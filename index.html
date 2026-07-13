@@ -503,10 +503,10 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
   <div class="rc-banner" id="bk-reminder-banner">
     <div class="rc-banner-top">
       <span>💾</span>
-      <span>오늘 백업을 아직 안 하셨어요</span>
+      <span>가끔 백업해두면 안심이에요</span>
     </div>
     <div class="rc-banner-desc">
-      탭 한 번이면 끝나요. 폰을 잃어버리거나 용량 오류가 나도 데이터를 지킬 수 있어요.
+      용량은 넉넉하니 급하지 않아요. 다만 폰 분실에 대비해 한 번쯤 백업해두시면 좋아요.
     </div>
     <div class="rc-banner-actions">
       <button class="rc-clean-btn" onclick="exportBackup()">💾 지금 백업하기</button>
@@ -843,8 +843,8 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
         <span class="bk-card-title">사진 한번에 재압축</span>
       </div>
       <div class="bk-card-desc">
-        등록된 모든 사진을 다시 압축해서 저장 용량을 줄여요.<br>
-        화질은 약간만 낮아지고, 저장공간 오류를 예방할 수 있어요.
+        평소엔 쓸 일이 없어요. 기기 저장공간이 정말 부족할 때만 사용하세요.<br>
+        실행하면 화질이 다소 낮아지며, 원래 화질로 되돌릴 수 없어요.
       </div>
       <button class="bk-action-btn" style="background:var(--orange);" onclick="recompressAllPhotos()">
         🗜️ 모든 사진 재압축
@@ -919,9 +919,76 @@ function cloneSample(s) {
 }
 
 let products = [];
-try { products = JSON.parse(localStorage.getItem('gz_products') || '[]'); } catch(e){}
-// 구 버전 호환: bizCards 필드가 없는 제품에 빈 배열 부여
-products.forEach(function(p) { if (!Array.isArray(p.bizCards)) p.bizCards = []; });
+
+// ══════════════════════════════════════════════════════
+//  IndexedDB 저장 계층
+//  localStorage(5~10MB 한계) 대신 IndexedDB 사용 → 수백MB~수GB 저장 가능
+//  박람회에서 하루 100장 이상 촬영해도 용량 걱정 없음
+// ══════════════════════════════════════════════════════
+var DB_NAME = 'gz_fair_db';
+var DB_STORE = 'kv';
+var _dbPromise = null;
+
+function openDB() {
+  if (_dbPromise) return _dbPromise;
+  _dbPromise = new Promise(function(resolve, reject) {
+    var req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = function(e) {
+      var db = e.target.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE);
+    };
+    req.onsuccess = function(e) { resolve(e.target.result); };
+    req.onerror = function(e) { reject(e.target.error); };
+  });
+  return _dbPromise;
+}
+
+function idbSet(key, value) {
+  return openDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(DB_STORE, 'readwrite');
+      tx.objectStore(DB_STORE).put(value, key);
+      tx.oncomplete = function() { resolve(true); };
+      tx.onerror = function(e) { reject(e.target.error); };
+      tx.onabort = function(e) { reject(tx.error); };
+    });
+  });
+}
+
+function idbGet(key) {
+  return openDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(DB_STORE, 'readonly');
+      var req = tx.objectStore(DB_STORE).get(key);
+      req.onsuccess = function() { resolve(req.result); };
+      req.onerror = function(e) { reject(e.target.error); };
+    });
+  });
+}
+
+function idbDel(key) {
+  return openDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(DB_STORE, 'readwrite');
+      tx.objectStore(DB_STORE).delete(key);
+      tx.oncomplete = function() { resolve(true); };
+      tx.onerror = function(e) { reject(e.target.error); };
+    });
+  });
+}
+
+// 앱 시작 시 IndexedDB에서 제품 데이터 불러오기
+function loadProducts() {
+  return idbGet('products').then(function(saved) {
+    products = Array.isArray(saved) ? saved : [];
+    products.forEach(function(p) { if (!Array.isArray(p.bizCards)) p.bizCards = []; });
+    return products;
+  }).catch(function(err) {
+    console.error('[loadProducts] 불러오기 실패:', err);
+    products = [];
+    return products;
+  });
+}
 
 let curTab = 'all';
 let curCat = 'all';
@@ -981,12 +1048,18 @@ let sampleIsLong = false;
   renderPhotos();
   renderBizCards();
 
-  renderList();
+  // 저장공간 영구 보존 요청 (브라우저가 임의로 데이터를 지우지 않도록)
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(function(){});
+  }
 
-  // 손상 데이터 감지 + 저장공간 사용량 표시
-  checkAndShowRecoveryBanner();
-  checkBackupReminder();
-  updateStorageBar();
+  // IndexedDB에서 데이터를 불러온 뒤 목록 렌더링
+  loadProducts().then(function() {
+    renderList();
+    checkAndShowRecoveryBanner();
+    checkBackupReminder();
+    updateStorageBar();
+  });
 })();
 
 // ── NAME INPUT ─────────────────────────────────────────
@@ -1089,7 +1162,7 @@ function processImageFiles(files, target) {
   files.forEach(function(file) {
     var reader = new FileReader();
     reader.onload = function(ev) {
-      compressImage(ev.target.result, 1400, 0.82).then(function(compressed) {
+      compressImage(ev.target.result, 1800, 0.88).then(function(compressed) {
         cur[target].push(compressed);
         if (target === 'bizCards') renderBizCards(); else renderPhotos();
         updateSaveBtn();
@@ -2134,12 +2207,14 @@ function scanBrokenPhotos() {
 }
 
 // 로드 시 손상 데이터 감지 → 배너 표시
+// 백업 알림: IndexedDB 전환으로 용량 걱정이 없어졌으므로,
+// 폰 분실 대비 차원에서만 가끔(3일에 한 번, 제품 10개 이상) 조용히 알림
 function checkBackupReminder() {
-  if (products.length === 0) return; // 등록된 게 없으면 알릴 필요 없음
+  if (products.length < 10) return;
   var last = 0;
   try { last = parseInt(localStorage.getItem('gz_last_backup_ts') || '0'); } catch(e) {}
   var hoursPassed = (Date.now() - last) / (1000 * 60 * 60);
-  if (hoursPassed >= 20) {
+  if (hoursPassed >= 72) {
     document.getElementById('bk-reminder-banner').classList.add('show');
   }
 }
@@ -2193,43 +2268,52 @@ function cleanupBrokenPhotos() {
 }
 
 // 저장공간 사용량 계산 (MB 단위, 소수점 1자리)
+// 현재 데이터가 차지하는 대략적인 용량(MB). 메모리상의 데이터 기준으로 계산
 function getStorageUsageMB() {
   try {
-    var data = localStorage.getItem('gz_products') || '';
-    // UTF-16 문자열이므로 실제 저장 바이트는 2배 (브라우저 대부분)
-    return (data.length * 2) / (1024 * 1024);
+    var bytes = 0;
+    products.forEach(function(p) {
+      (p.photos || []).forEach(function(s){ bytes += (s || '').length; });
+      (p.bizCards || []).forEach(function(s){ bytes += (s || '').length; });
+      bytes += 500; // 텍스트 정보 대략치
+    });
+    return bytes / (1024 * 1024);
   } catch(e) { return 0; }
 }
 
-// 사용량 바 갱신. 한도는 브라우저 기본 5MB 기준 (실제는 5~10MB)
+// 사용량 바 갱신. IndexedDB는 기기 여유 공간 기준이라 한도가 매우 큼
 function updateStorageBar() {
   var mb = getStorageUsageMB();
-  var limit = 5; // 보수적 기준
-  var pct = Math.min(100, (mb / limit) * 100);
   var bar = document.getElementById('storage-bar');
   var fill = document.getElementById('storage-fill');
   var text = document.getElementById('storage-text');
   var icon = document.getElementById('storage-icon');
 
-  if (mb < 1) {
-    // 1MB 미만이면 숨김 (평소엔 안 보이게)
-    bar.classList.add('hidden');
-    return;
-  }
-  bar.classList.remove('hidden');
-  fill.style.width = pct + '%';
-  text.textContent = mb.toFixed(1) + ' / ' + limit + ' MB';
+  // 실제 브라우저가 이 앱에 허용한 저장 한도를 조회 (없으면 보수적으로 500MB 가정)
+  var quotaPromise = (navigator.storage && navigator.storage.estimate)
+    ? navigator.storage.estimate().then(function(est) {
+        return est.quota ? est.quota / (1024 * 1024) : 500;
+      }).catch(function(){ return 500; })
+    : Promise.resolve(500);
 
-  bar.classList.remove('warn', 'danger');
-  if (mb >= 4) {
-    bar.classList.add('danger'); icon.textContent = '🚨';
-  } else if (mb >= 3) {
-    bar.classList.add('warn'); icon.textContent = '⚠️';
-  }
-  else { icon.textContent = '💾'; }
+  quotaPromise.then(function(limitMb) {
+    if (mb < 20) {
+      // 20MB 미만이면 아직 여유가 충분하므로 표시 숨김
+      bar.classList.add('hidden');
+      return;
+    }
+    var pct = Math.min(100, (mb / limitMb) * 100);
+    bar.classList.remove('hidden');
+    fill.style.width = pct + '%';
+    text.textContent = mb.toFixed(0) + ' / ' + limitMb.toFixed(0) + ' MB';
+
+    bar.classList.remove('warn', 'danger');
+    if (pct >= 85) { bar.classList.add('danger'); icon.textContent = '🚨'; }
+    else if (pct >= 65) { bar.classList.add('warn'); icon.textContent = '⚠️'; }
+    else { icon.textContent = '💾'; }
+  });
 }
 
-// 저장 성공/실패 반환. 실패 시 사용자에게 명확히 알림
 // ── 전체 데이터 삭제 ────────────────────────────────────
 function resetAllData() {
   if (!products.length) { showToast('삭제할 데이터가 없어요'); return; }
@@ -2238,7 +2322,7 @@ function resetAllData() {
   var ok2 = window.confirm('정말 삭제하시겠어요? 되돌릴 수 없습니다.');
   if (!ok2) return;
   products = [];
-  try { localStorage.removeItem('gz_products'); } catch(e) {}
+  idbDel('products').catch(function(e){ console.error(e); });
   resetCur();
   renderList();
   updateStorageBar();
@@ -2246,11 +2330,11 @@ function resetAllData() {
   showToast('🗑️ 모든 제품 데이터가 삭제되었어요');
 }
 
-// ── 사진 전체 재압축 (용량 절약) ─────────────────────────
-// 이미 압축되어 충분히 작은 사진(약 250KB 미만)은 다시 압축하지 않음
-// → 같은 사진을 여러 번 압축해서 화질이 누적으로 깎이는 것을 방지
+// ── 사진 전체 재압축 (수동 실행 전용) ────────────────────
+// IndexedDB 전환으로 용량 여유가 충분해져 자동 압축은 하지 않음.
+// 기기 저장공간이 정말 부족할 때만 사용자가 직접 실행.
 var RECOMPRESS_SKIP_LEN = 350000; // base64 문자 수 기준, 약 250KB
-function recompressAllPhotos(silent) {
+function recompressAllPhotos() {
   var tasks = [];
   products.forEach(function(p) {
     (p.photos || []).forEach(function(src, i) {
@@ -2265,41 +2349,30 @@ function recompressAllPhotos(silent) {
     });
   });
   if (tasks.length === 0) {
-    if (!silent) showToast('이미 충분히 압축되어 있어요');
+    showToast('이미 충분히 압축되어 있어요');
     return Promise.resolve(false);
   }
-  if (!silent) showToast('🗜️ 사진 재압축 중...');
+  showToast('🗜️ 사진 재압축 중...');
   return Promise.all(tasks).then(function() {
-    var ok = persist(true); // 재압축 후 재시도이므로 또 자동복구를 걸지 않음
+    persist();
     renderList();
     updateStorageBar();
-    if (ok) showToast(silent ? '✓ 자동 재압축으로 저장 공간을 확보했어요' : '✓ 재압축 완료! 용량이 줄어들었어요');
-    else if (!silent) showToast('🚨 재압축해도 용량이 부족해요. 일부 사진을 삭제해주세요');
-    return ok;
+    showToast('✓ 재압축 완료! 용량이 줄어들었어요');
+    return true;
   });
 }
 
-function persist(skipAutoFix) {
-  try {
-    localStorage.setItem('gz_products', JSON.stringify(products));
-    return true;
-  } catch(e) {
-    // QuotaExceededError 또는 유사 에러
-    var mb = getStorageUsageMB();
-    var msg = '🚨 저장 실패! 용량 초과 (현재 ' + mb.toFixed(1) + 'MB) — 자동으로 사진을 압축하고 있어요...';
-    showToast(msg);
-    console.error('[persist] localStorage 저장 실패:', e);
-    // 경고 배너에도 상태 표시
+// IndexedDB에 저장. 비동기지만 호출부 호환을 위해 즉시 true 반환하고 백그라운드로 기록.
+function persist() {
+  idbSet('products', products).catch(function(e) {
+    console.error('[persist] IndexedDB 저장 실패:', e);
+    showToast('🚨 저장 실패! 기기 저장공간을 확인해주세요');
     var icon = document.getElementById('storage-icon');
     if (icon) icon.textContent = '🚨';
     var bar = document.getElementById('storage-bar');
     if (bar) { bar.classList.remove('hidden'); bar.classList.add('danger'); }
-    // 한 번 더 묻지 않고, 자동으로 전체 사진을 재압축해서 스스로 복구 시도
-    if (!skipAutoFix) {
-      recompressAllPhotos(true);
-    }
-    return false;
-  }
+  });
+  return true;
 }
 
 function fmtDate(ds) {
