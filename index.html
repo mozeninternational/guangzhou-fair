@@ -33,7 +33,7 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
 
 /* HEADER */
 .hdr { padding: 14px 16px 10px; display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
-.hdr-title { font-size: 19px; font-weight: 700; }
+.hdr-title { font-size: 19px; font-weight: 700; cursor: pointer; touch-action: manipulation; }
 .hdr-sub { font-size: 11px; color: var(--t2); margin-top: 2px; }
 .hdr-right { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
 .hdr-btn-row { display: flex; align-items: center; gap: 6px; }
@@ -487,7 +487,7 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
   <!-- HEADER -->
   <div class="hdr">
     <div>
-      <div class="hdr-title">🏪 광저우 박람회</div>
+      <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
       <div class="hdr-sub">📅 <span id="hdr-date"></span></div>
     </div>
     <div class="hdr-right">
@@ -2174,6 +2174,24 @@ function switchNav(el, page) {
     main.style.display = '';
     sp.style.display = 'none';
   }
+}
+
+// ── 상단 타이틀 클릭 → 메인 화면으로 정돈 ─────────────────
+function resetToMain() {
+  // 수정 중이던 입력은 취소(자동저장된 내용은 이미 저장되어 있으므로 안전)
+  if (editingId) cancelEdit();
+  // 열려있는 팝업/시트 모두 닫기
+  document.querySelectorAll('.overlay.open').forEach(function(o){ o.classList.remove('open'); });
+  closeLightbox();
+  // 제품목록 탭으로 전환
+  var bnavItems = document.querySelectorAll('.bnav-item');
+  if (bnavItems.length) switchNav(bnavItems[0], 'products');
+  // 화면 맨 위로 스크롤
+  var appEl = document.querySelector('.app');
+  if (appEl) appEl.scrollTop = 0;
+  var contentEl = document.getElementById('main-page');
+  if (contentEl) contentEl.scrollTop = 0;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ── SAMPLE PAGE ───────────────────────────────────────
