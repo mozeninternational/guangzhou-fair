@@ -1069,6 +1069,34 @@ let sampleIsLong = false;
   });
 })();
 
+// ── 자동 업데이트 확인 (새 버전 배포 시 재설치 없이 자동 반영) ──
+// 서버의 index.html을 캐시 없이 새로 받아와 내용이 달라지면 자동으로 새로고침한다.
+function checkForAppUpdate() {
+  try {
+    fetch(location.pathname + '?_v=' + Date.now(), { cache: 'no-store' })
+      .then(function(res) { return res.text(); })
+      .then(function(text) {
+        var hash = String(text.length) + ':' + text.split('').reduce(function(a, c) {
+          return (a * 31 + c.charCodeAt(0)) >>> 0;
+        }, 0);
+        var saved = localStorage.getItem('gz_app_hash');
+        if (saved && saved !== hash) {
+          localStorage.setItem('gz_app_hash', hash);
+          showToast('🔄 새 버전으로 업데이트합니다...');
+          setTimeout(function() { location.reload(); }, 1200);
+          return;
+        }
+        localStorage.setItem('gz_app_hash', hash);
+      })
+      .catch(function() { /* 오프라인이면 조용히 넘어감 */ });
+  } catch (e) {}
+}
+checkForAppUpdate();
+// 앱을 백그라운드에서 다시 열 때(홈 화면 아이콘 재실행 포함)마다 재확인
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) checkForAppUpdate();
+});
+
 // ── NAME INPUT ─────────────────────────────────────────
 function onNameInput() {
   const el = document.getElementById('name-ta');
