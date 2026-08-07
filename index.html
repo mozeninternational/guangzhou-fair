@@ -600,7 +600,10 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
   <div class="sample-page" id="sample-page">
     <div class="sm-top">
       <div class="sm-label" id="sm-count">샘플 신청 제품</div>
-      <button class="excel-btn" onclick="exportExcel()">⬇ 엑셀 다운로드</button>
+      <div style="display:flex; gap:6px;">
+        <button class="excel-btn" onclick="exportExcel('sample', this)">⬇ 샘플만</button>
+        <button class="excel-btn" style="background:#2563a8;" onclick="exportExcel('all', this)">⬇ 전체(사진포함)</button>
+      </div>
     </div>
     <div class="empty" id="sm-empty" style="display:none;">
       <div class="empty-icon">📦</div>
@@ -2252,28 +2255,164 @@ function renderSamplePage() {
 }
 
 // ── EXCEL ─────────────────────────────────────────────
-function exportExcel() {
-  var sampled = products.filter(function(p){ return p.sample; });
-  if (!sampled.length) { showToast('샘플 데이터가 없어요'); return; }
-  sampled.sort(function(a,b){
-    if (!a.sample.expected) return 1;
-    if (!b.sample.expected) return -1;
-    return new Date(a.sample.expected)-new Date(b.sample.expected);
-  });
+// ExcelJS 라이브러리 동적 로딩 (PPT와 동일한 CDN-폴백 패턴)
+var _excelLibLoading = null;
+function loadExcelLibrary() {
+  if (typeof ExcelJS !== 'undefined') return Promise.resolve();
+  if (_excelLibLoading) return _excelLibLoading;
 
-  var rows = [['순서','상품군','품명','특허 및 장점','인증여부','출시 or 목업','샘플 소요일','개발 설정','중요도','입고']];
-  sampled.forEach(function(p, i) {
-    var cb = p.cb ? (p.cb.owned ? 'CB보유' : 'CB예정 '+p.cb.date) : '';
-    rows.push([i+1, p.category||'', p.name, p.memo||'', cb, '', p.sample.days || '미정', '', '', '']);
-  });
+  var cdns = [
+    'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
+    'https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js'
+  ];
 
-  var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
-  var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url; a.download = '샘플관리.csv'; a.click();
-  URL.revokeObjectURL(url);
-  showToast('엑셀 파일 다운로드 완료!');
+  _excelLibLoading = new Promise(function(resolve, reject) {
+    var i = 0;
+    function tryNext() {
+      if (i >= cdns.length) {
+        _excelLibLoading = null;
+        reject(new Error('인터넷 연결을 확인해주세요'));
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = cdns[i];
+      s.onload = function() {
+        if (typeof ExcelJS !== 'undefined') resolve();
+        else { i++; tryNext(); }
+      };
+      s.onerror = function() { i++; tryNext(); };
+      document.head.appendChild(s);
+    }
+    tryNext();
+  });
+  return _excelLibLoading;
+}
+
+// 이미지의 실제 가로/세로 픽셀 크기를 얻는다 (비율 계산용)
+function getImageNaturalSize(dataUrl) {
+  return new Promise(function(resolve) {
+    var img = new Image();
+    img.onload = function() {
+      resolve({ w: img.naturalWidth || img.width || 1, h: img.naturalHeight || img.height || 1 });
+    };
+    img.onerror = function() { resolve({ w: 1, h: 1 }); };
+    img.src = dataUrl;
+  });
+}
+
+// 제품을 사진 포함 엑셀(.xlsx)로 내보내기. scope: 'all'(기본) 또는 'sample'
+async function exportExcel(scope, btnEl) {
+  scope = scope || 'all';
+  var list = scope === 'sample' ? products.filter(function(p){ return p.sample; }) : products.slice();
+  if (!list.length) {
+    showToast(scope === 'sample' ? '샘플 신청한 제품이 없어요' : '등록된 제품이 없어요');
+    return;
+  }
+
+  var btn = btnEl || document.querySelector('.excel-btn');
+  var originalText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 생성 중...'; }
+
+  try {
+    if (typeof ExcelJS === 'undefined') {
+      if (btn) btn.textContent = '⏳ 라이브러리 준비 중...';
+      await loadExcelLibrary();
+      if (btn) btn.textContent = '⏳ 생성 중...';
+    }
+
+    var wb = new ExcelJS.Workbook();
+    var ws = wb.addWorksheet('제품목록');
+
+    ws.columns = [
+      { header: '순서', key: 'no', width: 6 },
+      { header: '사진', key: 'photo', width: 14 },
+      { header: '상품군', key: 'cat', width: 12 },
+      { header: '품명', key: 'name', width: 24 },
+      { header: '메모 · 특장점', key: 'memo', width: 34 },
+      { header: '단가(USD)', key: 'price', width: 12 },
+      { header: 'MOQ', key: 'moq', width: 10 },
+      { header: 'CB', key: 'cb', width: 20 },
+      { header: '샘플', key: 'sample', width: 26 },
+      { header: '사진장수', key: 'photoCount', width: 10 },
+      { header: '명함장수', key: 'bizCount', width: 10 },
+      { header: '등록일', key: 'date', width: 12 }
+    ];
+    ws.getRow(1).font = { bold: true };
+    ws.getRow(1).height = 20;
+    ws.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    for (var i = 0; i < list.length; i++) {
+      var p = list[i];
+      var rowIdx = i + 2; // 1행은 헤더
+
+      var cb = '';
+      if (p.cb) {
+        if (p.cb.owned) cb = 'CB보유';
+        else if (p.cb.date) cb = 'CB예정 ' + fmtDate(p.cb.date);
+      }
+      var sampleStr = '';
+      if (p.sample) {
+        sampleStr = p.sample.days
+          ? ('D+' + p.sample.days + ' · ' + fmtDate(p.sample.expected))
+          : '신청완료 (일정 미정)';
+        if (p.sample.memo) sampleStr += ' · ' + p.sample.memo;
+      }
+
+      var row = ws.addRow({
+        no: i + 1,
+        photo: '',
+        cat: p.category || '',
+        name: p.name || '(이름 없음)',
+        memo: p.memo || '',
+        price: (p.moq && p.moq.price) ? p.moq.price : '',
+        moq: (p.moq && p.moq.qty) ? p.moq.qty : '',
+        cb: cb,
+        sample: sampleStr,
+        photoCount: (p.photos && p.photos.length) || 0,
+        bizCount: (p.bizCards && p.bizCards.length) || 0,
+        date: p.date || ''
+      });
+      row.height = 60;
+      row.alignment = { vertical: 'middle', wrapText: true };
+
+      // 대표 사진(첫 장) 썸네일 삽입 — 원본 비율 그대로, 절대 찌그러뜨리지 않음
+      var mainPhoto = p.photos && p.photos[0];
+      if (mainPhoto && isValidPhoto(mainPhoto)) {
+        try {
+          var match = /^data:image\/(png|jpe?g);base64,(.*)$/i.exec(mainPhoto);
+          if (match) {
+            var ext = match[1].toLowerCase() === 'jpg' ? 'jpeg' : match[1].toLowerCase();
+            var size = await getImageNaturalSize(mainPhoto);
+            var maxBox = 70; // 셀 안에 들어갈 최대 정사각 영역(px)
+            var scale = Math.min(maxBox / size.w, maxBox / size.h, 1); // 1을 넘지 않게(확대 방지)
+            var imgW = Math.max(4, Math.round(size.w * scale));
+            var imgH = Math.max(4, Math.round(size.h * scale));
+            var imgId = wb.addImage({ base64: mainPhoto, extension: ext });
+            ws.addImage(imgId, {
+              tl: { col: 1, row: rowIdx - 1 },
+              ext: { width: imgW, height: imgH } // 원본 가로세로 비율 그대로 축소만 함
+            });
+          }
+        } catch (e) { /* 이미지 삽입 실패해도 나머지 정보는 계속 기록 */ }
+      }
+    }
+
+    var buf = await wb.xlsx.writeBuffer();
+    var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '광저우박람회_' + (scope === 'sample' ? '샘플목록_' : '제품목록_') + pptDateStr().replace(/\./g, '') + '.xlsx';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('✓ 엑셀 파일(사진 포함) 다운로드 완료!');
+  } catch (err) {
+    console.error(err);
+    showToast('🚨 엑셀 생성 실패: ' + (err.message || '오류'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = originalText || '⬇ 엑셀 다운로드'; }
+  }
 }
 
 // ── UTILS ─────────────────────────────────────────────
