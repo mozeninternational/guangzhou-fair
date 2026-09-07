@@ -135,19 +135,25 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
   margin: 0 auto;
   position: relative;
   display: grid; grid-template-columns: repeat(4,1fr); gap: 9px;
-  padding: 16px 16px 10px;
+  padding: 10px 44px 10px 16px;
   flex-shrink: 0;
 }
-.qa-grid.dragging { opacity: .92; box-shadow: 0 6px 22px rgba(0,0,0,.4); border-radius: 16px; background: rgba(17,17,17,.6); }
-.qa-grid-handle {
-  position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
-  width: 46px; height: 6px; background: rgba(255,255,255,.4);
-  border-radius: 3px; cursor: grab; touch-action: none;
-  box-shadow: 0 1px 3px rgba(0,0,0,.4);
+.qa-grid.at-bot { padding-bottom: 12px; margin-bottom: 66px; }
+/* 오른쪽 측면 이동 컨트롤 (위/아래 버튼) */
+.qa-move {
+  position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 4px;
 }
-/* 드래그 중 어느 위치에 놓일지 미리 보여주는 표시선 */
-.qa-drop-indicator { height: 3px; background: var(--orange); border-radius: 2px; margin: 6px 16px; box-shadow: 0 0 8px rgba(245,165,0,.6); display: none; }
-.qa-drop-indicator.show { display: block; }
+.qa-move-btn {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: rgba(255,255,255,.06); border: 1px solid var(--border);
+  color: var(--t2); font-size: 14px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; touch-action: manipulation; -webkit-appearance: none;
+  font-family: inherit; padding: 0;
+}
+.qa-move-btn:active { background: rgba(245,165,0,.2); color: var(--orange); border-color: var(--orange); }
+.qa-move-btn:disabled { opacity: .25; cursor: default; }
 .qa-btn {
   background: var(--card);
   border: 1.5px solid var(--border);
@@ -517,7 +523,7 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v10</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -619,9 +625,12 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
 
   <div class="qa-anchor" id="qa-anchor-mid"></div>
 
-  <!-- QUICK ACTIONS (손잡이를 끌어 위/중간/아래 위치로 이동. 놓으면 그 자리에 고정됨) -->
+  <!-- QUICK ACTIONS (오른쪽 ▲▼ 버튼으로 위치를 위/중간/아래로 이동. 놓으면 그 자리에 고정) -->
   <div class="qa-grid" id="qa-grid">
-    <div class="qa-grid-handle" id="qa-grid-handle"></div>
+    <div class="qa-move">
+      <button class="qa-move-btn" id="qa-move-up" type="button" onclick="moveQaGrid(-1)" title="위로 이동">▲</button>
+      <button class="qa-move-btn" id="qa-move-down" type="button" onclick="moveQaGrid(1)" title="아래로 이동">▼</button>
+    </div>
     <button class="qa-btn" id="qa-moq" onclick="openSheet('moq')">
       <div class="qa-icon c-orange" id="moq-icon">$</div>
       <div class="qa-top" id="moq-top">MOQ</div>
@@ -1153,121 +1162,49 @@ function resumeDraftIfAny() {
   });
 })();
 
-// ── 4개 버튼(qa-grid)을 손잡이로 끌어 3개 위치(위/중간/아래) 중 하나로 스냅 배치 ──
-// 문서 흐름 안에서 위치만 바뀌므로, 옮겨도 입력 영역이 가려지지 않는다.
+// ── 4개 버튼(qa-grid)을 ▲▼ 버튼으로 위/중간/아래 3개 위치로 이동 ──
+// 문서 흐름 안에서 위치만 바뀌므로 입력 영역이 가려지지 않고,
+// '아래'로 가도 하단 고정 탭(제품목록/샘플관리/사진) 위에 머문다.
 var QA_GRID_POS_KEY = 'gz_qa_grid_zone'; // 'top' | 'mid' | 'bot'
 var QA_ZONES = ['top', 'mid', 'bot'];
 
-function getQaContainer() { return document.querySelector('.app'); }
+function getQaZone() {
+  var zone = 'mid';
+  try { var raw = localStorage.getItem(QA_GRID_POS_KEY); if (QA_ZONES.indexOf(raw) >= 0) zone = raw; } catch (e) {}
+  return zone;
+}
 
-// 저장된 위치(zone)에 맞는 앵커 바로 앞으로 qa-grid를 이동
+// 저장된 위치(zone)의 앵커 바로 뒤로 qa-grid 이동 + 버튼 활성/비활성 갱신
 function applyQaGridPos() {
   var el = document.getElementById('qa-grid');
   if (!el) return;
-  var zone = 'mid';
-  try { var raw = localStorage.getItem(QA_GRID_POS_KEY); if (QA_ZONES.indexOf(raw) >= 0) zone = raw; } catch (e) {}
+  var zone = getQaZone();
   var anchor = document.getElementById('qa-anchor-' + zone);
   if (anchor && anchor.parentNode) {
     anchor.parentNode.insertBefore(el, anchor.nextSibling);
   }
+  // 맨 아래 위치일 때만 하단 탭에 안 가리도록 여백 클래스 추가
+  el.classList.toggle('at-bot', zone === 'bot');
+  // 위/아래 버튼 비활성 처리 (맨 위에선 ▲ 비활성, 맨 아래선 ▼ 비활성)
+  var idx = QA_ZONES.indexOf(zone);
+  var up = document.getElementById('qa-move-up');
+  var down = document.getElementById('qa-move-down');
+  if (up) up.disabled = (idx <= 0);
+  if (down) down.disabled = (idx >= QA_ZONES.length - 1);
 }
 
-(function setupQaGridDrag() {
-  var handle = document.getElementById('qa-grid-handle');
-  var el = document.getElementById('qa-grid');
-  if (!handle || !el) return;
+// ▲(-1) / ▼(+1) 로 한 칸씩 이동
+function moveQaGrid(dir) {
+  var idx = QA_ZONES.indexOf(getQaZone());
+  var next = Math.max(0, Math.min(QA_ZONES.length - 1, idx + dir));
+  if (next === idx) return;
+  try { localStorage.setItem(QA_GRID_POS_KEY, QA_ZONES[next]); } catch (e) {}
+  applyQaGridPos();
+  var label = { top: '맨 위', mid: '가운데', bot: '맨 아래' }[QA_ZONES[next]];
+  showToast('버튼을 ' + label + '로 옮겼어요');
+}
 
-  var pressTimer = null;
-  var dragging = false;
-  var startY = 0;
-  var indicator = null;
-  var targetZone = null;
-
-  function getY(e) { return (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY; }
-
-  function ensureIndicator() {
-    if (!indicator) {
-      indicator = document.createElement('div');
-      indicator.className = 'qa-drop-indicator';
-      document.querySelector('.app').appendChild(indicator);
-    }
-    return indicator;
-  }
-
-  // 현재 손가락 Y위치에서 가장 가까운 zone 계산
-  function zoneFromY(y) {
-    var best = 'mid', bestDist = Infinity;
-    QA_ZONES.forEach(function(z) {
-      var a = document.getElementById('qa-anchor-' + z);
-      if (!a) return;
-      var rect = a.getBoundingClientRect();
-      var dist = Math.abs(rect.top - y);
-      if (dist < bestDist) { bestDist = dist; best = z; }
-    });
-    return best;
-  }
-
-  // 표시선을 해당 zone 앵커 위치로 이동
-  function showIndicatorAt(zone) {
-    var a = document.getElementById('qa-anchor-' + zone);
-    var ind = ensureIndicator();
-    if (!a) { ind.classList.remove('show'); return; }
-    var rect = a.getBoundingClientRect();
-    ind.style.position = 'fixed';
-    ind.style.left = rect.left + 'px';
-    ind.style.width = rect.width + 'px';
-    ind.style.top = rect.top + 'px';
-    ind.style.margin = '0';
-    ind.classList.add('show');
-  }
-
-  function onDown(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    startY = getY(e);
-    clearTimeout(pressTimer);
-    pressTimer = setTimeout(function() {
-      dragging = true;
-      el.classList.add('dragging');
-      targetZone = zoneFromY(getY(e));
-      showIndicatorAt(targetZone);
-    }, 250);
-  }
-  function onMove(e) {
-    if (!dragging) {
-      if (Math.abs(getY(e) - startY) > 8) clearTimeout(pressTimer);
-      return;
-    }
-    if (e.cancelable) e.preventDefault();
-    e.stopPropagation();
-    targetZone = zoneFromY(getY(e));
-    showIndicatorAt(targetZone);
-  }
-  function onUp(e) {
-    clearTimeout(pressTimer);
-    if (dragging) {
-      e.stopPropagation();
-      dragging = false;
-      el.classList.remove('dragging');
-      if (indicator) indicator.classList.remove('show');
-      if (targetZone) {
-        try { localStorage.setItem(QA_GRID_POS_KEY, targetZone); } catch (err) {}
-        applyQaGridPos();
-        showToast('버튼 위치를 옮겼어요');
-      }
-    }
-  }
-
-  handle.addEventListener('touchstart', onDown, { passive: false });
-  handle.addEventListener('touchmove', onMove, { passive: false });
-  handle.addEventListener('touchend', onUp);
-  handle.addEventListener('touchcancel', onUp);
-  handle.addEventListener('mousedown', onDown);
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
-
-  applyQaGridPos(); // 이전에 옮겨둔 위치가 있으면 복원
-})();
+applyQaGridPos(); // 저장된 위치 복원
 
 // ── 자동 업데이트 확인 (새 버전 배포 시 재설치 없이 자동 반영) ──
 // 서버의 index.html을 캐시 없이 새로 받아와 내용이 달라지면 자동으로 새로고침한다.
