@@ -129,24 +129,25 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
 .ppt-opt-label { font-size: 10px; }
 
 /* QUICK ACTION BUTTONS */
+.qa-anchor { height: 0; margin: 0; padding: 0; flex-shrink: 0; }
 .qa-grid {
-  position: fixed; left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 430px; box-sizing: border-box;
-  bottom: 72px; /* 기본 위치: 하단 탭바 바로 위 (사용자가 옮기기 전까지) */
-  z-index: 150;
+  margin: 0 auto;
+  position: relative;
   display: grid; grid-template-columns: repeat(4,1fr); gap: 9px;
-  padding: 18px 16px 12px;
-  background: rgba(17,17,17,.92);
-  border-radius: 16px;
-  box-shadow: 0 6px 22px rgba(0,0,0,.4);
+  padding: 16px 16px 10px;
+  flex-shrink: 0;
 }
-.qa-grid.dragging { cursor: grabbing; opacity: .9; }
+.qa-grid.dragging { opacity: .92; box-shadow: 0 6px 22px rgba(0,0,0,.4); border-radius: 16px; background: rgba(17,17,17,.6); }
 .qa-grid-handle {
-  position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
-  width: 46px; height: 6px; background: rgba(255,255,255,.55);
+  position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+  width: 46px; height: 6px; background: rgba(255,255,255,.4);
   border-radius: 3px; cursor: grab; touch-action: none;
   box-shadow: 0 1px 3px rgba(0,0,0,.4);
 }
+/* 드래그 중 어느 위치에 놓일지 미리 보여주는 표시선 */
+.qa-drop-indicator { height: 3px; background: var(--orange); border-radius: 2px; margin: 6px 16px; box-shadow: 0 0 8px rgba(245,165,0,.6); display: none; }
+.qa-drop-indicator.show { display: block; }
 .qa-btn {
   background: var(--card);
   border: 1.5px solid var(--border);
@@ -569,6 +570,8 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
     <span class="storage-bar-text" id="storage-text">0.0 MB</span>
   </div>
 
+  <div class="qa-anchor" id="qa-anchor-top"></div>
+
   <!-- CURRENT INPUT -->
   <div class="cur-area">
     <div class="edit-banner" id="edit-banner">
@@ -614,6 +617,36 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
     <div class="cat-row" id="cat-row"></div>
   </div>
 
+  <div class="qa-anchor" id="qa-anchor-mid"></div>
+
+  <!-- QUICK ACTIONS (손잡이를 끌어 위/중간/아래 위치로 이동. 놓으면 그 자리에 고정됨) -->
+  <div class="qa-grid" id="qa-grid">
+    <div class="qa-grid-handle" id="qa-grid-handle"></div>
+    <button class="qa-btn" id="qa-moq" onclick="openSheet('moq')">
+      <div class="qa-icon c-orange" id="moq-icon">$</div>
+      <div class="qa-top" id="moq-top">MOQ</div>
+      <div class="qa-bot qa-val" id="moq-bot"></div>
+    </button>
+
+    <button class="qa-btn" id="qa-cb">
+      <div class="qa-icon c-orange" id="cb-icon">📋</div>
+      <div class="qa-top" id="cb-top">CB 없음</div>
+      <div class="qa-bot" id="cb-bot"></div>
+    </button>
+
+    <button class="qa-btn" id="qa-sample">
+      <div class="qa-icon c-orange" id="sample-icon">📅</div>
+      <div class="qa-top" id="sample-top">샘플 신청</div>
+      <div class="qa-bot" id="sample-bot"></div>
+    </button>
+
+    <button class="qa-btn" id="qa-card" onclick="document.getElementById('biz-input').click()">
+      <div class="qa-icon c-orange" id="card-icon">📇</div>
+      <div class="qa-top" id="card-top">명함사진</div>
+      <div class="qa-bot" id="card-bot"></div>
+    </button>
+  </div>
+
   <!-- PRODUCT LIST -->
   <div class="content" id="main-page">
     <div class="empty" id="empty-state">
@@ -623,6 +656,8 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
     </div>
     <div class="p-list" id="p-list" style="display:none;"></div>
   </div>
+
+  <div class="qa-anchor" id="qa-anchor-bot"></div>
 
   <!-- SAMPLE PAGE -->
   <div class="sample-page" id="sample-page">
@@ -651,34 +686,6 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
       <div class="empty-title">저장된 사진이 없어요</div>
     </div>
     <div class="ph-grid" id="ph-grid" style="display:none;"></div>
-  </div>
-
-  <!-- QUICK ACTIONS (길게 눌러서 손잡이를 끌면 화면 어디로든 자유 배치 가능) -->
-  <div class="qa-grid" id="qa-grid">
-    <div class="qa-grid-handle" id="qa-grid-handle"></div>
-    <button class="qa-btn" id="qa-moq" onclick="openSheet('moq')">
-      <div class="qa-icon c-orange" id="moq-icon">$</div>
-      <div class="qa-top" id="moq-top">MOQ</div>
-      <div class="qa-bot qa-val" id="moq-bot"></div>
-    </button>
-
-    <button class="qa-btn" id="qa-cb">
-      <div class="qa-icon c-orange" id="cb-icon">📋</div>
-      <div class="qa-top" id="cb-top">CB 없음</div>
-      <div class="qa-bot" id="cb-bot"></div>
-    </button>
-
-    <button class="qa-btn" id="qa-sample">
-      <div class="qa-icon c-orange" id="sample-icon">📅</div>
-      <div class="qa-top" id="sample-top">샘플 신청</div>
-      <div class="qa-bot" id="sample-bot"></div>
-    </button>
-
-    <button class="qa-btn" id="qa-card" onclick="document.getElementById('biz-input').click()">
-      <div class="qa-icon c-orange" id="card-icon">📇</div>
-      <div class="qa-top" id="card-top">명함사진</div>
-      <div class="qa-bot" id="card-bot"></div>
-    </button>
   </div>
 
   <!-- BOTTOM NAV -->
@@ -1146,20 +1153,23 @@ function resumeDraftIfAny() {
   });
 })();
 
-// ── MOQ/CB/샘플신청/명함사진 4개 버튼(qa-grid)을 손잡이로 끌어 화면 어디로든 자유 배치 ──
-var QA_GRID_POS_KEY = 'gz_qa_grid_pos'; // 0(맨 위) ~ 1(맨 아래) 비율로 저장
+// ── 4개 버튼(qa-grid)을 손잡이로 끌어 3개 위치(위/중간/아래) 중 하나로 스냅 배치 ──
+// 문서 흐름 안에서 위치만 바뀌므로, 옮겨도 입력 영역이 가려지지 않는다.
+var QA_GRID_POS_KEY = 'gz_qa_grid_zone'; // 'top' | 'mid' | 'bot'
+var QA_ZONES = ['top', 'mid', 'bot'];
+
+function getQaContainer() { return document.querySelector('.app'); }
+
+// 저장된 위치(zone)에 맞는 앵커 바로 앞으로 qa-grid를 이동
 function applyQaGridPos() {
   var el = document.getElementById('qa-grid');
   if (!el) return;
-  var raw = null;
-  try { raw = localStorage.getItem(QA_GRID_POS_KEY); } catch (e) {}
-  if (raw === null) return; // 저장된 적 없으면 CSS 기본 위치(하단) 그대로 둔다
-  var frac = parseFloat(raw);
-  if (isNaN(frac)) return;
-  frac = Math.max(0, Math.min(1, frac));
-  var maxTop = Math.max(0, window.innerHeight - el.offsetHeight);
-  el.style.bottom = 'auto';
-  el.style.top = Math.round(maxTop * frac) + 'px';
+  var zone = 'mid';
+  try { var raw = localStorage.getItem(QA_GRID_POS_KEY); if (QA_ZONES.indexOf(raw) >= 0) zone = raw; } catch (e) {}
+  var anchor = document.getElementById('qa-anchor-' + zone);
+  if (anchor && anchor.parentNode) {
+    anchor.parentNode.insertBefore(el, anchor.nextSibling);
+  }
 }
 
 (function setupQaGridDrag() {
@@ -1169,22 +1179,59 @@ function applyQaGridPos() {
 
   var pressTimer = null;
   var dragging = false;
-  var startY = 0, startTop = 0;
+  var startY = 0;
+  var indicator = null;
+  var targetZone = null;
 
   function getY(e) { return (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY; }
+
+  function ensureIndicator() {
+    if (!indicator) {
+      indicator = document.createElement('div');
+      indicator.className = 'qa-drop-indicator';
+      document.querySelector('.app').appendChild(indicator);
+    }
+    return indicator;
+  }
+
+  // 현재 손가락 Y위치에서 가장 가까운 zone 계산
+  function zoneFromY(y) {
+    var best = 'mid', bestDist = Infinity;
+    QA_ZONES.forEach(function(z) {
+      var a = document.getElementById('qa-anchor-' + z);
+      if (!a) return;
+      var rect = a.getBoundingClientRect();
+      var dist = Math.abs(rect.top - y);
+      if (dist < bestDist) { bestDist = dist; best = z; }
+    });
+    return best;
+  }
+
+  // 표시선을 해당 zone 앵커 위치로 이동
+  function showIndicatorAt(zone) {
+    var a = document.getElementById('qa-anchor-' + zone);
+    var ind = ensureIndicator();
+    if (!a) { ind.classList.remove('show'); return; }
+    var rect = a.getBoundingClientRect();
+    ind.style.position = 'fixed';
+    ind.style.left = rect.left + 'px';
+    ind.style.width = rect.width + 'px';
+    ind.style.top = rect.top + 'px';
+    ind.style.margin = '0';
+    ind.classList.add('show');
+  }
 
   function onDown(e) {
     e.preventDefault();
     e.stopPropagation();
     startY = getY(e);
-    startTop = el.getBoundingClientRect().top;
     clearTimeout(pressTimer);
     pressTimer = setTimeout(function() {
       dragging = true;
       el.classList.add('dragging');
-      el.style.bottom = 'auto';
-      el.style.top = startTop + 'px';
-    }, 300);
+      targetZone = zoneFromY(getY(e));
+      showIndicatorAt(targetZone);
+    }, 250);
   }
   function onMove(e) {
     if (!dragging) {
@@ -1193,10 +1240,8 @@ function applyQaGridPos() {
     }
     if (e.cancelable) e.preventDefault();
     e.stopPropagation();
-    var dy = getY(e) - startY;
-    var maxTop = Math.max(0, window.innerHeight - el.offsetHeight);
-    var newTop = Math.max(0, Math.min(maxTop, startTop + dy));
-    el.style.top = newTop + 'px';
+    targetZone = zoneFromY(getY(e));
+    showIndicatorAt(targetZone);
   }
   function onUp(e) {
     clearTimeout(pressTimer);
@@ -1204,10 +1249,12 @@ function applyQaGridPos() {
       e.stopPropagation();
       dragging = false;
       el.classList.remove('dragging');
-      var maxTop = Math.max(0, window.innerHeight - el.offsetHeight);
-      var top = parseFloat(el.style.top) || 0;
-      var frac = maxTop > 0 ? (top / maxTop) : 0;
-      try { localStorage.setItem(QA_GRID_POS_KEY, String(frac)); } catch (err) {}
+      if (indicator) indicator.classList.remove('show');
+      if (targetZone) {
+        try { localStorage.setItem(QA_GRID_POS_KEY, targetZone); } catch (err) {}
+        applyQaGridPos();
+        showToast('버튼 위치를 옮겼어요');
+      }
     }
   }
 
@@ -1218,7 +1265,6 @@ function applyQaGridPos() {
   handle.addEventListener('mousedown', onDown);
   document.addEventListener('mousemove', onMove);
   document.addEventListener('mouseup', onUp);
-  window.addEventListener('resize', applyQaGridPos);
 
   applyQaGridPos(); // 이전에 옮겨둔 위치가 있으면 복원
 })();
@@ -2427,18 +2473,26 @@ function switchNav(el, page) {
   var main = document.getElementById('main-page');
   var sp = document.getElementById('sample-page');
   var pp = document.getElementById('photos-page');
+  var curArea = document.querySelector('.cur-area');
+  var qaGrid = document.getElementById('qa-grid');
   main.style.display = 'none';
   sp.style.display = 'none';
   pp.style.display = 'none';
   if (page === 'samples') {
     sp.style.display = 'flex';
     sp.style.flexDirection = 'column';
+    if (curArea) curArea.style.display = 'none';
+    if (qaGrid) qaGrid.style.display = 'none';
     renderSamplePage();
   } else if (page === 'photos') {
     pp.style.display = '';
+    if (curArea) curArea.style.display = 'none';
+    if (qaGrid) qaGrid.style.display = 'none';
     renderPhotosPage();
   } else {
     main.style.display = '';
+    if (curArea) curArea.style.display = '';
+    if (qaGrid) qaGrid.style.display = '';
   }
 }
 
