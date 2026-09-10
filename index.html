@@ -5,8 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#111827">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- 홈 화면 아이콘으로 열 때 브라우저 UI 없이 앱처럼 실행 (iOS/Android) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="광저우 박람회">
+<link rel="manifest" href="manifest.json">
 <title>광저우 박람회</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- 한글 웹폰트 — 중국 등 Google 접속이 막힌 환경에서 화면이 멈추지 않도록 "논블로킹"으로 로드.
+     불러오지 못하면 기기 기본 한글 폰트로 바로 표시된다. -->
+<link rel="stylesheet" media="print" onload="this.media='all'; this.onload=null;"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"></noscript>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"
         onerror="this.onerror=null;this.src='https://unpkg.com/sortablejs@1.15.2/Sortable.min.js';"></script>
 <style>
@@ -27,7 +36,7 @@ button { touch-action: manipulation; }
   --t3: #4a5a70;
 }
 html, body { min-height: 100%; height: 100%; height: -webkit-fill-available; background: var(--bg); overscroll-behavior: none; }
-body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex; justify-content: center; overflow: hidden; -webkit-overflow-scrolling: touch; }
+body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif; color: var(--t1); display: flex; justify-content: center; overflow: hidden; -webkit-overflow-scrolling: touch; }
 
 .app { width: 100%; max-width: 430px; height: 100dvh; min-height: 100vh; min-height: -webkit-fill-available; background: var(--bg); display: flex; flex-direction: column; overflow: hidden; }
 
@@ -514,6 +523,97 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
 .storage-bar.warn .storage-bar-fill > div { background: var(--amber); }
 .storage-bar.danger .storage-bar-fill > div { background: var(--red); }
 .storage-bar-text { font-weight: 700; white-space: nowrap; }
+
+/* ══════════════════════════════════════════════════
+   PDF 내보내기 전용 (화면에서는 숨김, 인쇄 시에만 표시)
+   별도 라이브러리 없이 브라우저 인쇄 → "PDF로 저장" 사용
+   ══════════════════════════════════════════════════ */
+#print-report { display: none; }
+
+@media print {
+  html, body {
+    height: auto !important; min-height: 0 !important;
+    overflow: visible !important; display: block !important;
+    background: #fff !important;
+  }
+  body > * { display: none !important; }
+  body > #print-report { display: block !important; }
+
+  @page { size: A4 portrait; margin: 12mm 11mm 13mm; }
+
+  #print-report {
+    color: #1a1613; background: #fff;
+    font-family: 'Noto Sans KR', sans-serif;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    padding-right: 0.8mm;   /* 표 우측 테두리가 인쇄 경계에 잘리지 않도록 */
+  }
+  .pr-head { border-bottom: 2.2pt solid #1a1613; padding-bottom: 5pt; margin-bottom: 9pt; }
+  .pr-eyebrow { font-size: 7pt; letter-spacing: 2pt; font-weight: 700; color: #c2410c; }
+  .pr-title { font-size: 15pt; font-weight: 800; margin-top: 2pt; }
+  .pr-sub { font-size: 8pt; color: #6b6259; margin-top: 3pt; }
+  .pr-stats { display: flex; gap: 14pt; margin-top: 5pt; }
+  .pr-stat { font-size: 8pt; color: #4a423a; }
+  .pr-stat b { font-size: 11pt; font-weight: 800; color: #1a1613; margin-right: 2pt; }
+
+  .pr-card {
+    display: flex; gap: 6mm; padding: 4mm 0;
+    border-bottom: 0.6pt solid #d9d1c2;
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .pr-left { width: 38mm; flex-shrink: 0; }
+  .pr-main {
+    width: 38mm; height: 38mm; border: 0.6pt solid #d9d1c2; border-radius: 2mm;
+    overflow: hidden; background: #f7f5f0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pr-main img { width: 100%; height: 100%; object-fit: cover; }
+  .pr-noimg { font-size: 7pt; color: #a89f93; }
+  .pr-thumbs { display: flex; gap: 1.2mm; margin-top: 1.4mm; }
+  .pr-thumbs img {
+    width: 8.8mm; height: 8.8mm; object-fit: cover;
+    border: 0.5pt solid #d9d1c2; border-radius: 1mm;
+  }
+  .pr-cardimg { margin-top: 1.4mm; font-size: 6.5pt; color: #6b6259; }
+  .pr-cardimg img {
+    width: 17mm; height: 10mm; object-fit: cover;
+    border: 0.5pt solid #d9d1c2; border-radius: 1mm; vertical-align: middle; margin-right: 1.5mm;
+  }
+
+  .pr-body { flex: 1; min-width: 0; }
+  .pr-name { font-size: 11pt; font-weight: 800; line-height: 1.3; }
+  .pr-no {
+    display: inline-block; background: #1a1613; color: #fff;
+    font-size: 7.5pt; font-weight: 700; padding: 0.6mm 1.8mm;
+    border-radius: 1mm; margin-right: 2mm; vertical-align: 1pt;
+  }
+  .pr-tags { margin-top: 2pt; }
+  .pr-tag {
+    display: inline-block; font-size: 7pt; font-weight: 700;
+    padding: 0.5mm 1.8mm; border-radius: 1mm; margin-right: 1.5mm;
+    border: 0.5pt solid #d9d1c2; color: #4a423a; background: #f7f5f0;
+  }
+  .pr-tag.cb-y { border-color: #5a7a5a; color: #3f5c3f; background: #e9f1e9; }
+  .pr-tag.cb-w { border-color: #b8892d; color: #8a6416; background: #f9f0dc; }
+  .pr-tag.cb-n { border-color: #b8352e; color: #93251f; background: #f7e2e0; }
+  .pr-tag.smp  { border-color: #2e5d7a; color: #23485e; background: #e2edf3; }
+
+  .pr-tbl { width: 100%; border-collapse: collapse; margin-top: 3mm; table-layout: fixed; }
+  .pr-tbl th, .pr-tbl td {
+    border: 0.5pt solid #e0dacd; padding: 1.2mm 2mm;
+    font-size: 8pt; text-align: left; vertical-align: middle;
+  }
+  .pr-tbl th { background: #f7f5f0; color: #6b6259; font-weight: 700; width: 15mm; white-space: nowrap; }
+  .pr-tbl td { color: #1a1613; overflow-wrap: anywhere; word-break: keep-all; }
+  .pr-tbl td.hi { font-weight: 800; color: #c2410c; }
+
+  .pr-memo { margin-top: 2mm; font-size: 8pt; color: #4a423a; line-height: 1.5; white-space: pre-wrap; }
+  .pr-memo b { color: #6b6259; font-weight: 700; }
+  .pr-check { margin-top: 1.5mm; font-size: 7.5pt; color: #6b6259; }
+  .pr-check .done { color: #3f5c3f; }
+
+  .pr-foot { margin-top: 8pt; font-size: 7pt; color: #a89f93; text-align: center; }
+}
+
 </style>
 </head>
 <body>
@@ -523,12 +623,12 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v10</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v13</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
         <button class="ppt-btn" id="ppt-hdr-btn" onclick="openSheet('ppt')">
-          <span>📄</span><span>PPT</span>
+          <span>📄</span><span>리포트</span>
         </button>
         <button class="backup-btn" onclick="openSheet('backup')">
           <span>💾</span><span>백업</span>
@@ -550,6 +650,22 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
     <div class="rc-banner-actions">
       <button class="rc-clean-btn" onclick="exportBackup()">💾 지금 백업하기</button>
       <button class="rc-dismiss-btn" onclick="document.getElementById('bk-reminder-banner').classList.remove('show')">나중에</button>
+    </div>
+  </div>
+
+  <!-- 저장소 읽기 실패 경고 (자동저장 잠금 상태) -->
+  <div class="rc-banner" id="data-error-banner">
+    <div class="rc-banner-top">
+      <span>\U0001F6A8</span>
+      <span>저장된 자료를 불러오지 못했어요</span>
+    </div>
+    <div class="rc-banner-desc">
+      기존 자료가 지워지지 않도록 <b>새 입력 저장을 잠갔습니다.</b><br>
+      앱을 완전히 껐다가 다시 열어보세요. 그래도 같으면 백업 파일로 복구하세요.
+    </div>
+    <div class="rc-banner-actions">
+      <button class="rc-clean-btn" onclick="location.reload()">\U0001F504 앱 다시 열기</button>
+      <button class="rc-dismiss-btn" onclick="openSheet('backup')">\U0001F4BE 백업에서 복구</button>
     </div>
   </div>
 
@@ -812,13 +928,27 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
 <div class="overlay" id="ppt-overlay" onclick="overlayClick(event,'ppt')">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">📄 PPT 프레젠테이션 내보내기</div>
+    <div class="sheet-title">📄 리포트 내보내기</div>
 
-    <div class="info-box">
+    <div class="info-box" id="exp-info">
       제품 발굴 리포트를 PowerPoint 파일로 저장합니다.<br>
       · 사진은 원본 비율 그대로 배치됩니다<br>
       · <b>대표 이미지만</b>: 제품당 1장 (출력·공유용)<br>
       · <b>사진 전부</b>: 메인 이미지 탭하면 다음 사진으로 순환 (발표모드)
+    </div>
+
+    <div class="fg">
+      <div class="fl">파일 형식</div>
+      <div class="ppt-options">
+        <button class="ppt-opt-btn active" id="fmt-ppt" onclick="setExpFormat('ppt')">
+          <span class="ppt-opt-label" style="font-size:12px;font-weight:700;">📊 PPT</span>
+          <span class="ppt-opt-label" style="opacity:.8;">발표용 · 인터넷 필요</span>
+        </button>
+        <button class="ppt-opt-btn" id="fmt-pdf" onclick="setExpFormat('pdf')">
+          <span class="ppt-opt-label" style="font-size:12px;font-weight:700;">🖨 PDF</span>
+          <span class="ppt-opt-label" style="opacity:.8;">인쇄용 · 오프라인 OK</span>
+        </button>
+      </div>
     </div>
 
     <div class="fg">
@@ -836,24 +966,27 @@ body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex;
     </div>
 
     <div class="fg">
-      <div class="fl">사진 슬라이드</div>
+      <div class="fl" id="exp-photo-label">사진 슬라이드</div>
       <div class="ppt-options">
         <button class="ppt-opt-btn active" id="mode-single" onclick="setPptMode('single')">
           <span class="ppt-opt-label" style="font-size:12px;font-weight:700;">대표 이미지만</span>
-          <span class="ppt-opt-label" style="opacity:.8;">제품당 1장 · 출력용</span>
+          <span class="ppt-opt-label" style="opacity:.8;" id="mode-single-sub">제품당 1장 · 출력용</span>
         </button>
         <button class="ppt-opt-btn" id="mode-all" onclick="setPptMode('all')">
           <span class="ppt-opt-label" style="font-size:12px;font-weight:700;">사진 전부</span>
-          <span class="ppt-opt-label" style="opacity:.8;">탭 순환 · 발표용</span>
+          <span class="ppt-opt-label" style="opacity:.8;" id="mode-all-sub">탭 순환 · 발표용</span>
         </button>
       </div>
     </div>
 
-    <button class="confirm-btn" id="ppt-confirm" onclick="exportToPpt()">
+    <button class="confirm-btn" id="ppt-confirm" onclick="runExport()">
       ✓ PPT 파일 생성 &amp; 다운로드
     </button>
   </div>
 </div>
+
+<!-- PDF(인쇄) 리포트 컨테이너 — 화면에서는 숨김, 인쇄 시에만 표시 -->
+<div id="print-report"></div>
 
 <div class="toast" id="toast"></div>
 
@@ -1054,15 +1187,30 @@ function idbDel(key) {
   });
 }
 
+// 저장소 읽기 실패 여부. true이면 모든 쓰기를 막아 기존 데이터를 보호한다.
+var dataLoadFailed = false;
+
+function showDataErrorBanner() {
+  var b = document.getElementById('data-error-banner');
+  if (b) b.classList.add('show');
+}
+
 // 앱 시작 시 IndexedDB에서 제품 데이터 불러오기
 function loadProducts() {
   return idbGet('products').then(function(saved) {
     products = Array.isArray(saved) ? saved : [];
     products.forEach(function(p) { if (!Array.isArray(p.bizCards)) p.bizCards = []; });
     return products;
+  }).then(function(list) {
+    dataLoadFailed = false;
+    return list;
   }).catch(function(err) {
     console.error('[loadProducts] 불러오기 실패:', err);
+    // 읽기에 실패했는데 빈 목록으로 시작하면, 이후 자동저장이 원본을 덮어써 데이터가 전부 사라진다.
+    // 따라서 "저장 잠금" 상태로 두고 사용자에게 알린다.
     products = [];
+    dataLoadFailed = true;
+    setTimeout(showDataErrorBanner, 300);
     return products;
   });
 }
@@ -1150,6 +1298,14 @@ function resumeDraftIfAny() {
   // 저장공간 영구 보존 요청 (브라우저가 임의로 데이터를 지우지 않도록)
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persist().catch(function(){});
+  }
+
+  // 오프라인 동작 — 앱 파일을 기기에 저장해두어 인터넷 없이도 열리게 한다.
+  // (박람회장·기내 등에서 인터넷이 끊겨도 앱이 정상적으로 열려야 함)
+  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+    navigator.serviceWorker.register('sw.js').catch(function(e) {
+      console.warn('[sw] 등록 실패(오프라인 사용 불가):', e);
+    });
   }
 
   // IndexedDB에서 데이터를 불러온 뒤 목록 렌더링
@@ -1289,10 +1445,12 @@ function renderChips() {
 // ── PHOTOS ────────────────────────────────────────────
 
 // 이미지 압축: 긴 변 기준 최대 1400px, JPEG quality 0.82
-function compressImage(dataUrl, maxDim, quality) {
+// forceJpeg=true 이면 원본보다 커지더라도 반드시 JPEG 변환 결과를 사용한다.
+// (HEIC 등은 PowerPoint·PDF에서 표시되지 않으므로 원본을 그대로 두면 안 된다)
+function compressImage(dataUrl, maxDim, quality, forceJpeg) {
   maxDim = maxDim || 1400;
   quality = quality || 0.82;
-  return new Promise(function(resolve) {
+  return new Promise(function(resolve, reject) {
     var img = new Image();
     img.onload = function() {
       var w = img.naturalWidth || img.width;
@@ -1310,12 +1468,17 @@ function compressImage(dataUrl, maxDim, quality) {
         ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
         var out = canvas.toDataURL('image/jpeg', quality);
+        if (forceJpeg) { resolve(out); return; }
         resolve(out.length < dataUrl.length ? out : dataUrl);
       } catch(err) {
+        if (forceJpeg) { reject(new Error('convert_failed')); return; }
         resolve(dataUrl);
       }
     };
-    img.onerror = function() { resolve(dataUrl); };
+    img.onerror = function() {
+      if (forceJpeg) { reject(new Error('decode_failed')); return; }
+      resolve(dataUrl);
+    };
     img.src = dataUrl;
   });
 }
@@ -1332,9 +1495,15 @@ function processImageFiles(files, target) {
   if (remaining > 1) showToast('사진 ' + remaining + '장 압축 중...');
 
   files.forEach(function(file) {
+    // 아이폰 HEIC/HEIF는 PowerPoint·PDF에서 표시되지 않으므로 반드시 JPEG로 변환한다.
+    var ftype = (file.type || '').toLowerCase();
+    var fname = (file.name || '').toLowerCase();
+    var needsConvert = !(ftype === 'image/jpeg' || ftype === 'image/jpg' || ftype === 'image/png')
+                       || /\.(heic|heif)$/.test(fname);
+
     var reader = new FileReader();
     reader.onload = function(ev) {
-      compressImage(ev.target.result, 1800, 0.88).then(function(compressed) {
+      compressImage(ev.target.result, 1800, 0.88, needsConvert).then(function(compressed) {
         cur[target].push(compressed);
         if (target === 'bizCards') renderBizCards(); else renderPhotos();
         updateSaveBtn();
@@ -1344,6 +1513,10 @@ function processImageFiles(files, target) {
         if (remaining === 0 && files.length > 1) {
           showToast('✓ ' + files.length + '장 추가 완료');
         }
+      }).catch(function() {
+        // HEIC 등 이 기기에서 변환할 수 없는 형식
+        remaining--;
+        showToast('\u26A0\uFE0F 이 사진 형식은 사용할 수 없어요 (카메라 설정 → 높은 호환성)');
       });
     };
     reader.onerror = function() {
@@ -2127,12 +2300,20 @@ function saveProduct() {
         cb: cur.cb ? Object.assign({}, cur.cb) : null,
         sample: cloneSample(cur.sample)
       };
-      if (!persist()) {
-        // 저장 실패 → 롤백
-        products[idx] = backup;
-        showToast('🚨 수정 실패 - 용량이 부족해요. 사진을 줄여주세요');
-        return;
-      }
+      persistSafe().then(function(ok) {
+        if (!ok) {
+          // 저장 실패 → 되돌리기 (여기서 되돌리지 않으면 화면과 실제 저장 내용이 어긋난다)
+          products[idx] = backup;
+          renderList();
+          showToast('🚨 수정 실패 - 저장공간이 부족해요. 사진을 줄여주세요');
+          return;
+        }
+        resetCur();
+        renderList();
+        updateStorageBar();
+        showToast('✓ 수정되었어요!');
+      });
+      return;
     } else {
       persist();
     }
@@ -2155,16 +2336,19 @@ function saveProduct() {
       sample: cloneSample(cur.sample)
     };
     products.unshift(p);
-    if (!persist()) {
-      // 저장 실패 → 롤백
-      products.shift();
-      showToast('🚨 저장 실패 - 용량이 부족해요. 사진을 줄여주세요');
-      return;
-    }
-    resetCur();
-    renderList();
-    updateStorageBar();
-    showToast('✓ 제품이 저장되었어요!');
+    persistSafe().then(function(ok) {
+      if (!ok) {
+        // 저장 실패 → 되돌리기
+        products.shift();
+        renderList();
+        showToast('🚨 저장 실패 - 저장공간이 부족해요. 사진을 줄여주세요');
+        return;
+      }
+      resetCur();
+      renderList();
+      updateStorageBar();
+      showToast('✓ 제품이 저장되었어요!');
+    });
   }
 }
 
@@ -2976,14 +3160,37 @@ function recompressAllPhotos() {
 }
 
 // IndexedDB에 저장. 비동기지만 호출부 호환을 위해 즉시 true 반환하고 백그라운드로 기록.
+function markPersistFailed(e) {
+  console.error('[persist] IndexedDB 저장 실패:', e);
+  var icon = document.getElementById('storage-icon');
+  if (icon) icon.textContent = '🚨';
+  var bar = document.getElementById('storage-bar');
+  if (bar) { bar.classList.remove('hidden'); bar.classList.add('danger'); }
+}
+
+// 저장을 시도하고 "실제 성공 여부"를 Promise(true/false)로 돌려준다.
+// 저장소 읽기에 실패한 상태(dataLoadFailed)라면 아예 쓰지 않는다 — 원본 보호.
+function persistSafe() {
+  if (dataLoadFailed) {
+    showDataErrorBanner();
+    return Promise.resolve(false);
+  }
+  return idbSet('products', products).then(function() {
+    return true;
+  }).catch(function(e) {
+    markPersistFailed(e);
+    return false;
+  });
+}
+
+// 기존 호출부 호환용(자동저장 등). 실패하면 토스트로 알린다.
 function persist() {
-  idbSet('products', products).catch(function(e) {
-    console.error('[persist] IndexedDB 저장 실패:', e);
-    showToast('🚨 저장 실패! 기기 저장공간을 확인해주세요');
-    var icon = document.getElementById('storage-icon');
-    if (icon) icon.textContent = '🚨';
-    var bar = document.getElementById('storage-bar');
-    if (bar) { bar.classList.remove('hidden'); bar.classList.add('danger'); }
+  if (dataLoadFailed) {
+    showDataErrorBanner();
+    return false;
+  }
+  persistSafe().then(function(ok) {
+    if (!ok) showToast('🚨 저장 실패! 기기 저장공간을 확인해주세요');
   });
   return true;
 }
@@ -3697,14 +3904,208 @@ function pptAddClosing(pres, list) {
 // ─── PPT 라이브러리 로더 (CDN 여러 개 자동 시도) ───
 // 첫 번째 CDN이 막히거나 느려도 두 번째, 세 번째로 자동 재시도
 var _pptLibLoading = null; // Promise 캐싱
+
+// ══════════════════════════════════════════════════════
+//  PDF 내보내기 (브라우저 인쇄 → "PDF로 저장")
+//  외부 라이브러리 불필요 → 인터넷 없어도 항상 동작
+// ══════════════════════════════════════════════════════
+var expFormat = 'ppt';   // 'ppt' | 'pdf'
+
+function setExpFormat(f) {
+  expFormat = f;
+  document.getElementById('fmt-ppt').className = 'ppt-opt-btn' + (f === 'ppt' ? ' active' : '');
+  document.getElementById('fmt-pdf').className = 'ppt-opt-btn' + (f === 'pdf' ? ' active' : '');
+
+  var isPdf = (f === 'pdf');
+  document.getElementById('exp-photo-label').textContent = isPdf ? '사진 포함' : '사진 슬라이드';
+  document.getElementById('mode-single-sub').textContent = isPdf ? '제품당 큰 사진 1장' : '제품당 1장 · 출력용';
+  document.getElementById('mode-all-sub').textContent = isPdf ? '작은 썸네일도 함께' : '탭 순환 · 발표용';
+
+  document.getElementById('exp-info').innerHTML = isPdf
+    ? '제품 발굴 리포트를 A4 문서로 만듭니다. <b>인터넷 없어도 됩니다.</b><br>' +
+      '· 버튼을 누르면 <b>인쇄 화면</b>이 뜨고, 거기서 <b>“PDF로 저장”</b>을 고르세요<br>' +
+      '· 아이폰: 프린터 미리보기 화면에서 공유 → 파일에 저장'
+    : '제품 발굴 리포트를 PowerPoint 파일로 저장합니다.<br>' +
+      '· 사진은 원본 비율 그대로 배치됩니다<br>' +
+      '· <b>대표 이미지만</b>: 제품당 1장 (출력·공유용)<br>' +
+      '· <b>사진 전부</b>: 메인 이미지 탭하면 다음 사진으로 순환 (발표모드)';
+
+  var b = document.getElementById('ppt-confirm');
+  b.innerHTML = isPdf ? '🖨 PDF 만들기 (인쇄 → PDF로 저장)' : '✓ PPT 파일 생성 &amp; 다운로드';
+}
+
+function runExport() {
+  if (expFormat === 'pdf') exportToPdf();
+  else exportToPpt();
+}
+
+function prEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// 제품 1건 → 인쇄용 카드 HTML
+function prCard(p, no, photoMode) {
+  var photos = (p.photos || []).filter(function(s){ return isValidPhoto(s); });
+  var main = photos.length
+    ? '<img src="' + photos[0] + '" alt="">'
+    : '<span class="pr-noimg">사진 없음</span>';
+
+  var thumbs = '';
+  if (photoMode === 'all' && photos.length > 1) {
+    thumbs = '<div class="pr-thumbs">' +
+      photos.slice(1, 5).map(function(s){ return '<img src="' + s + '" alt="">'; }).join('') +
+      '</div>';
+  }
+
+  var cards = (p.bizCards || []).filter(function(s){ return isValidPhoto(s); });
+  var bizHtml = cards.length
+    ? '<div class="pr-cardimg"><img src="' + cards[0] + '" alt="">명함 ' + cards.length + '장</div>'
+    : '';
+
+  // 태그
+  var tags = '';
+  if (p.category) tags += '<span class="pr-tag">' + prEsc(p.category) + '</span>';
+  var cbCls = 'cb-n', cbTxt = 'CB 미대응';
+  if (!p.cb) { cbCls = ''; cbTxt = 'CB 미입력'; }
+  else if (p.cb.owned) { cbCls = 'cb-y'; cbTxt = 'CB 보유'; }
+  else if (p.cb.date) { cbCls = 'cb-w'; cbTxt = 'CB 진행중'; }
+  tags += '<span class="pr-tag ' + cbCls + '">' + cbTxt + '</span>';
+  if (p.sample) tags += '<span class="pr-tag smp">샘플 신청</span>';
+
+  // 정보 표
+  var price = (p.moq && p.moq.price && p.moq.price !== '-') ? '$' + prEsc(p.moq.price) : '–';
+  var qty   = (p.moq && p.moq.qty && p.moq.qty !== '-') ? prEsc(p.moq.qty) + ' pcs' : '–';
+  var cbVal = '–';
+  if (p.cb) {
+    if (p.cb.owned) cbVal = '보유';
+    else if (p.cb.date) cbVal = pptFmtDate(p.cb.date) + ' 예정';
+    else cbVal = '미대응';
+  }
+  var smpVal = '–';
+  if (p.sample) {
+    smpVal = pptFmtDate(p.sample.expected) + (p.sample.days ? ' (' + p.sample.days + '일)' : '');
+  }
+
+  var tbl = '<table class="pr-tbl">' +
+    '<tr><th>단가</th><td class="hi">' + price + '</td><th>MOQ</th><td>' + qty + '</td></tr>' +
+    '<tr><th>CB</th><td>' + cbVal + '</td><th>샘플</th><td>' + smpVal + '</td></tr>' +
+    '</table>';
+
+  // 메모
+  var memos = [];
+  if (p.memo) memos.push(prEsc(p.memo));
+  if (p.moq && p.moq.memo) memos.push('<b>MOQ:</b> ' + prEsc(p.moq.memo));
+  if (p.sample && p.sample.memo) memos.push('<b>샘플:</b> ' + prEsc(p.sample.memo));
+  var memoHtml = memos.length ? '<div class="pr-memo">' + memos.join('<br>') + '</div>' : '';
+
+  // 체크리스트
+  var clHtml = '';
+  if (p.sample && p.sample.checklist && p.sample.checklist.length) {
+    clHtml = '<div class="pr-check">' + p.sample.checklist.map(function(it){
+      return it.done
+        ? '<span class="done">☑ ' + prEsc(it.text) + '</span>'
+        : '<span>☐ ' + prEsc(it.text) + '</span>';
+    }).join(' · ') + '</div>';
+  }
+
+  return '<div class="pr-card">' +
+    '<div class="pr-left"><div class="pr-main">' + main + '</div>' + thumbs + bizHtml + '</div>' +
+    '<div class="pr-body">' +
+      '<div class="pr-name"><span class="pr-no">' + String(no).padStart(2, '0') + '</span>' + prEsc(p.name) + '</div>' +
+      '<div class="pr-tags">' + tags + '</div>' +
+      tbl + memoHtml + clHtml +
+    '</div></div>';
+}
+
+function buildPrintReport(list, photoMode) {
+  var smpCnt = list.filter(function(p){ return p.sample; }).length;
+  var cbCnt  = list.filter(function(p){ return p.cb && p.cb.owned; }).length;
+  var scopeTxt = (pptScope === 'sample') ? '샘플 신청 제품만' : '전체 제품';
+
+  var html = '<div class="pr-head">' +
+    '<div class="pr-eyebrow">CANTON FAIR · PRODUCT DISCOVERY</div>' +
+    '<div class="pr-title">광저우 박람회 · 제품 발굴 리포트</div>' +
+    '<div class="pr-sub">생성일 ' + pptDateStr() + ' · 범위: ' + scopeTxt + '</div>' +
+    '<div class="pr-stats">' +
+      '<div class="pr-stat"><b>' + list.length + '</b>건 제품</div>' +
+      '<div class="pr-stat"><b>' + smpCnt + '</b>건 샘플 신청</div>' +
+      '<div class="pr-stat"><b>' + cbCnt + '</b>건 CB 보유</div>' +
+    '</div></div>';
+
+  html += list.map(function(p, i){ return prCard(p, i + 1, photoMode); }).join('');
+  html += '<div class="pr-foot">광저우 박람회 제품 발굴 노트 · ' + pptDateStr() + '</div>';
+
+  document.getElementById('print-report').innerHTML = html;
+}
+
+// 리포트 안의 사진이 모두 로드될 때까지 대기
+function prWaitImages() {
+  var root = document.getElementById('print-report');
+  var imgs = Array.prototype.slice.call(root.querySelectorAll('img'));
+  if (!imgs.length) return Promise.resolve();
+  return Promise.all(imgs.map(function(im) {
+    if (im.complete && im.naturalWidth > 0) return Promise.resolve();
+    return new Promise(function(res) {
+      im.addEventListener('load', res, { once: true });
+      im.addEventListener('error', res, { once: true });
+      setTimeout(res, 3000); // 안전장치
+    });
+  }));
+}
+
+function exportToPdf() {
+  var list = pptScope === 'sample'
+    ? products.filter(function(p){ return p.sample; })
+    : products.slice();
+
+  if (list.length === 0) {
+    showToast(pptScope === 'sample' ? '샘플 신청한 제품이 없어요' : '등록된 제품이 없어요');
+    return;
+  }
+
+  var btn = document.getElementById('ppt-confirm');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="ppt-spinner"></span> PDF 준비 중...';
+
+  try {
+    buildPrintReport(list, pptPhotoMode);
+    closeOverlay('ppt');
+    showToast('인쇄 화면에서 “PDF로 저장”을 선택하세요');
+
+    // 사진이 모두 그려진 뒤에 인쇄 (빈 사진으로 출력되는 것 방지)
+    prWaitImages().then(function() {
+      setTimeout(function() {
+        try {
+          window.print();
+        } catch (e) {
+          showToast('🚨 인쇄 화면을 열 수 없어요. 브라우저 메뉴에서 “인쇄”를 실행해주세요');
+        }
+      }, 250);
+    });
+  } catch (err) {
+    console.error(err);
+    showToast('🚨 PDF 생성 실패: ' + (err.message || '오류'));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🖨 PDF 만들기 (인쇄 → PDF로 저장)';
+  }
+}
+
+// 인쇄가 끝나면 리포트 DOM 비우기 (메모리 반환)
+window.addEventListener('afterprint', function() {
+  var el = document.getElementById('print-report');
+  if (el) el.innerHTML = '';
+});
+
 function loadPptLibrary() {
   if (typeof PptxGenJS !== 'undefined') return Promise.resolve();
   if (_pptLibLoading) return _pptLibLoading;
 
   var cdns = [
-    'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.2/dist/pptxgen.bundle.js',
-    'https://unpkg.com/pptxgenjs@3.12.2/dist/pptxgen.bundle.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.2/pptxgen.bundle.js'
+    'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
+    'https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js'
   ];
 
   _pptLibLoading = new Promise(function(resolve, reject) {
