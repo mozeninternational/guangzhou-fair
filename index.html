@@ -623,7 +623,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v13</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v15</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -802,7 +802,10 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="content" id="photos-page" style="display:none;">
     <div class="sm-top">
       <div class="sm-label" id="ph-count">저장된 사진</div>
-      <button class="excel-btn" style="background:#6b4fa0;" onclick="exportAllPhotosZip()">⬇ 전체 사진 ZIP</button>
+      <div style="display:flex; gap:6px; flex-shrink:0;">
+        <button class="excel-btn" style="background:#2e7d5b;" id="ph-save-btn" onclick="savePhotosToAlbum('today')">\U0001F4E5 사진첩 저장</button>
+        <button class="excel-btn" style="background:#6b4fa0;" onclick="exportAllPhotosZip()">⬇ ZIP</button>
+      </div>
     </div>
     <div class="empty" id="ph-empty" style="display:none;">
       <div class="empty-icon">🖼️</div>
@@ -999,15 +1002,47 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <div class="sheet-handle"></div>
     <div class="sheet-title">💾 백업 · 데이터 옮기기</div>
 
+    <!-- 날짜별 백업 카드 (권장) -->
+    <div class="bk-card" style="border-color: rgba(46,125,91,.45);">
+      <div class="bk-card-top">
+        <span class="bk-card-icon">📅</span>
+        <span class="bk-card-title">날짜별 백업 <span style="font-size:10px;color:#4ade80;">권장</span></span>
+      </div>
+      <div class="bk-card-desc">
+        하루치씩 나눠 저장해요. 사진과 정보가 <b>한 파일에 같이</b> 들어가서 짝이 어긋나지 않아요.<br>
+        <b>회색으로 남은 날짜만</b> 누르시면 됩니다.
+      </div>
+      <div id="bk-day-list" style="margin-top:10px;"></div>
+      <div style="font-size:11px; color:var(--t2); margin-top:8px; line-height:1.5;">
+        💡 만든 파일은 카카오톡 <b>"나와의 채팅"</b>에 올려두세요.
+      </div>
+    </div>
+
+    <!-- 가벼운 백업 카드 -->
+    <div class="bk-card">
+      <div class="bk-card-top">
+        <span class="bk-card-icon">⚡</span>
+        <span class="bk-card-title">가벼운 백업 (사진 제외)</span>
+      </div>
+      <div class="bk-card-desc">
+        가격·MOQ·샘플일정·메모만 담아요. <b>1초면 끝나고 아주 가볍습니다.</b><br>
+        시간이 없을 때 이것만이라도 해두시면 상담 기록은 지킬 수 있어요.
+      </div>
+      <div class="bk-card-info" id="bk-light-info">현재 제품: <b>0개</b></div>
+      <button class="bk-action-btn" style="background:#6b7a8f;" onclick="exportLightBackup()">
+        ⚡ 가볍게 백업하기
+      </button>
+    </div>
+
     <!-- 내보내기 카드 -->
     <div class="bk-card">
       <div class="bk-card-top">
         <span class="bk-card-icon">📤</span>
-        <span class="bk-card-title">내보내기</span>
+        <span class="bk-card-title">전체 내보내기</span>
       </div>
       <div class="bk-card-desc">
-        지금까지 입력한 모든 제품 정보를 파일로 저장해요.<br>
-        카카오톡 "나와의 채팅"에 올려두면 안전합니다.
+        전체를 파일 하나로 만들어요. 사진이 많으면 폰이 버거워할 수 있으니<br>
+        <b>인터넷과 시간이 넉넉한 곳(호텔·집)</b>에서 쓰세요.
       </div>
       <div class="bk-card-info" id="bk-export-info">
         현재 제품: <b>0개</b> · 예상 파일 크기 <b>0 MB</b>
@@ -1043,6 +1078,22 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       </div>
       <button class="bk-action-btn green" onclick="document.getElementById('backup-input').click()">
         📁 백업 파일 선택하기
+      </button>
+    </div>
+
+    <!-- 되돌리기 카드 -->
+    <div class="bk-card">
+      <div class="bk-card-top">
+        <span class="bk-card-icon">⏪</span>
+        <span class="bk-card-title">되돌리기 (자동 저장본)</span>
+      </div>
+      <div class="bk-card-desc">
+        앱이 <b>하루 한 번 자동으로</b> 최근 5일치를 폰 안에 저장해 둡니다.<br>
+        실수로 지웠거나 내용이 이상해졌을 때 예전 시점으로 되돌릴 수 있어요.<br>
+        <span style="color:var(--t2);font-size:11px;">사진은 지금 폰에 있는 것을 그대로 씁니다.</span>
+      </div>
+      <button class="bk-action-btn" style="background:#6b7a8f;" onclick="restoreFromSnapshot()">
+        ⏪ 예전 시점으로 되돌리기
       </button>
     </div>
 
@@ -1165,6 +1216,43 @@ function idbSet(key, value) {
   });
 }
 
+// 여러 키를 한 트랜잭션으로 읽는다 (사진 수백 장을 낱개로 읽을 때 필수)
+function idbGetMany(keys) {
+  if (!keys.length) return Promise.resolve({});
+  return openDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(DB_STORE, 'readonly');
+      var store = tx.objectStore(DB_STORE);
+      var out = {};
+      keys.forEach(function(k) {
+        var r = store.get(k);
+        r.onsuccess = function() { out[k] = r.result; };
+      });
+      tx.oncomplete = function() { resolve(out); };
+      tx.onerror = function(e) { reject(e.target.error); };
+      tx.onabort = function() { reject(tx.error); };
+    });
+  });
+}
+
+// 여러 키를 한 트랜잭션으로 쓰고/지운다
+function idbBulk(puts, deletes) {
+  var pk = Object.keys(puts || {});
+  var dk = deletes || [];
+  if (!pk.length && !dk.length) return Promise.resolve(true);
+  return openDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(DB_STORE, 'readwrite');
+      var store = tx.objectStore(DB_STORE);
+      pk.forEach(function(k) { store.put(puts[k], k); });
+      dk.forEach(function(k) { store.delete(k); });
+      tx.oncomplete = function() { resolve(true); };
+      tx.onerror = function(e) { reject(e.target.error); };
+      tx.onabort = function() { reject(tx.error); };
+    });
+  });
+}
+
 function idbGet(key) {
   return openDB().then(function(db) {
     return new Promise(function(resolve, reject) {
@@ -1190,6 +1278,110 @@ function idbDel(key) {
 // 저장소 읽기 실패 여부. true이면 모든 쓰기를 막아 기존 데이터를 보호한다.
 var dataLoadFailed = false;
 
+/* ══════════════════════════════════════════════════════
+   사진 분리 저장
+   ──────────────────────────────────────────────────────
+   예전에는 제품 목록 전체(사진 포함)를 통째로 한 번에 저장했다.
+   사진이 쌓이면 제품 하나만 고쳐도 수백 MB를 다시 쓰게 되어
+   3일차쯤부터 저장할 때마다 몇 초씩 멈췄다.
+
+   이제는 사진을 낱개 키(photo:xxx)로 따로 저장하고,
+   제품 목록에는 사진 번호만 남긴다.
+   → 저장할 때 "새로 찍은 사진"만 쓰므로 데이터가 아무리 쌓여도 빠르다.
+
+   화면·PPT·PDF·엑셀 코드는 예전 그대로 동작한다.
+   (메모리 안의 products는 계속 사진 원본을 들고 있음)
+   ══════════════════════════════════════════════════════ */
+var PHOTO_PREFIX = 'photo:';
+var MISSING_MARK = '__missing__:';   // 사진 파일을 못 찾았을 때의 표시
+var photoIdMap = new Map();          // 사진 "지문" → 사진 번호
+
+// 사진 원본(수십만 자)을 통째로 비교하면 저장할 때마다 느려진다.
+// 길이 + 앞뒤 일부만 뽑아 "지문"을 만들어 비교한다 (사실상 충돌 없음).
+function photoFingerprint(src) {
+  var n = src.length;
+  return n + '|' + src.substr(23, 40) + '|' + src.substring(n - 32);
+}
+var storedPhotoIds = new Set();      // 저장소에 이미 들어있는 사진 번호
+var photoSeq = 0;
+
+function newPhotoId() {
+  photoSeq++;
+  return Date.now().toString(36) + '_' + photoSeq.toString(36);
+}
+
+// 사진 문자열에 대응하는 번호를 돌려준다. 처음 보는 사진이면 번호를 새로 만든다.
+function photoIdFor(src, pendingPuts) {
+  if (typeof src !== 'string' || !src) return null;
+
+  // 못 찾은 사진 → 원래 번호를 그대로 유지해 참조를 잃지 않게 한다
+  if (src.indexOf(MISSING_MARK) === 0) return src.slice(MISSING_MARK.length);
+
+  var fp = photoFingerprint(src);
+  var id = photoIdMap.get(fp);
+  if (!id) {
+    id = newPhotoId();
+    photoIdMap.set(fp, id);
+  }
+  if (!storedPhotoIds.has(id) && pendingPuts) {
+    pendingPuts[PHOTO_PREFIX + id] = src;   // 아직 저장 안 된 새 사진만 쓴다
+  }
+  return id;
+}
+
+// 메모리의 products → 저장용 형태(사진은 번호만)로 변환
+function buildMetaAndPuts() {
+  var puts = {};
+  var used = new Set();
+  var meta = products.map(function(p) {
+    var ph = (p.photos || []).map(function(s) { return photoIdFor(s, puts); }).filter(Boolean);
+    var bc = (p.bizCards || []).map(function(s) { return photoIdFor(s, puts); }).filter(Boolean);
+    ph.forEach(function(id) { used.add(id); });
+    bc.forEach(function(id) { used.add(id); });
+    var copy = Object.assign({}, p);
+    copy.photos = ph;
+    copy.bizCards = bc;
+    return copy;
+  });
+  return { meta: meta, puts: puts, used: used };
+}
+
+// 저장소 형태(사진 번호) → 메모리 형태(사진 원본)로 복원
+function hydrateMeta(meta, blobs) {
+  var missing = 0;
+  products = meta.map(function(p) {
+    function pull(ids) {
+      return (ids || []).map(function(id) {
+        if (typeof id === 'string' && id.indexOf('data:') === 0) return id; // 예전 형식
+        var v = blobs[PHOTO_PREFIX + id];
+        if (typeof v === 'string' && v) {
+          photoIdMap.set(photoFingerprint(v), id);
+          storedPhotoIds.add(id);
+          return v;
+        }
+        missing++;
+        return MISSING_MARK + id;
+      });
+    }
+    p.photos = pull(p.photos);
+    p.bizCards = pull(p.bizCards);
+    if (!Array.isArray(p.bizCards)) p.bizCards = [];
+    return p;
+  });
+  return missing;
+}
+
+// 예전 형식(사진이 제품 안에 통째로 들어있는 형태) 판별
+function isLegacyFormat(list) {
+  for (var i = 0; i < list.length; i++) {
+    var arr = (list[i].photos || []).concat(list[i].bizCards || []);
+    for (var j = 0; j < arr.length; j++) {
+      if (typeof arr[j] === 'string' && arr[j].indexOf('data:') === 0) return true;
+    }
+  }
+  return false;
+}
+
 function showDataErrorBanner() {
   var b = document.getElementById('data-error-banner');
   if (b) b.classList.add('show');
@@ -1198,9 +1390,29 @@ function showDataErrorBanner() {
 // 앱 시작 시 IndexedDB에서 제품 데이터 불러오기
 function loadProducts() {
   return idbGet('products').then(function(saved) {
-    products = Array.isArray(saved) ? saved : [];
-    products.forEach(function(p) { if (!Array.isArray(p.bizCards)) p.bizCards = []; });
-    return products;
+    var meta = Array.isArray(saved) ? saved : [];
+    if (!meta.length) { products = []; return products; }
+
+    // 예전 형식이면 그대로 쓰고, 첫 저장 때 자동으로 새 형식으로 나뉜다
+    if (isLegacyFormat(meta)) {
+      products = meta;
+      products.forEach(function(p) { if (!Array.isArray(p.bizCards)) p.bizCards = []; });
+      console.log('[load] 예전 형식 감지 — 다음 저장 시 사진이 분리 저장됩니다');
+      return products;
+    }
+
+    // 필요한 사진 번호를 모아 한 번에 읽는다
+    var keys = [];
+    meta.forEach(function(p) {
+      (p.photos || []).forEach(function(id) { keys.push(PHOTO_PREFIX + id); });
+      (p.bizCards || []).forEach(function(id) { keys.push(PHOTO_PREFIX + id); });
+    });
+
+    return idbGetMany(keys).then(function(blobs) {
+      var missing = hydrateMeta(meta, blobs);
+      if (missing > 0) console.warn('[load] 사진 ' + missing + '장을 찾지 못했습니다');
+      return products;
+    });
   }).then(function(list) {
     dataLoadFailed = false;
     return list;
@@ -1315,6 +1527,13 @@ function resumeDraftIfAny() {
     checkBackupReminder();
     updateStorageBar();
     resumeDraftIfAny(); // 이전에 저장/취소하지 않고 중단된 작성 중 항목이 있으면 이어서 열기
+
+    // 하루 한 번, 사진을 뺀 상태를 폰 안에 조용히 저장 (실수 삭제·손상 대비)
+    setTimeout(function() {
+      saveDailySnapshot().then(function(saved) {
+        if (saved) console.log('[snapshot] 오늘 스냅샷 저장됨');
+      });
+    }, 2500);
   });
 })();
 
@@ -2106,12 +2325,12 @@ function openOverlay(name) {
     document.getElementById('cnt-sample').textContent = products.filter(function(p){ return p.sample; }).length;
   }
   if (name === 'backup') {
-    // 예상 파일 크기 계산
-    var jsonSize = 0;
-    try { jsonSize = JSON.stringify(products).length; } catch(e) {}
-    var mb = (jsonSize * 2) / (1024 * 1024); // UTF-16 기준
+    // 예상 파일 크기 — 사진이 많을 때 JSON.stringify로 재면 화면이 멈추므로 길이 합으로 계산
+    var mb = getStorageUsageMB();
     document.getElementById('bk-export-info').innerHTML =
-      '현재 제품: <b>' + products.length + '개</b> · 예상 파일 크기 <b>' + mb.toFixed(1) + ' MB</b>';
+      '현재 제품: <b>' + products.length + '개</b> · 예상 파일 크기 <b>' + mb.toFixed(0) + ' MB</b>' +
+      (mb > 90 ? ' <span style="color:#f5a500;">— 날짜별 백업을 권합니다</span>' : '');
+    refreshBackupSheet();
     // 텍스트 영역 초기화 (이전 내용 숨김)
     var area = document.getElementById('bk-fallback-area');
     if (area) area.style.display = 'none';
@@ -2395,6 +2614,9 @@ function deleteCurrentProduct() {
   if (!confirm('"' + name + '"을(를) 삭제할까요?\n이 동작은 되돌릴 수 없습니다.')) return;
   products = products.filter(function(p){ return p.id !== editingId; });
   persist(); // 삭제는 용량이 줄어드므로 실패할 일 거의 없음
+  cleanupOrphanPhotos().then(function(n) {
+    if (n) { updateStorageBar(); }
+  });
   resetCur();
   renderList();
   updateStorageBar();
@@ -2770,6 +2992,112 @@ function getImageNaturalSize(dataUrl) {
   });
 }
 
+/* ══════════════════════════════════════════════════════
+   사진첩(갤러리)에 저장
+   ──────────────────────────────────────────────────────
+   웹앱은 사진첩에 자동으로 쓸 수 없다(기기가 막아둠).
+   대신 공유창을 열어 "이미지 저장"을 고르게 한다.
+   한 번에 너무 많이 넘기면 폰이 실패하므로 15장씩 나눠 보낸다.
+   ══════════════════════════════════════════════════════ */
+var ALBUM_CHUNK = 15;
+
+function dataUrlToFile(dataUrl, name) {
+  var m = /^data:(image\/[a-z+]+);base64,(.*)$/i.exec(dataUrl);
+  if (!m) return null;
+  var bin = atob(m[2]);
+  var buf = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return new File([buf], name, { type: m[1] });
+}
+
+// 저장 대상 사진 모으기. scope: 'today' = 오늘 등록분, 'all' = 전체
+function collectPhotosForAlbum(scope) {
+  var today = new Date().toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+  var out = [];
+  products.forEach(function(p) {
+    if (scope === 'today' && p.date !== today) return;
+    var safe = (p.name || '제품').replace(/[^가-힣A-Za-z0-9]/g, '_').slice(0, 20);
+    (p.photos || []).forEach(function(s, i) {
+      if (isValidPhoto(s)) out.push({ src: s, name: safe + '_' + (i + 1) + '.jpg' });
+    });
+    (p.bizCards || []).forEach(function(s, i) {
+      if (isValidPhoto(s)) out.push({ src: s, name: safe + '_명함' + (i + 1) + '.jpg' });
+    });
+  });
+  return out;
+}
+
+async function savePhotosToAlbum(scope) {
+  var list = collectPhotosForAlbum(scope);
+
+  // 오늘 찍은 게 없으면 전체로 자동 전환
+  if (!list.length && scope === 'today') {
+    list = collectPhotosForAlbum('all');
+    if (list.length) showToast('오늘 등록한 사진이 없어 전체로 저장합니다');
+  }
+  if (!list.length) { showToast('저장할 사진이 없어요'); return; }
+
+  var btn = document.getElementById('ph-save-btn');
+  var orig = btn ? btn.textContent : '';
+
+  var chunks = [];
+  for (var i = 0; i < list.length; i += ALBUM_CHUNK) chunks.push(list.slice(i, i + ALBUM_CHUNK));
+
+  if (chunks.length > 1) {
+    var go = window.confirm(
+      '사진 ' + list.length + '장을 사진첩에 저장합니다.\n\n' +
+      '한 번에 다 넘기면 폰이 멈출 수 있어 ' + ALBUM_CHUNK + '장씩 ' + chunks.length + '번에 나눠 보냅니다.\n' +
+      '공유창이 뜰 때마다 "이미지 저장"을 눌러주세요.\n\n계속할까요?');
+    if (!go) return;
+  }
+
+  try {
+    if (btn) { btn.disabled = true; }
+    for (var c = 0; c < chunks.length; c++) {
+      if (btn) btn.textContent = '⏳ ' + (c + 1) + '/' + chunks.length;
+
+      var files = chunks[c].map(function(o) { return dataUrlToFile(o.src, o.name); })
+                           .filter(Boolean);
+      if (!files.length) continue;
+
+      if (navigator.canShare && navigator.canShare({ files: files }) && navigator.share) {
+        try {
+          await navigator.share({ files: files });
+        } catch (e) {
+          // 사용자가 공유창을 닫음 → 중단
+          if (e && e.name === 'AbortError') {
+            showToast('저장을 멈췄어요 (' + c + '/' + chunks.length + '묶음 완료)');
+            return;
+          }
+          throw e;
+        }
+      } else {
+        // 공유 기능이 없는 기기(주로 안드로이드 일부) → 다운로드 폴더로 저장
+        downloadPhotoFiles(chunks[c]);
+        showToast('\u2139\uFE0F 이 기기는 다운로드 폴더에 저장됩니다');
+      }
+    }
+    showToast('✓ 사진 ' + list.length + '장 저장 완료');
+  } catch (err) {
+    console.error(err);
+    showToast('\U0001F6A8 사진첩 저장 실패: ' + (err.message || '오류'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = orig || '\U0001F4E5 사진첩 저장'; }
+  }
+}
+
+// 공유 기능이 없을 때의 대안 — 파일로 내려받기
+function downloadPhotoFiles(items) {
+  items.forEach(function(o, i) {
+    setTimeout(function() {
+      var a = document.createElement('a');
+      a.href = o.src; a.download = o.name;
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ try { document.body.removeChild(a); } catch(e){} }, 300);
+    }, i * 250);
+  });
+}
+
 // ── 전체 사진 ZIP 추출 ─────────────────────────────────
 // JSZip 라이브러리 동적 로딩 (PPT/엑셀과 동일한 CDN-폴백 패턴)
 var _zipLibLoading = null;
@@ -3119,7 +3447,11 @@ function resetAllData() {
   var ok2 = window.confirm('정말 삭제하시겠어요? 되돌릴 수 없습니다.');
   if (!ok2) return;
   products = [];
-  idbDel('products').catch(function(e){ console.error(e); });
+  var allPhotoKeys = [];
+  storedPhotoIds.forEach(function(id) { allPhotoKeys.push(PHOTO_PREFIX + id); });
+  photoIdMap.clear();
+  storedPhotoIds.clear();
+  idbBulk(null, allPhotoKeys.concat(['products'])).catch(function(e){ console.error(e); });
   resetCur();
   renderList();
   updateStorageBar();
@@ -3175,12 +3507,42 @@ function persistSafe() {
     showDataErrorBanner();
     return Promise.resolve(false);
   }
-  return idbSet('products', products).then(function() {
+  var built;
+  try {
+    built = buildMetaAndPuts();
+  } catch (e) {
+    markPersistFailed(e);
+    return Promise.resolve(false);
+  }
+
+  var puts = built.puts;
+  puts['products'] = built.meta;
+
+  return idbBulk(puts, null).then(function() {
+    // 새로 저장된 사진 번호를 기억해 두면 다음 저장 때 다시 쓰지 않는다
+    Object.keys(puts).forEach(function(k) {
+      if (k.indexOf(PHOTO_PREFIX) === 0) storedPhotoIds.add(k.slice(PHOTO_PREFIX.length));
+    });
+    lastUsedPhotoIds = built.used;
     return true;
   }).catch(function(e) {
     markPersistFailed(e);
     return false;
   });
+}
+
+// 삭제된 제품이 쓰던 사진 파일 치우기 (저장 흐름을 막지 않도록 따로 실행)
+var lastUsedPhotoIds = new Set();
+function cleanupOrphanPhotos() {
+  if (dataLoadFailed) return Promise.resolve(0);
+  var used = buildMetaAndPuts().used;
+  var orphans = [];
+  storedPhotoIds.forEach(function(id) { if (!used.has(id)) orphans.push(PHOTO_PREFIX + id); });
+  if (!orphans.length) return Promise.resolve(0);
+  return idbBulk(null, orphans).then(function() {
+    orphans.forEach(function(k) { storedPhotoIds.delete(k.slice(PHOTO_PREFIX.length)); });
+    return orphans.length;
+  }).catch(function() { return 0; });
 }
 
 // 기존 호출부 호환용(자동저장 등). 실패하면 토스트로 알린다.
@@ -3333,6 +3695,245 @@ function showBackupFallback(json) {
 // 가져오기 — 파일 선택 후 파싱 → 확인창 표시
 var _pendingImportData = null; // 확인 단계에서 임시 저장
 
+/* ══════════════════════════════════════════════════════
+   날짜별 백업 · 가벼운 백업 · 자동 스냅샷
+   ══════════════════════════════════════════════════════ */
+var DAY_DONE_KEY = 'gz_day_backup_done';   // 날짜별 백업 완료 기록
+
+function getDayBackupDone() {
+  try { return JSON.parse(localStorage.getItem(DAY_DONE_KEY) || '{}'); }
+  catch (e) { return {}; }
+}
+function setDayBackupDone(day, count) {
+  try {
+    var m = getDayBackupDone();
+    m[day] = { at: Date.now(), count: count };
+    localStorage.setItem(DAY_DONE_KEY, JSON.stringify(m));
+  } catch (e) {}
+}
+
+// 등록일 기준으로 제품을 묶는다 (앱 화면에 보이는 날짜와 동일)
+function groupProductsByDay() {
+  var map = {};
+  products.forEach(function(p) {
+    var d = p.date || '날짜없음';
+    if (!map[d]) map[d] = [];
+    map[d].push(p);
+  });
+  return Object.keys(map).sort(function(a, b) {
+    var pa = a.split('/').map(Number), pb = b.split('/').map(Number);
+    if (isNaN(pa[0])) return 1;
+    if (isNaN(pb[0])) return -1;
+    return (pa[0] - pb[0]) || (pa[1] - pb[1]);
+  }).map(function(d) {
+    var list = map[d];
+    var photos = list.reduce(function(a, p) {
+      return a + (p.photos || []).length + (p.bizCards || []).length;
+    }, 0);
+    var bytes = 0;
+    list.forEach(function(p) {
+      (p.photos || []).forEach(function(s){ bytes += (s || '').length; });
+      (p.bizCards || []).forEach(function(s){ bytes += (s || '').length; });
+    });
+    return { day: d, list: list, photos: photos, mb: bytes / 1048576 };
+  });
+}
+
+function renderDayBackupList() {
+  var box = document.getElementById('bk-day-list');
+  if (!box) return;
+  var groups = groupProductsByDay();
+  var done = getDayBackupDone();
+
+  if (!groups.length) {
+    box.innerHTML = '<div style="font-size:12px;color:var(--t2);padding:8px 0;">아직 등록한 제품이 없어요</div>';
+    return;
+  }
+
+  box.innerHTML = groups.map(function(g) {
+    var isDone = done[g.day] && done[g.day].count === g.list.length;
+    var isStale = done[g.day] && done[g.day].count !== g.list.length;
+    var mark = isDone ? '✅' : (isStale ? '\u26A0\uFE0F' : '⬜');
+    var label = isDone ? '백업 완료' : (isStale ? '내용이 바뀜 — 다시' : '아직');
+    var bg = isDone ? 'rgba(46,125,91,.15)' : (isStale ? 'rgba(245,165,0,.15)' : 'rgba(255,255,255,.05)');
+    var bd = isDone ? 'rgba(46,125,91,.5)' : (isStale ? 'rgba(245,165,0,.5)' : 'var(--border)');
+    return '<button onclick="exportDayBackup(\'' + g.day.replace(/'/g, "") + '\')" ' +
+      'style="width:100%;display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:6px;' +
+      'background:' + bg + ';border:1px solid ' + bd + ';border-radius:10px;color:var(--t1);' +
+      'font-family:inherit;font-size:13px;text-align:left;cursor:pointer;">' +
+      '<span>' + mark + '</span>' +
+      '<span style="font-weight:700;min-width:44px;">' + g.day + '</span>' +
+      '<span style="color:var(--t2);font-size:11px;flex:1;">제품 ' + g.list.length + '개 · 사진 ' + g.photos + '장 · ' + g.mb.toFixed(0) + 'MB</span>' +
+      '<span style="font-size:11px;color:' + (isDone ? '#4ade80' : 'var(--t2)') + ';">' + label + '</span>' +
+      '</button>';
+  }).join('');
+}
+
+function downloadJson(obj, fname) {
+  var blob = new Blob([JSON.stringify(obj)], { type: 'application/json;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = fname; a.rel = 'noopener'; a.style.display = 'none';
+  document.body.appendChild(a); a.click();
+  setTimeout(function() {
+    try { document.body.removeChild(a); } catch (e) {}
+    URL.revokeObjectURL(url);
+  }, 800);
+}
+
+// 하루치 백업 (사진 포함 — 짝이 어긋나지 않음)
+function exportDayBackup(day) {
+  var g = groupProductsByDay().filter(function(x){ return x.day === day; })[0];
+  if (!g) { showToast('해당 날짜의 제품이 없어요'); return; }
+
+  if (g.mb > 90) {
+    if (!window.confirm('이 날짜는 사진이 많아 약 ' + Math.round(g.mb) + 'MB입니다.\n' +
+                        '만드는 데 시간이 걸리고 폰이 잠시 느려질 수 있어요.\n\n계속할까요?')) return;
+  }
+
+  try {
+    downloadJson({
+      app: 'guangzhou_fair',
+      version: 'v15',
+      kind: 'day',
+      day: day,
+      exportedAt: new Date().toISOString(),
+      productCount: g.list.length,
+      products: g.list
+    }, '광저우_' + day.replace('/', '월') + '일_' + g.list.length + '개.json');
+
+    setDayBackupDone(day, g.list.length);
+    markBackupDone();
+    renderDayBackupList();
+    showToast('✓ ' + day 
+      + ' 백업 완료 (제품 ' + g.list.length + '개)');
+  } catch (err) {
+    console.error(err);
+    showToast('\U0001F6A8 백업 실패: ' + (err.message || '오류') + ' — 가벼운 백업을 써보세요');
+  }
+}
+
+// 사진을 뺀 가벼운 백업
+function stripPhotos(list) {
+  return list.map(function(p) {
+    var c = Object.assign({}, p);
+    c.photoCount = (p.photos || []).length;
+    c.bizCount = (p.bizCards || []).length;
+    c.photos = [];
+    c.bizCards = [];
+    return c;
+  });
+}
+
+function exportLightBackup() {
+  if (!products.length) { showToast('내보낼 제품이 없어요'); return; }
+  try {
+    downloadJson({
+      app: 'guangzhou_fair',
+      version: 'v15',
+      kind: 'light',
+      exportedAt: new Date().toISOString(),
+      productCount: products.length,
+      products: stripPhotos(products)
+    }, '광저우_가벼운백업_' + pptDateStr().replace(/\./g, '') + '.json');
+    markBackupDone();
+    showToast('✓ 가벼운 백업 완료 (제품 ' + products.length + '개)');
+  } catch (err) {
+    console.error(err);
+    showToast('\U0001F6A8 백업 실패: ' + (err.message || '오류'));
+  }
+}
+
+/* 자동 스냅샷 — 앱을 열 때 하루 한 번, 사진을 뺀 상태를 폰 안에 조용히 저장.
+   실수로 전체 삭제하거나 데이터가 손상됐을 때 되돌리기용. 최근 5일치 보관. */
+var SNAP_PREFIX = 'snap:';
+var SNAP_KEEP = 5;
+
+function todayKey() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function saveDailySnapshot() {
+  if (dataLoadFailed || !products.length) return Promise.resolve(false);
+  var key = SNAP_PREFIX + todayKey();
+  return idbGet(key).then(function(existing) {
+    if (existing) return false;  // 오늘 것은 이미 있음
+    return idbSet(key, {
+      at: Date.now(),
+      productCount: products.length,
+      products: stripPhotos(products)
+    }).then(function() {
+      return pruneSnapshots().then(function(){ return true; });
+    });
+  }).catch(function(){ return false; });
+}
+
+function listSnapshotKeys() {
+  return openDB().then(function(db) {
+    return new Promise(function(resolve) {
+      var tx = db.transaction(DB_STORE, 'readonly');
+      var r = tx.objectStore(DB_STORE).getAllKeys();
+      r.onsuccess = function() {
+        resolve((r.result || []).filter(function(k) {
+          return String(k).indexOf(SNAP_PREFIX) === 0;
+        }).sort());
+      };
+      r.onerror = function() { resolve([]); };
+    });
+  }).catch(function(){ return []; });
+}
+
+function pruneSnapshots() {
+  return listSnapshotKeys().then(function(keys) {
+    if (keys.length <= SNAP_KEEP) return true;
+    return idbBulk(null, keys.slice(0, keys.length - SNAP_KEEP));
+  }).catch(function(){ return true; });
+}
+
+// 스냅샷에서 되돌리기 (사진은 현재 앱에 있는 것을 그대로 유지)
+function restoreFromSnapshot() {
+  listSnapshotKeys().then(function(keys) {
+    if (!keys.length) { showToast('저장된 스냅샷이 없어요'); return; }
+    var lines = keys.slice().reverse().map(function(k, i) {
+      return (i + 1) + '. ' + k.slice(SNAP_PREFIX.length);
+    }).join('\n');
+    var pick = window.prompt('되돌릴 시점을 번호로 골라주세요.\n(사진은 지금 폰에 있는 것을 그대로 씁니다)\n\n' + lines, '1');
+    if (!pick) return;
+    var idx = parseInt(pick, 10) - 1;
+    var ordered = keys.slice().reverse();
+    if (isNaN(idx) || !ordered[idx]) { showToast('번호를 확인해주세요'); return; }
+
+    idbGet(ordered[idx]).then(function(snap) {
+      if (!snap || !Array.isArray(snap.products)) { showToast('스냅샷을 읽을 수 없어요'); return; }
+      if (!window.confirm(ordered[idx].slice(SNAP_PREFIX.length) + ' 시점으로 되돌릴까요?\n제품 ' + snap.products.length + '개\n\n지금 상태는 사라집니다.')) return;
+
+      // 현재 사진을 제품 id로 찾아 다시 붙인다
+      var byId = {};
+      products.forEach(function(p) { byId[p.id] = p; });
+      products = snap.products.map(function(p) {
+        var cur2 = byId[p.id];
+        var c = Object.assign({}, p);
+        c.photos = cur2 ? (cur2.photos || []) : [];
+        c.bizCards = cur2 ? (cur2.bizCards || []) : [];
+        return c;
+      });
+      persist();
+      renderList();
+      updateStorageBar();
+      closeOverlay('backup');
+      showToast('✓ ' + ordered[idx].slice(SNAP_PREFIX.length) + ' 시점으로 되돌렸어요');
+    });
+  });
+}
+
+// 백업 화면을 열 때 날짜별 목록·요약을 갱신
+function refreshBackupSheet() {
+  renderDayBackupList();
+  var li = document.getElementById('bk-light-info');
+  if (li) li.innerHTML = '현재 제품: <b>' + products.length + '개</b> · 예상 파일 크기 <b>수십 KB</b>';
+}
+
 function handleBackupFile(e) {
   var file = e.target.files && e.target.files[0];
   e.target.value = ''; // 같은 파일 재선택 가능하게
@@ -3403,8 +4004,23 @@ function runImport(mode) {
 
     // 가져오는 제품들에 bizCards 필드 보정 (구 버전 호환)
     imported.forEach(function(p) {
+      if (!Array.isArray(p.photos)) p.photos = [];
       if (!Array.isArray(p.bizCards)) p.bizCards = [];
     });
+
+    /* ★ 사진 보호
+       "가벼운 백업"(사진 제외)을 가져올 때, 지금 폰에 있는 사진이 지워지면 안 된다.
+       같은 제품이 이미 있고 가져온 쪽에 사진이 없으면 → 현재 사진을 그대로 유지한다. */
+    var curById = {};
+    products.forEach(function(p) { curById[p.id] = p; });
+    var keptPhotos = 0;
+    imported.forEach(function(p) {
+      var cur2 = curById[p.id];
+      if (!cur2) return;
+      if (!p.photos.length && (cur2.photos || []).length) { p.photos = cur2.photos.slice(); keptPhotos++; }
+      if (!p.bizCards.length && (cur2.bizCards || []).length) { p.bizCards = cur2.bizCards.slice(); }
+    });
+    window._lastKeptPhotos = keptPhotos;
 
     if (mode === 'replace') {
       products = imported.slice();
@@ -3934,6 +4550,42 @@ function setExpFormat(f) {
   b.innerHTML = isPdf ? '🖨 PDF 만들기 (인쇄 → PDF로 저장)' : '✓ PPT 파일 생성 &amp; 다운로드';
 }
 
+/* 사진이 너무 많으면 폰이 파일을 만들다 멈춘다.
+   내보내기 전에 예상 용량을 계산해 미리 알려준다. */
+function estimateExportMB(list, photoMode) {
+  var bytes = 0;
+  list.forEach(function(p) {
+    var ph = (p.photos || []).filter(isValidPhoto);
+    var use = (photoMode === 'all') ? ph : ph.slice(0, 1);
+    use.forEach(function(s) { bytes += s.length * 0.75; });
+    var bc = (p.bizCards || []).filter(isValidPhoto);
+    if (bc.length) bytes += bc[0].length * 0.75 * (photoMode === 'all' ? Math.max(1, use.length) : 1);
+  });
+  return bytes / (1024 * 1024);
+}
+
+function confirmExportSize(list, photoMode, kind) {
+  var mb = estimateExportMB(list, photoMode);
+  var photos = list.reduce(function(a, p) {
+    var n = (p.photos || []).filter(isValidPhoto).length;
+    return a + (photoMode === 'all' ? n : Math.min(1, n));
+  }, 0);
+
+  if (mb < 45) return true;   // 여유 — 그냥 진행
+
+  if (mb >= 120) {
+    return window.confirm(
+      '\u26A0\uFE0F 사진이 너무 많습니다\n\n' +
+      '제품 ' + list.length + '개 · 사진 ' + photos + '장 → 약 ' + Math.round(mb) + 'MB\n\n' +
+      '이 크기는 폰에서 만들다가 멈출 가능성이 높습니다.\n' +
+      '"대표 이미지만"으로 바꾸거나, 범위를 "샘플 신청만"으로 줄이시길 권합니다.\n\n' +
+      '그래도 진행할까요?');
+  }
+  return window.confirm(
+    '제품 ' + list.length + '개 · 사진 ' + photos + '장 → 약 ' + Math.round(mb) + 'MB\n\n' +
+    kind + ' 만드는 데 시간이 걸리고, 폰이 잠시 느려질 수 있습니다.\n계속할까요?');
+}
+
 function runExport() {
   if (expFormat === 'pdf') exportToPdf();
   else exportToPpt();
@@ -4063,6 +4715,7 @@ function exportToPdf() {
     showToast(pptScope === 'sample' ? '샘플 신청한 제품이 없어요' : '등록된 제품이 없어요');
     return;
   }
+  if (!confirmExportSize(list, pptPhotoMode, 'PDF')) return;
 
   var btn = document.getElementById('ppt-confirm');
   btn.disabled = true;
@@ -4140,6 +4793,8 @@ async function exportToPpt() {
     showToast(pptScope === 'sample' ? '샘플 신청한 제품이 없어요' : '등록된 제품이 없어요');
     return;
   }
+
+  if (!confirmExportSize(list, pptPhotoMode, 'PPT')) return;
 
   var btn = document.getElementById('ppt-confirm');
   btn.disabled = true;
