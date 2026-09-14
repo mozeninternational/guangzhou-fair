@@ -500,6 +500,24 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .storage-bar.danger .storage-bar-fill > div { background: var(--red); }
 .storage-bar-text { font-weight: 700; white-space: nowrap; }
 
+/* ── 목록 카드 스와이프 삭제 ───────────────────────── */
+.p-row { position: relative; overflow: hidden; border-radius: 14px; }
+.p-row-del {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 84px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; background: #b8352e; color: #fff;
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  border: none; cursor: pointer; border-radius: 0 14px 14px 0;
+}
+.p-row-del span { font-size: 18px; line-height: 1; }
+.p-row .p-card {
+  position: relative; z-index: 1;
+  transition: transform .22s cubic-bezier(.22,.61,.36,1);
+  will-change: transform;
+}
+.p-row.dragging .p-card { transition: none; }
+.p-row.open .p-card { transform: translateX(-84px); }
+
 /* ── 목록 카드: 확인할 것 ──────────────────────────── */
 .p-todo { margin: 4px 0 2px; }
 .p-todo-item {
@@ -681,7 +699,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v16</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v17</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -757,7 +775,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       <span>📝 수정 중</span>
       <div class="edit-banner-actions">
         <button class="del-btn" onclick="deleteCurrentProduct()">🗑 삭제</button>
-        <button class="cancel-btn" onclick="cancelEdit()">✓ 편집 끝내기</button>
+        <button class="cancel-btn" onclick="cancelEdit()">취소</button>
       </div>
     </div>
     <!-- 제품명 -->
@@ -796,7 +814,8 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       <button class="fn-chip" id="fn-card" type="button"><span class="fn-chip-ico">📇</span><span id="fn-card-t">명함</span></button>
     </div>
 
-    <div class="cat-row" id="cat-row"></div>
+    <!-- 카테고리 선택 줄은 화면에서 제거 (데이터 필드는 보존) -->
+    <div class="cat-row" id="cat-row" style="display:none;"></div>
 
     <!-- 📸 제품 사진 섹션 (이름/메모 바로 아래, 깔끔하게) -->
     <div class="photo-section">
@@ -1693,14 +1712,13 @@ function clearCategory() {
 function renderCatUI() {
   var pill = document.getElementById('cat-tag-pill');
   var row = document.getElementById('cat-row');
+  // 카테고리 선택 줄은 화면에서 제거됨. 기존에 저장된 값만 태그로 보여준다.
+  if (row) row.style.display = 'none';
   if (cur.category) {
     pill.textContent = '🏷 ' + cur.category;
     pill.style.display = 'inline-flex';
-    row.style.display = 'none';
   } else {
     pill.style.display = 'none';
-    row.style.display = 'flex';
-    document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('active'); });
   }
 }
 
@@ -2584,12 +2602,13 @@ function performAutoSave() {
       sample: cloneSample(cur.sample)
     };
     products.unshift(p);
-    editingId = p.id; // 이후 입력은 같은 항목에 계속 자동 저장됨
-    saveDraftId(editingId); // 새로고침되어도 같은 항목에 계속 이어붙도록 기록
-    // 의도치 않게 새 제품이 만들어졌을 때 바로 알아챌 수 있도록 알린다
-    document.getElementById('edit-banner').classList.add('show');
-    document.getElementById('save-btn').textContent = '저장';
-    showToast('\u270F\uFE0F 새 제품 기록을 시작했어요');
+    editingId = p.id;          // 이후 입력은 같은 항목에 계속 자동 저장됨
+    isEditingExisting = false; // 새로 만드는 중 → "수정 중" 배너는 띄우지 않는다
+    saveDraftId(editingId);
+    /* 제품명 없이 사진·버튼만으로 새 제품이 생기는 경우가 있다.
+       (예: 저장 직후 화면에서 사진을 더 넣을 때)
+       배너는 띄우지 않되, 알림으로 바로 알아챌 수 있게 한다. */
+    if (!cur.name) showToast('✏️ 새 제품 기록을 시작했어요');
   }
   persist();
   renderList();
@@ -2626,13 +2645,13 @@ function saveProduct() {
           showToast('🚨 수정 실패 - 저장공간이 부족해요. 사진을 줄여주세요');
           return;
         }
-        /* 수정 저장 후에도 편집을 끝내지 않는다.
-           예전에는 여기서 편집이 끝나 입력창이 빈 상태가 됐는데,
-           화면이 그대로처럼 보여 사진을 더 넣으면 (이름 없음) 제품이 새로 생겼다.
-           이제는 "취소(닫기)"를 눌러야 편집이 끝난다. */
+        /* 수정 저장 → 편집 종료 (수정 중 배너도 사라진다).
+           입력창을 비우고 목록으로 초점을 옮겨, 이어서 잘못 입력하는 일을 막는다. */
+        resetCur();
         renderList();
         updateStorageBar();
-        showToast('✓ 저장했어요 — 계속 편집 중');
+        scrollToList();
+        showToast('✓ 수정되었어요!');
       });
       return;
     } else {
@@ -2685,11 +2704,15 @@ function migrateTodos(p) {
   });
 }
 
+/* 목록에서 눌러 "기존 제품을 고치는 중"일 때만 true. */
+var isEditingExisting = false;
+
 function editProduct(id) {
   var p = products.find(function(x){ return x.id === id; });
   if (!p) return;
 
   editingId = id;
+  isEditingExisting = true;
   saveDraftId(editingId);
   cur.name = p.name || '';
   cur.memo = p.memo || '';
@@ -2722,8 +2745,16 @@ function editProduct(id) {
 }
 
 function cancelEdit() {
+  var wasEditing = isEditingExisting;
   resetCur();
-  showToast('편집을 끝냈어요');
+  showToast(wasEditing ? '수정을 취소했어요' : '작성을 취소했어요');
+}
+
+// 저장 후 목록이 보이도록 스크롤
+function scrollToList() {
+  var el = document.getElementById('p-list');
+  if (!el) return;
+  setTimeout(function(){ try { el.scrollIntoView({behavior:'smooth', block:'start'}); } catch(e){} }, 120);
 }
 
 function deleteCurrentProduct() {
@@ -2765,6 +2796,7 @@ function resetCur() {
 
   // edit mode 해제 (저장/취소/삭제로 명시적으로 끝냈을 때만 여기로 옴)
   editingId = null;
+  isEditingExisting = false;
   clearDraftId();
   document.getElementById('edit-banner').classList.remove('show');
   document.getElementById('save-btn').textContent = '저장';
@@ -2784,7 +2816,7 @@ function resetCur() {
 
   // Reset cat buttons
   document.getElementById('cat-tag-pill').style.display = 'none';
-  document.getElementById('cat-row').style.display = 'flex';
+  // 카테고리 줄은 화면에서 제거됨 (표시하지 않음)
   document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('active'); });
 
   // Reset QA buttons
@@ -2866,16 +2898,124 @@ function renderList() {
         '</div>';
     }
 
-    html += '<div class="p-card" onclick="editProduct(' + p.id + ')">' +
+    html += '<div class="p-row" data-id="' + p.id + '">' +
+      '<button class="p-row-del" type="button" onclick="event.stopPropagation(); confirmDeleteProduct(' + p.id + ')">' +
+        '<span>🗑️</span>삭제</button>' +
+      '<div class="p-card" onclick="onCardTap(event, ' + p.id + ')">' +
       '<div class="p-head"><div class="p-name">' + escapeHtmlLite(p.name) + '</div><div class="p-date">' + p.date + '</div></div>' +
       (catBadge ? '<div class="p-cat-row">' + catBadge + '</div>' : '') +
       (p.memo ? '<div class="p-memo">' + escapeHtmlLite(p.memo) + '</div>' : '') +
       todoHtml +
       photos +
       '<div class="p-badges">' + badges.join('') + '</div>' +
-      '</div>';
+      '</div></div>';
   });
   list.innerHTML = html;
+  setupSwipeDelete();
+}
+
+/* ══════════════════════════════════════════════════════
+   목록 카드 왼쪽 스와이프 → 삭제 버튼
+   ──────────────────────────────────────────────────────
+   가로로 충분히 밀었을 때만 반응한다.
+   세로 스크롤 중이면 무시하므로 목록을 내리다 잘못 열리지 않는다.
+   ══════════════════════════════════════════════════════ */
+var openSwipeRow = null;
+
+function closeSwipeRow() {
+  if (openSwipeRow) { openSwipeRow.classList.remove('open'); openSwipeRow = null; }
+}
+
+// 스와이프가 열려 있을 때의 첫 탭은 "닫기"로 쓴다 (실수로 편집 열리는 것 방지)
+function onCardTap(e, id) {
+  if (openSwipeRow) { closeSwipeRow(); return; }
+  editProduct(id);
+}
+
+function setupSwipeDelete() {
+  var THRESHOLD = 42;   // 이만큼 밀어야 열림
+  var MAX = 84;
+
+  document.querySelectorAll('.p-row').forEach(function(row) {
+    var card = row.querySelector('.p-card');
+    if (!card) return;
+    var x0 = 0, y0 = 0, dx = 0, decided = null, active = false;
+
+    function start(e) {
+      var t = e.touches ? e.touches[0] : e;
+      x0 = t.clientX; y0 = t.clientY; dx = 0; decided = null; active = true;
+      if (openSwipeRow && openSwipeRow !== row) closeSwipeRow();
+    }
+
+    function move(e) {
+      if (!active) return;
+      var t = e.touches ? e.touches[0] : e;
+      var mx = t.clientX - x0, my = t.clientY - y0;
+
+      if (decided === null) {
+        if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+        decided = Math.abs(mx) > Math.abs(my) * 1.4 ? 'x' : 'y';
+        if (decided === 'x') row.classList.add('dragging');
+      }
+      if (decided !== 'x') return;
+
+      if (e.cancelable) e.preventDefault();
+      var base = row.classList.contains('open') ? -MAX : 0;
+      dx = Math.max(-MAX, Math.min(0, base + mx));
+      card.style.transform = 'translateX(' + dx + 'px)';
+    }
+
+    function end() {
+      if (!active) return;
+      active = false;
+      row.classList.remove('dragging');
+      card.style.transform = '';
+      if (decided !== 'x') return;
+
+      if (dx <= -THRESHOLD) {
+        row.classList.add('open');
+        openSwipeRow = row;
+      } else {
+        row.classList.remove('open');
+        if (openSwipeRow === row) openSwipeRow = null;
+      }
+    }
+
+    card.addEventListener('touchstart', start, { passive: true });
+    card.addEventListener('touchmove', move, { passive: false });
+    card.addEventListener('touchend', end);
+    card.addEventListener('touchcancel', end);
+
+    // PC(마우스)에서는 카드 밖으로 나가도 끌리도록 document에 붙인다
+    card.addEventListener('mousedown', function(e) {
+      start(e);
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', function up() {
+        end();
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+      });
+    });
+  });
+}
+
+// 목록에서 바로 삭제 (한 번 더 확인)
+function confirmDeleteProduct(id) {
+  var p = products.find(function(x){ return x.id === id; });
+  if (!p) return;
+  if (!confirm('"' + (p.name || '이 제품') + '"을(를) 삭제할까요?\n되돌릴 수 없습니다.')) {
+    closeSwipeRow();
+    return;
+  }
+  products = products.filter(function(x){ return x.id !== id; });
+  if (editingId === id) resetCur();
+  closeSwipeRow();
+  persist();
+  cleanupOrphanPhotos().then(function(n){ if (n) updateStorageBar(); });
+  renderList();
+  updateStorageBar();
+  checkAndShowRecoveryBanner();
+  showToast('삭제되었습니다');
 }
 
 // ── NAV ───────────────────────────────────────────────
@@ -3859,7 +3999,7 @@ function exportDayBackup(day) {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v16',
+      version: 'v17',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -3895,7 +4035,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v16',
+      version: 'v17',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
