@@ -138,31 +138,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .ppt-opt-label { font-size: 10px; }
 
 /* QUICK ACTION BUTTONS */
-.qa-anchor { height: 0; margin: 0; padding: 0; flex-shrink: 0; }
-.qa-grid {
-  width: 100%; max-width: 430px; box-sizing: border-box;
-  margin: 0 auto;
-  position: relative;
-  display: grid; grid-template-columns: repeat(4,1fr); gap: 9px;
-  padding: 10px 44px 10px 16px;
-  flex-shrink: 0;
-}
-.qa-grid.at-bot { padding-bottom: 12px; margin-bottom: 66px; }
 /* 오른쪽 측면 이동 컨트롤 (위/아래 버튼) */
-.qa-move {
-  position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
-  display: flex; flex-direction: column; gap: 4px;
-}
-.qa-move-btn {
-  width: 30px; height: 30px; border-radius: 8px;
-  background: rgba(255,255,255,.06); border: 1px solid var(--border);
-  color: var(--t2); font-size: 14px; line-height: 1;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; touch-action: manipulation; -webkit-appearance: none;
-  font-family: inherit; padding: 0;
-}
-.qa-move-btn:active { background: rgba(245,165,0,.2); color: var(--orange); border-color: var(--orange); }
-.qa-move-btn:disabled { opacity: .25; cursor: default; }
 .qa-btn {
   background: var(--card);
   border: 1.5px solid var(--border);
@@ -524,6 +500,88 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .storage-bar.danger .storage-bar-fill > div { background: var(--red); }
 .storage-bar-text { font-weight: 700; white-space: nowrap; }
 
+/* ── 목록 카드: 확인할 것 ──────────────────────────── */
+.p-todo { margin: 4px 0 2px; }
+.p-todo-item {
+  font-size: 12px; color: #f5c97a; line-height: 1.55;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.p-todo-more { font-size: 11px; color: var(--t3); margin-top: 1px; }
+
+/* ── 제품명 / 메모 분리 입력 ───────────────────────── */
+.nm-row { display: flex; align-items: flex-start; gap: 6px; }
+.nm-ta {
+  flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+  color: var(--t1); font-family: inherit; font-size: 17px; font-weight: 700;
+  line-height: 1.35; padding: 2px 0; resize: none; overflow: hidden;
+}
+.nm-ta::placeholder { color: var(--t3); font-weight: 400; font-size: 14px; }
+
+.memo-box {
+  margin-top: 8px; padding: 8px 10px; border-radius: 10px;
+  background: rgba(255,255,255,.045); border: 1px solid var(--border);
+  display: flex; align-items: flex-start; gap: 6px;
+  transition: border-color .15s, background .15s;
+}
+.memo-box:focus-within { border-color: rgba(245,165,0,.55); background: rgba(245,165,0,.06); }
+.memo-ta {
+  flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+  color: var(--t2); font-family: inherit; font-size: 13px; line-height: 1.5;
+  padding: 0; resize: none; overflow: hidden; min-height: 19px;
+}
+.memo-ta::placeholder { color: var(--t3); font-size: 13px; }
+
+/* ── 확인할 것 (체크리스트) ────────────────────────── */
+.td-wrap { margin-top: 8px; }
+.td-item {
+  display: flex; align-items: flex-start; gap: 7px; padding: 5px 2px;
+  font-size: 13px; line-height: 1.4; color: var(--t1);
+}
+.td-box {
+  flex-shrink: 0; width: 17px; height: 17px; margin-top: 1px; border-radius: 5px;
+  border: 1.5px solid var(--t3); background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: #fff; padding: 0; font-family: inherit;
+}
+.td-box.done { background: #2e7d5b; border-color: #2e7d5b; }
+.td-text { flex: 1; min-width: 0; word-break: break-word; cursor: pointer; }
+.td-item.done .td-text { color: var(--t3); text-decoration: line-through; }
+.td-del {
+  flex-shrink: 0; background: none; border: none; color: var(--t3);
+  font-size: 14px; cursor: pointer; padding: 0 2px; font-family: inherit;
+}
+.td-add {
+  display: flex; align-items: center; gap: 6px; margin-top: 2px;
+  padding: 6px 2px; border-top: 1px dashed var(--border);
+}
+.td-add-in {
+  flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+  color: var(--t1); font-family: inherit; font-size: 13px; padding: 0;
+}
+.td-add-in::placeholder { color: var(--t3); }
+
+/* ── 기능 칩 (단가 / MOQ / CB / 샘플 / 명함) ────────── */
+.fn-row {
+  display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px;
+}
+.fn-chip {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px;
+  min-height: 30px; padding: 5px 11px; border-radius: 15px;
+  background: rgba(255,255,255,.05); border: 1.5px solid var(--border);
+  color: var(--t2); font-family: inherit; font-size: 12px; font-weight: 600;
+  white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: transform .1s, background .15s, border-color .15s, color .15s;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
+}
+.fn-chip:active { transform: scale(.94); }
+.fn-chip.holding { background: rgba(245,165,0,.22); border-color: var(--orange); }
+.fn-chip.on-orange { background: rgba(245,165,0,.16); border-color: var(--orange); color: var(--orange); }
+.fn-chip.on-green  { background: rgba(46,125,91,.20); border-color: #3fa87a; color: #6ee7b7; }
+.fn-chip.on-amber  { background: rgba(184,137,45,.20); border-color: #d4a14a; color: #f5c97a; }
+.fn-chip.on-red    { background: rgba(184,53,46,.18); border-color: #c9605a; color: #f3a9a4; }
+.fn-chip-ico { font-size: 13px; line-height: 1; }
+.fn-chip-sub { font-size: 10px; opacity: .75; font-weight: 500; }
+
 /* ══════════════════════════════════════════════════
    PDF 내보내기 전용 (화면에서는 숨김, 인쇄 시에만 표시)
    별도 라이브러리 없이 브라우저 인쇄 → "PDF로 저장" 사용
@@ -623,7 +681,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v15</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v16</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -692,7 +750,6 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <span class="storage-bar-text" id="storage-text">0.0 MB</span>
   </div>
 
-  <div class="qa-anchor" id="qa-anchor-top"></div>
 
   <!-- CURRENT INPUT -->
   <div class="cur-area">
@@ -700,17 +757,46 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       <span>📝 수정 중</span>
       <div class="edit-banner-actions">
         <button class="del-btn" onclick="deleteCurrentProduct()">🗑 삭제</button>
-        <button class="cancel-btn" onclick="cancelEdit()">취소</button>
+        <button class="cancel-btn" onclick="cancelEdit()">✓ 편집 끝내기</button>
       </div>
     </div>
-    <div class="cur-row">
-      <textarea class="name-ta" id="name-ta" rows="2"
-        placeholder="제품명을 입력하세요...&#10;엔터로 줄바꿈 후 특장점 메모 가능"
-        oninput="onNameInput()"></textarea>
+    <!-- 제품명 -->
+    <div class="nm-row">
+      <textarea class="nm-ta" id="name-ta" rows="1"
+        placeholder="제품명" oninput="onNameInput()"></textarea>
       <span class="cat-tag-pill" id="cat-tag-pill" style="display:none;"></span>
-      <button class="mic-btn" id="mic-name" type="button" onclick="toggleVoice('name-ta','mic-name')" title="음성으로 입력">🎤</button>
+      <button class="mic-btn" id="mic-name" type="button" onclick="toggleVoice('name-ta','mic-name')" title="제품명 음성입력">🎤</button>
       <button class="save-btn" id="save-btn" onclick="saveProduct()" disabled>저장</button>
     </div>
+
+    <!-- 메모 -->
+    <div class="memo-box">
+      <textarea class="memo-ta" id="memo-ta" rows="1"
+        placeholder="메모 — 특장점, 부스 위치, 상담 내용" oninput="onMemoInput()"></textarea>
+      <button class="mic-btn" id="mic-memo" type="button" onclick="toggleVoice('memo-ta','mic-memo')" title="메모 음성입력">🎤</button>
+    </div>
+
+    <!-- 확인할 것 -->
+    <div class="td-wrap">
+      <div id="td-list"></div>
+      <div class="td-add">
+        <span style="color:var(--t3);font-size:14px;">＋</span>
+        <input class="td-add-in" id="td-input" type="text" placeholder="확인할 것 추가"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();addTodoFromInput();}">
+        <button class="mic-btn" id="mic-todo" type="button" onclick="toggleVoice('td-input','mic-todo')" title="확인할 것 음성입력">🎤</button>
+      </div>
+    </div>
+
+    <!-- 기능 칩 -->
+    <div class="fn-row">
+      <button class="fn-chip" id="fn-price" type="button"><span class="fn-chip-ico">$</span><span id="fn-price-t">단가</span></button>
+      <button class="fn-chip" id="fn-moq" type="button"><span id="fn-moq-t">MOQ</span></button>
+      <button class="fn-chip" id="fn-cb" type="button"><span class="fn-chip-ico">📋</span><span id="fn-cb-t">CB 미입력</span></button>
+      <button class="fn-chip" id="fn-sample" type="button"><span class="fn-chip-ico">📅</span><span id="fn-sample-t">샘플 신청</span></button>
+      <button class="fn-chip" id="fn-card" type="button"><span class="fn-chip-ico">📇</span><span id="fn-card-t">명함</span></button>
+    </div>
+
+    <div class="cat-row" id="cat-row"></div>
 
     <!-- 📸 제품 사진 섹션 (이름/메모 바로 아래, 깔끔하게) -->
     <div class="photo-section">
@@ -736,41 +822,8 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       </div>
     </div>
 
-    <div class="cat-row" id="cat-row"></div>
   </div>
 
-  <div class="qa-anchor" id="qa-anchor-mid"></div>
-
-  <!-- QUICK ACTIONS (오른쪽 ▲▼ 버튼으로 위치를 위/중간/아래로 이동. 놓으면 그 자리에 고정) -->
-  <div class="qa-grid" id="qa-grid">
-    <div class="qa-move">
-      <button class="qa-move-btn" id="qa-move-up" type="button" onclick="moveQaGrid(-1)" title="위로 이동">▲</button>
-      <button class="qa-move-btn" id="qa-move-down" type="button" onclick="moveQaGrid(1)" title="아래로 이동">▼</button>
-    </div>
-    <button class="qa-btn" id="qa-moq" onclick="openSheet('moq')">
-      <div class="qa-icon c-orange" id="moq-icon">$</div>
-      <div class="qa-top" id="moq-top">MOQ</div>
-      <div class="qa-bot qa-val" id="moq-bot"></div>
-    </button>
-
-    <button class="qa-btn" id="qa-cb">
-      <div class="qa-icon c-orange" id="cb-icon">📋</div>
-      <div class="qa-top" id="cb-top">CB 없음</div>
-      <div class="qa-bot" id="cb-bot"></div>
-    </button>
-
-    <button class="qa-btn" id="qa-sample">
-      <div class="qa-icon c-orange" id="sample-icon">📅</div>
-      <div class="qa-top" id="sample-top">샘플 신청</div>
-      <div class="qa-bot" id="sample-bot"></div>
-    </button>
-
-    <button class="qa-btn" id="qa-card" onclick="document.getElementById('biz-input').click()">
-      <div class="qa-icon c-orange" id="card-icon">📇</div>
-      <div class="qa-top" id="card-top">명함사진</div>
-      <div class="qa-bot" id="card-bot"></div>
-    </button>
-  </div>
 
   <!-- PRODUCT LIST -->
   <div class="content" id="main-page">
@@ -814,7 +867,6 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <div class="ph-grid" id="ph-grid" style="display:none;"></div>
   </div>
 
-  <div class="qa-anchor" id="qa-anchor-bot"></div>
 
   <!-- BOTTOM NAV -->
   <nav class="bnav">
@@ -914,13 +966,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
         <button class="mic-btn" id="mic-sample-memo" type="button" onclick="toggleVoice('sample-memo','mic-sample-memo')" title="음성으로 입력">🎤</button>
       </div>
     </div>
-    <div class="fg">
-      <div class="fl">진행 체크리스트</div>
-      <div class="cl-wrap" id="sample-checklist"></div>
-      <div class="cl-add-row">
-        <input class="fi" id="cl-new-item" type="text" placeholder="체크리스트 항목 추가...">
-        <button class="cl-add-btn" type="button" onclick="addChecklistItem()">+ 추가</button>
-      </div>
+    
     </div>
     <button class="confirm-btn g" onclick="saveSample()">✓ 샘플 신청 완료</button>
     <button class="clear-btn" onclick="clearSample()">초기화</button>
@@ -1480,23 +1526,10 @@ function resumeDraftIfAny() {
     return '<button class="cat-btn" onclick="selectCat(this,\'' + c + '\')">' + c + '</button>';
   }).join('');
 
-  // CB button events
-  const cbBtn = document.getElementById('qa-cb');
-  cbBtn.addEventListener('touchstart', cbStart, {passive:false});
-  cbBtn.addEventListener('touchend', cbEnd, {passive:false});
-  cbBtn.addEventListener('touchcancel', cbCancel, {passive:false});
-  cbBtn.addEventListener('mousedown', cbStart);
-  cbBtn.addEventListener('mouseup', cbEnd);
-  cbBtn.addEventListener('mouseleave', cbCancel);
-
-  // 샘플신청 버튼 이벤트 (CB와 동일한 탭/롱프레스 방식)
-  const sampleBtnEl = document.getElementById('qa-sample');
-  sampleBtnEl.addEventListener('touchstart', sampleStart, {passive:false});
-  sampleBtnEl.addEventListener('touchend', sampleEnd, {passive:false});
-  sampleBtnEl.addEventListener('touchcancel', sampleCancel, {passive:false});
-  sampleBtnEl.addEventListener('mousedown', sampleStart);
-  sampleBtnEl.addEventListener('mouseup', sampleEnd);
-  sampleBtnEl.addEventListener('mouseleave', sampleCancel);
+  // 기능 칩 이벤트 (짧게 / 꾹 누르기)
+  setupFnChips();
+  renderFnChips();
+  renderTodos();
 
   // 드래그&드롭 업로드 영역 설정
   setupDropZone(document.getElementById('dropzone-photos'), 'photos');
@@ -1537,50 +1570,6 @@ function resumeDraftIfAny() {
   });
 })();
 
-// ── 4개 버튼(qa-grid)을 ▲▼ 버튼으로 위/중간/아래 3개 위치로 이동 ──
-// 문서 흐름 안에서 위치만 바뀌므로 입력 영역이 가려지지 않고,
-// '아래'로 가도 하단 고정 탭(제품목록/샘플관리/사진) 위에 머문다.
-var QA_GRID_POS_KEY = 'gz_qa_grid_zone'; // 'top' | 'mid' | 'bot'
-var QA_ZONES = ['top', 'mid', 'bot'];
-
-function getQaZone() {
-  var zone = 'mid';
-  try { var raw = localStorage.getItem(QA_GRID_POS_KEY); if (QA_ZONES.indexOf(raw) >= 0) zone = raw; } catch (e) {}
-  return zone;
-}
-
-// 저장된 위치(zone)의 앵커 바로 뒤로 qa-grid 이동 + 버튼 활성/비활성 갱신
-function applyQaGridPos() {
-  var el = document.getElementById('qa-grid');
-  if (!el) return;
-  var zone = getQaZone();
-  var anchor = document.getElementById('qa-anchor-' + zone);
-  if (anchor && anchor.parentNode) {
-    anchor.parentNode.insertBefore(el, anchor.nextSibling);
-  }
-  // 맨 아래 위치일 때만 하단 탭에 안 가리도록 여백 클래스 추가
-  el.classList.toggle('at-bot', zone === 'bot');
-  // 위/아래 버튼 비활성 처리 (맨 위에선 ▲ 비활성, 맨 아래선 ▼ 비활성)
-  var idx = QA_ZONES.indexOf(zone);
-  var up = document.getElementById('qa-move-up');
-  var down = document.getElementById('qa-move-down');
-  if (up) up.disabled = (idx <= 0);
-  if (down) down.disabled = (idx >= QA_ZONES.length - 1);
-}
-
-// ▲(-1) / ▼(+1) 로 한 칸씩 이동
-function moveQaGrid(dir) {
-  var idx = QA_ZONES.indexOf(getQaZone());
-  var next = Math.max(0, Math.min(QA_ZONES.length - 1, idx + dir));
-  if (next === idx) return;
-  try { localStorage.setItem(QA_GRID_POS_KEY, QA_ZONES[next]); } catch (e) {}
-  applyQaGridPos();
-  var label = { top: '맨 위', mid: '가운데', bot: '맨 아래' }[QA_ZONES[next]];
-  showToast('버튼을 ' + label + '로 옮겼어요');
-}
-
-applyQaGridPos(); // 저장된 위치 복원
-
 // ── 자동 업데이트 확인 (새 버전 배포 시 재설치 없이 자동 반영) ──
 // 서버의 index.html을 캐시 없이 새로 받아와 내용이 달라지면 자동으로 새로고침한다.
 function checkForAppUpdate() {
@@ -1610,13 +1599,78 @@ document.addEventListener('visibilitychange', function() {
 });
 
 // ── NAME INPUT ─────────────────────────────────────────
-function onNameInput() {
-  const el = document.getElementById('name-ta');
-  cur.name = el.value.trim();
+function autoGrow(el) {
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 'px';
+}
+
+function onNameInput() {
+  const el = document.getElementById('name-ta');
+  cur.name = el.value.replace(/\n/g, ' ').trim();
+  autoGrow(el);
   updateSaveBtn();
   renderChips();
+  scheduleAutoSave();
+}
+
+function onMemoInput() {
+  const el = document.getElementById('memo-ta');
+  cur.memo = el.value;
+  autoGrow(el);
+  updateSaveBtn();
+  scheduleAutoSave();
+}
+
+/* ── 확인할 것 (모든 제품 공통 체크리스트) ──────────────
+   예전에는 샘플신청 창 안에 숨어 있어 잘 보지 않게 됐다.
+   이제 메모 바로 아래에 두고, 목록 카드에도 그대로 보여준다. */
+function renderTodos() {
+  var box = document.getElementById('td-list');
+  if (!box) return;
+  var list = cur.todos || [];
+  box.innerHTML = list.map(function(t) {
+    return '<div class="td-item' + (t.done ? ' done' : '') + '">' +
+      '<button class="td-box' + (t.done ? ' done' : '') + '" type="button" onclick="toggleTodo(\'' + t.id + '\')">' + (t.done ? '✓' : '') + '</button>' +
+      '<span class="td-text" onclick="toggleTodo(\'' + t.id + '\')">' + escapeHtmlLite(t.text) + '</span>' +
+      '<button class="td-del" type="button" onclick="removeTodo(\'' + t.id + '\')">✕</button>' +
+      '</div>';
+  }).join('');
+}
+
+function escapeHtmlLite(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function addTodo(text) {
+  text = (text || '').trim();
+  if (!text) return;
+  if (!Array.isArray(cur.todos)) cur.todos = [];
+  cur.todos.push({ id: 't' + Date.now() + Math.floor(Math.random() * 1000), text: text, done: false });
+  renderTodos();
+  updateSaveBtn();
+  scheduleAutoSave();
+}
+
+function addTodoFromInput() {
+  var el = document.getElementById('td-input');
+  addTodo(el.value);
+  el.value = '';
+  el.focus();
+}
+
+function toggleTodo(id) {
+  var t = (cur.todos || []).find(function(x) { return x.id === id; });
+  if (!t) return;
+  t.done = !t.done;
+  renderTodos();
+  scheduleAutoSave();
+}
+
+function removeTodo(id) {
+  cur.todos = (cur.todos || []).filter(function(x) { return x.id !== id; });
+  renderTodos();
+  updateSaveBtn();
   scheduleAutoSave();
 }
 
@@ -1652,8 +1706,149 @@ function renderCatUI() {
 
 // ── SAVE BTN ──────────────────────────────────────────
 function updateSaveBtn() {
-  const has = cur.name || cur.photos.length || cur.bizCards.length || cur.category || cur.moq || cur.cb || cur.sample;
+  const has = cur.name || cur.memo || (cur.todos && cur.todos.length) || cur.photos.length || cur.bizCards.length || cur.category || cur.moq || cur.cb || cur.sample;
   document.getElementById('save-btn').disabled = !has;
+}
+
+/* ══════════════════════════════════════════════════════
+   기능 칩 (단가 / MOQ / CB / 샘플 / 명함)
+   ──────────────────────────────────────────────────────
+   짧게 = 빠른 동작, 꾹 = 상세 입력.
+   CB·샘플만 꾹 누르기를 쓰고, 단가·MOQ·명함은 바로 실행된다.
+   ══════════════════════════════════════════════════════ */
+function fnSet(id, txtId, text, cls, sub) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'fn-chip' + (cls ? ' ' + cls : '');
+  var t = document.getElementById(txtId);
+  if (t) t.textContent = text;
+  var old = el.querySelector('.fn-chip-sub');
+  if (old) old.remove();
+  if (sub) {
+    var s = document.createElement('span');
+    s.className = 'fn-chip-sub';
+    s.textContent = sub;
+    el.appendChild(s);
+  }
+}
+
+function fmtNum(v) {
+  var n = String(v == null ? '' : v).replace(/[^0-9.]/g, '');
+  if (!n) return '';
+  var parts = n.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+}
+
+function renderFnChips() {
+  // 단가
+  var price = (cur.moq && cur.moq.price && cur.moq.price !== '-') ? cur.moq.price : '';
+  if (price) fnSet('fn-price', 'fn-price-t', fmtNum(price), 'on-orange');
+  else fnSet('fn-price', 'fn-price-t', '단가', '');
+
+  // MOQ
+  var qty = (cur.moq && cur.moq.qty && cur.moq.qty !== '-') ? cur.moq.qty : '';
+  if (qty) fnSet('fn-moq', 'fn-moq-t', 'MOQ ' + fmtNum(qty), 'on-orange');
+  else fnSet('fn-moq', 'fn-moq-t', 'MOQ', '');
+
+  // CB
+  if (!cur.cb) fnSet('fn-cb', 'fn-cb-t', 'CB 미입력', '');
+  else if (cur.cb.owned) fnSet('fn-cb', 'fn-cb-t', 'CB 보유', 'on-green');
+  else if (cur.cb.date) fnSet('fn-cb', 'fn-cb-t', 'CB 진행중', 'on-amber', pptFmtDate(cur.cb.date));
+  else fnSet('fn-cb', 'fn-cb-t', 'CB 없음', 'on-red');
+
+  // 샘플
+  if (!cur.sample) {
+    fnSet('fn-sample', 'fn-sample-t', '샘플 신청', '');
+  } else {
+    var sub = '';
+    if (cur.sample.expected) {
+      var d = dLeftFromDate(cur.sample.expected);
+      sub = (d === null) ? '' : (d < 0 ? '지연 ' + (-d) + '일' : 'D-' + d);
+    } else if (cur.sample.days) {
+      sub = cur.sample.days + '일';
+    }
+    fnSet('fn-sample', 'fn-sample-t', '샘플 신청', 'on-green', sub);
+  }
+
+  // 명함
+  var nc = (cur.bizCards || []).length;
+  if (nc) fnSet('fn-card', 'fn-card-t', '명함 ' + nc, 'on-orange');
+  else fnSet('fn-card', 'fn-card-t', '명함', '');
+}
+
+// 예정일 기준 남은 일수 (오늘 기준)
+function dLeftFromDate(ds) {
+  if (!ds) return null;
+  var t = new Date(ds + 'T00:00:00');
+  if (isNaN(t.getTime())) return null;
+  var now = new Date(); now.setHours(0, 0, 0, 0);
+  return Math.round((t - now) / 86400000);
+}
+
+/* 칩에 "짧게 / 꾹" 동작을 붙인다.
+   onTap = 짧게 눌렀을 때, onHold = 0.5초 이상 눌렀을 때(없으면 짧게와 동일) */
+function bindChip(id, onTap, onHold) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var timer = null, isLong = false;
+
+  function start(e) {
+    if (e.type === 'touchstart') e.preventDefault();
+    isLong = false;
+    el.classList.add('holding');
+    if (onHold) {
+      timer = setTimeout(function() {
+        isLong = true;
+        el.classList.remove('holding');
+        if (navigator.vibrate) { try { navigator.vibrate(15); } catch (err) {} }
+        onHold();
+      }, 500);
+    }
+  }
+  function end(e) {
+    if (e.type === 'touchend') e.preventDefault();
+    clearTimeout(timer);
+    el.classList.remove('holding');
+    if (!isLong) onTap();
+    isLong = false;
+  }
+  function cancel() {
+    clearTimeout(timer);
+    el.classList.remove('holding');
+    isLong = false;
+  }
+
+  el.addEventListener('touchstart', start, { passive: false });
+  el.addEventListener('touchend', end, { passive: false });
+  el.addEventListener('touchcancel', cancel, { passive: false });
+  el.addEventListener('mousedown', start);
+  el.addEventListener('mouseup', end);
+  el.addEventListener('mouseleave', cancel);
+}
+
+function setupFnChips() {
+  // 단가 / MOQ — 같은 입력창을 열되 누른 쪽에 커서를 둔다
+  bindChip('fn-price', function() { openMoqSheet('price'); });
+  bindChip('fn-moq',   function() { openMoqSheet('qty'); });
+
+  // CB — 짧게: 보유 토글 / 꾹: 상세(완성 예정일)
+  bindChip('fn-cb', function() { quickToggleCb(); }, function() { openOverlay('cb'); });
+
+  // 샘플 — 짧게: 신청 표시 / 꾹: 상세(소요일·메모)
+  bindChip('fn-sample', function() { quickToggleSample(); }, function() { openOverlay('sample'); });
+
+  // 명함 — 바로 카메라
+  bindChip('fn-card', function() { document.getElementById('biz-input').click(); });
+}
+
+// 단가·MOQ 입력창을 열고 지정한 칸에 커서를 놓는다
+function openMoqSheet(focusField) {
+  openOverlay('moq');
+  setTimeout(function() {
+    var el = document.getElementById(focusField === 'qty' ? 'moq-qty' : 'moq-price');
+    if (el) { el.focus(); try { el.select(); } catch (e) {} }
+  }, 320);
 }
 
 // ── CHIPS ─────────────────────────────────────────────
@@ -2071,21 +2266,7 @@ function delBizCard(i) {
 }
 
 function updateCardBtn() {
-  var btn = document.getElementById('qa-card');
-  var icon = document.getElementById('card-icon');
-  if (cur.bizCards.length > 0) {
-    btn.className = 'qa-btn on-blue';
-    icon.className = 'qa-icon';
-    icon.innerHTML = '<img class="qa-icon-photo" src="' + cur.bizCards[0] + '">';
-    document.getElementById('card-top').textContent = cur.bizCards.length > 1 ? cur.bizCards.length + '장' : '';
-    document.getElementById('card-bot').textContent = '';
-  } else {
-    btn.className = 'qa-btn';
-    icon.className = 'qa-icon c-orange';
-    icon.innerHTML = '📇';
-    document.getElementById('card-top').textContent = '명함사진';
-    document.getElementById('card-bot').textContent = '';
-  }
+  renderFnChips();
 }
 
 // ── DRAG & DROP (PC에서 사진 파일 끌어다 놓기) ─────────
@@ -2133,45 +2314,23 @@ function blockGlobalDrop() {
 }
 
 // ── CB PRESS ──────────────────────────────────────────
-function cbStart(e) {
-  e.preventDefault();
-  cbIsLong = false;
-  cbPressTimer = setTimeout(function() {
-    cbIsLong = true;
-    openOverlay('cb');
-  }, 500);
-}
-function cbEnd(e) {
-  e.preventDefault();
-  clearTimeout(cbPressTimer);
-  if (!cbIsLong) toggleCb();
-  cbIsLong = false;
-}
-function cbCancel(e) {
-  clearTimeout(cbPressTimer);
-  cbIsLong = false;
-}
+
+
+
 
 function toggleCb() {
   if (cur.cb && cur.cb.owned) {
     cur.cb = null;
-    document.getElementById('qa-cb').className = 'qa-btn';
-    document.getElementById('cb-icon').style.display = '';
-    document.getElementById('cb-icon').className = 'qa-icon c-orange';
-    document.getElementById('cb-icon').textContent = '📋';
-    document.getElementById('cb-top').textContent = 'CB 없음';
-    document.getElementById('cb-bot').textContent = '';
   } else {
     cur.cb = { owned: true, date: null };
-    document.getElementById('qa-cb').className = 'qa-btn on-green';
-    document.getElementById('cb-icon').style.display = 'none';
-    document.getElementById('cb-top').innerHTML = '<span class="val-big green">CB 보유</span>';
-    document.getElementById('cb-bot').textContent = '';
     showToast('CB 보유 확인');
   }
+  renderFnChips();
   renderChips();
   updateSaveBtn();
+  scheduleAutoSave();
 }
+function quickToggleCb() { toggleCb(); }
 
 // ── 음성입력 (Web Speech API) ──────────────────────────
 var voiceRecognition = null;
@@ -2222,45 +2381,23 @@ function toggleVoice(targetId, btnId) {
 }
 
 
-function sampleStart(e) {
-  e.preventDefault();
-  sampleIsLong = false;
-  samplePressTimer = setTimeout(function() {
-    sampleIsLong = true;
-    openOverlay('sample');
-  }, 500);
-}
-function sampleEnd(e) {
-  e.preventDefault();
-  clearTimeout(samplePressTimer);
-  if (!sampleIsLong) toggleSampleQuick();
-  sampleIsLong = false;
-}
-function sampleCancel(e) {
-  clearTimeout(samplePressTimer);
-  sampleIsLong = false;
-}
+
+
+
 
 function toggleSampleQuick() {
   if (cur.sample) {
     cur.sample = null;
-    document.getElementById('qa-sample').className = 'qa-btn';
-    document.getElementById('sample-icon').style.display = '';
-    document.getElementById('sample-icon').className = 'qa-icon c-orange';
-    document.getElementById('sample-icon').textContent = '📅';
-    document.getElementById('sample-top').textContent = '샘플 신청';
-    document.getElementById('sample-bot').textContent = '';
   } else {
-    cur.sample = { days: null, expected: null, memo: '', checklist: defaultChecklist() };
-    document.getElementById('qa-sample').className = 'qa-btn on-green';
-    document.getElementById('sample-icon').style.display = 'none';
-    document.getElementById('sample-top').innerHTML = '<span class="val-big green">샘플 신청</span>';
-    document.getElementById('sample-bot').textContent = '';
-    showToast('샘플 신청 완료');
+    cur.sample = { days: null, expected: null, memo: '' };
+    showToast('샘플 신청 표시');
   }
+  renderFnChips();
   renderChips();
   updateSaveBtn();
+  scheduleAutoSave();
 }
+function quickToggleSample() { toggleSampleQuick(); }
 
 // ── 샘플 진행 체크리스트 ────────────────────────────────
 function defaultChecklist() {
@@ -2271,19 +2408,7 @@ function defaultChecklist() {
     { id: 'c4', text: '수령 완료', done: false }
   ];
 }
-function renderChecklist() {
-  var wrap = document.getElementById('sample-checklist');
-  if (!cur.sample) { wrap.innerHTML = ''; return; }
-  if (!cur.sample.checklist) cur.sample.checklist = defaultChecklist();
-  var list = cur.sample.checklist;
-  wrap.innerHTML = list.map(function(it) {
-    return '<div class="cl-item">' +
-      '<button class="cl-check' + (it.done ? ' done' : '') + '" onclick="toggleChecklistItem(\'' + it.id + '\')">' + (it.done ? '✓' : '') + '</button>' +
-      '<span class="cl-text' + (it.done ? ' done' : '') + '">' + it.text + '</span>' +
-      '<span class="cl-del" onclick="delChecklistItem(\'' + it.id + '\')">✕</span>' +
-      '</div>';
-  }).join('');
-}
+function renderChecklist() { /* 확인할 것으로 이동됨 */ }
 function toggleChecklistItem(id) {
   if (!cur.sample || !cur.sample.checklist) return;
   var it = cur.sample.checklist.find(function(x){ return x.id === id; });
@@ -2352,10 +2477,6 @@ function saveMoq() {
   var qty = document.getElementById('moq-qty').value;
   if (!price && !qty) { showToast('가격 또는 수량을 입력해주세요'); return; }
   cur.moq = { price: price || '-', qty: qty || '-', memo: document.getElementById('moq-memo').value };
-  document.getElementById('qa-moq').className = 'qa-btn on-orange';
-  document.getElementById('moq-icon').style.display = 'none';
-  document.getElementById('moq-top').innerHTML = '<span class="price-big">$' + price + '</span>';
-  document.getElementById('moq-bot').textContent = qty ? 'MOQ ' + qty : '';
   closeOverlay('moq');
   renderChips(); updateSaveBtn();
   showToast('가격 · MOQ 저장됨');
@@ -2365,12 +2486,6 @@ function clearMoq() {
   document.getElementById('moq-price').value = '';
   document.getElementById('moq-qty').value = '';
   document.getElementById('moq-memo').value = '';
-  document.getElementById('qa-moq').className = 'qa-btn';
-  document.getElementById('moq-icon').style.display = '';
-  document.getElementById('moq-icon').className = 'qa-icon c-orange';
-  document.getElementById('moq-icon').textContent = '$';
-  document.getElementById('moq-top').textContent = 'MOQ';
-  document.getElementById('moq-bot').textContent = '';
   closeOverlay('moq');
   renderChips(); updateSaveBtn();
 }
@@ -2380,22 +2495,12 @@ function saveCbDate() {
   var date = document.getElementById('cb-date').value;
   if (!date) { showToast('날짜를 선택해주세요'); return; }
   cur.cb = { owned: false, date: date };
-  document.getElementById('qa-cb').className = 'qa-btn on-amber';
-  document.getElementById('cb-icon').style.display = 'none';
-  document.getElementById('cb-top').innerHTML = '<span class="val-big amber">' + fmtDate(date) + '</span>';
-  document.getElementById('cb-bot').textContent = '진행중';
   closeOverlay('cb');
   renderChips(); updateSaveBtn();
   showToast('CB 예정일 저장됨');
 }
 function clearCb() {
   cur.cb = null;
-  document.getElementById('qa-cb').className = 'qa-btn';
-  document.getElementById('cb-icon').style.display = '';
-  document.getElementById('cb-icon').className = 'qa-icon c-orange';
-  document.getElementById('cb-icon').textContent = '📋';
-  document.getElementById('cb-top').textContent = 'CB 없음';
-  document.getElementById('cb-bot').textContent = '';
   closeOverlay('cb');
   renderChips(); updateSaveBtn();
 }
@@ -2420,10 +2525,6 @@ function saveSample() {
   var expected = d.toISOString().split('T')[0];
   var checklist = (cur.sample && cur.sample.checklist) ? cur.sample.checklist : defaultChecklist();
   cur.sample = { days: days, expected: expected, memo: document.getElementById('sample-memo').value, checklist: checklist };
-  document.getElementById('qa-sample').className = 'qa-btn on-green';
-  document.getElementById('sample-icon').style.display = 'none';
-  document.getElementById('sample-top').innerHTML = '<span class="val-big green">' + fmtDate(expected) + '</span>';
-  document.getElementById('sample-bot').textContent = '샘플 예정일';
   closeOverlay('sample');
   renderChips(); updateSaveBtn();
   showToast('샘플 신청 완료!');
@@ -2433,14 +2534,7 @@ function clearSample() {
   document.getElementById('sample-days').value = '';
   document.getElementById('sample-memo').value = '';
   document.getElementById('cl-new-item').value = '';
-  document.getElementById('sample-checklist').innerHTML = '';
   document.getElementById('edd').style.display = 'none';
-  document.getElementById('qa-sample').className = 'qa-btn';
-  document.getElementById('sample-icon').style.display = '';
-  document.getElementById('sample-icon').className = 'qa-icon c-orange';
-  document.getElementById('sample-icon').textContent = '📅';
-  document.getElementById('sample-top').textContent = '샘플 신청';
-  document.getElementById('sample-bot').textContent = '';
   closeOverlay('sample');
   renderChips(); updateSaveBtn();
 }
@@ -2453,12 +2547,11 @@ function scheduleAutoSave() {
   autoSaveTimer = setTimeout(performAutoSave, 800);
 }
 function performAutoSave() {
-  var hasData = cur.name || cur.photos.length || cur.bizCards.length || cur.category || cur.moq || cur.cb || cur.sample;
+  var hasData = cur.name || cur.memo || (cur.todos && cur.todos.length) || cur.photos.length || cur.bizCards.length || cur.category || cur.moq || cur.cb || cur.sample;
   if (!hasData) return;
 
-  var lines = document.getElementById('name-ta').value.split('\n');
-  var name = lines[0].trim() || '(이름 없음)';
-  var memo = lines.slice(1).join('\n').trim();
+  var name = document.getElementById('name-ta').value.replace(/\s*\n\s*/g, ' ').trim() || '(이름 없음)';
+  var memo = document.getElementById('memo-ta').value.trim();
 
   if (editingId) {
     var idx = products.findIndex(function(x){ return x.id === editingId; });
@@ -2471,6 +2564,7 @@ function performAutoSave() {
       photos: cur.photos.slice(),
       bizCards: cur.bizCards.slice(),
       category: cur.category,
+      todos: (cur.todos || []).map(function(t){ return Object.assign({}, t); }),
       moq: cur.moq ? Object.assign({}, cur.moq) : null,
       cb: cur.cb ? Object.assign({}, cur.cb) : null,
       sample: cloneSample(cur.sample)
@@ -2484,6 +2578,7 @@ function performAutoSave() {
       photos: cur.photos.slice(),
       bizCards: cur.bizCards.slice(),
       category: cur.category,
+      todos: (cur.todos || []).map(function(t){ return Object.assign({}, t); }),
       moq: cur.moq ? Object.assign({}, cur.moq) : null,
       cb: cur.cb ? Object.assign({}, cur.cb) : null,
       sample: cloneSample(cur.sample)
@@ -2491,6 +2586,10 @@ function performAutoSave() {
     products.unshift(p);
     editingId = p.id; // 이후 입력은 같은 항목에 계속 자동 저장됨
     saveDraftId(editingId); // 새로고침되어도 같은 항목에 계속 이어붙도록 기록
+    // 의도치 않게 새 제품이 만들어졌을 때 바로 알아챌 수 있도록 알린다
+    document.getElementById('edit-banner').classList.add('show');
+    document.getElementById('save-btn').textContent = '저장';
+    showToast('\u270F\uFE0F 새 제품 기록을 시작했어요');
   }
   persist();
   renderList();
@@ -2498,9 +2597,8 @@ function performAutoSave() {
 }
 
 function saveProduct() {
-  var lines = document.getElementById('name-ta').value.split('\n');
-  var name = lines[0].trim() || '(이름 없음)';
-  var memo = lines.slice(1).join('\n').trim();
+  var name = document.getElementById('name-ta').value.replace(/\s*\n\s*/g, ' ').trim() || '(이름 없음)';
+  var memo = document.getElementById('memo-ta').value.trim();
 
   if (editingId) {
     // 수정 모드 — 기존 제품 업데이트
@@ -2515,6 +2613,7 @@ function saveProduct() {
         photos: cur.photos.slice(),
         bizCards: cur.bizCards.slice(),
         category: cur.category,
+        todos: (cur.todos || []).map(function(t){ return Object.assign({}, t); }),
         moq: cur.moq ? Object.assign({}, cur.moq) : null,
         cb: cur.cb ? Object.assign({}, cur.cb) : null,
         sample: cloneSample(cur.sample)
@@ -2527,10 +2626,13 @@ function saveProduct() {
           showToast('🚨 수정 실패 - 저장공간이 부족해요. 사진을 줄여주세요');
           return;
         }
-        resetCur();
+        /* 수정 저장 후에도 편집을 끝내지 않는다.
+           예전에는 여기서 편집이 끝나 입력창이 빈 상태가 됐는데,
+           화면이 그대로처럼 보여 사진을 더 넣으면 (이름 없음) 제품이 새로 생겼다.
+           이제는 "취소(닫기)"를 눌러야 편집이 끝난다. */
         renderList();
         updateStorageBar();
-        showToast('✓ 수정되었어요!');
+        showToast('✓ 저장했어요 — 계속 편집 중');
       });
       return;
     } else {
@@ -2550,6 +2652,7 @@ function saveProduct() {
       photos: cur.photos.slice(),
       bizCards: cur.bizCards.slice(),
       category: cur.category,
+      todos: (cur.todos || []).map(function(t){ return Object.assign({}, t); }),
       moq: cur.moq ? Object.assign({}, cur.moq) : null,
       cb: cur.cb ? Object.assign({}, cur.cb) : null,
       sample: cloneSample(cur.sample)
@@ -2572,6 +2675,16 @@ function saveProduct() {
 }
 
 // ── EDIT / DELETE ─────────────────────────────────────
+/* 예전 버전에서 샘플신청 안에 있던 체크리스트를 "확인할 것"으로 옮긴다.
+   이미 todos가 있으면 그대로 쓴다. */
+function migrateTodos(p) {
+  if (Array.isArray(p.todos)) return p.todos.map(function(t){ return Object.assign({}, t); });
+  var old = (p.sample && Array.isArray(p.sample.checklist)) ? p.sample.checklist : [];
+  return old.map(function(t) {
+    return { id: t.id || ('t' + Math.random().toString(36).slice(2)), text: t.text, done: !!t.done };
+  });
+}
+
 function editProduct(id) {
   var p = products.find(function(x){ return x.id === id; });
   if (!p) return;
@@ -2579,6 +2692,8 @@ function editProduct(id) {
   editingId = id;
   saveDraftId(editingId);
   cur.name = p.name || '';
+  cur.memo = p.memo || '';
+  cur.todos = migrateTodos(p);
   cur.photos = (p.photos || []).slice();
   cur.bizCards = (p.bizCards || []).slice();
   cur.category = p.category || null;
@@ -2586,11 +2701,15 @@ function editProduct(id) {
   cur.cb = p.cb ? Object.assign({}, p.cb) : null;
   cur.sample = cloneSample(p.sample);
 
-  // 이름+메모 textarea 세팅
   var ta = document.getElementById('name-ta');
-  ta.value = p.name + (p.memo ? '\n' + p.memo : '');
-  ta.style.height = 'auto';
-  ta.style.height = ta.scrollHeight + 'px';
+  ta.value = cur.name;
+  autoGrow(ta);
+
+  var ma = document.getElementById('memo-ta');
+  ma.value = cur.memo;
+  autoGrow(ma);
+
+  renderTodos();
 
   syncUIFromCur();
 
@@ -2604,7 +2723,7 @@ function editProduct(id) {
 
 function cancelEdit() {
   resetCur();
-  showToast('수정 취소');
+  showToast('편집을 끝냈어요');
 }
 
 function deleteCurrentProduct() {
@@ -2628,63 +2747,8 @@ function deleteCurrentProduct() {
 function syncUIFromCur() {
   // 카테고리
   renderCatUI();
-
-  // MOQ
-  var moqBtn = document.getElementById('qa-moq');
-  var moqIcon = document.getElementById('moq-icon');
-  if (cur.moq) {
-    moqBtn.className = 'qa-btn on-orange';
-    moqIcon.style.display = 'none';
-    document.getElementById('moq-top').innerHTML = '<span class="price-big">$' + cur.moq.price + '</span>';
-    document.getElementById('moq-bot').textContent = cur.moq.qty ? 'MOQ ' + cur.moq.qty : '';
-  } else {
-    moqBtn.className = 'qa-btn';
-    moqIcon.style.display = '';
-    document.getElementById('moq-top').textContent = 'MOQ';
-    document.getElementById('moq-bot').textContent = '';
-  }
-
-  // CB
-  var cbBtn = document.getElementById('qa-cb');
-  var cbIcon = document.getElementById('cb-icon');
-  if (cur.cb && cur.cb.owned) {
-    cbBtn.className = 'qa-btn on-green';
-    cbIcon.style.display = 'none';
-    document.getElementById('cb-top').innerHTML = '<span class="val-big green">CB 보유</span>';
-    document.getElementById('cb-bot').textContent = '';
-  } else if (cur.cb && cur.cb.date) {
-    cbBtn.className = 'qa-btn on-amber';
-    cbIcon.style.display = 'none';
-    document.getElementById('cb-top').innerHTML = '<span class="val-big amber">' + fmtDate(cur.cb.date) + '</span>';
-    document.getElementById('cb-bot').textContent = '진행중';
-  } else {
-    cbBtn.className = 'qa-btn';
-    cbIcon.style.display = '';
-    cbIcon.className = 'qa-icon c-orange';
-    cbIcon.textContent = '📋';
-    document.getElementById('cb-top').textContent = 'CB 없음';
-    document.getElementById('cb-bot').textContent = '';
-  }
-
-  // Sample
-  var sampleBtn = document.getElementById('qa-sample');
-  var sampleIcon = document.getElementById('sample-icon');
-  if (cur.sample && cur.sample.days) {
-    sampleBtn.className = 'qa-btn on-green';
-    sampleIcon.style.display = 'none';
-    document.getElementById('sample-top').innerHTML = '<span class="val-big green">' + fmtDate(cur.sample.expected) + '</span>';
-    document.getElementById('sample-bot').textContent = '샘플 예정일';
-  } else if (cur.sample) {
-    sampleBtn.className = 'qa-btn on-green';
-    sampleIcon.style.display = 'none';
-    document.getElementById('sample-top').innerHTML = '<span class="val-big green">샘플 신청</span>';
-    document.getElementById('sample-bot').textContent = '';
-  } else {
-    sampleBtn.className = 'qa-btn';
-    sampleIcon.style.display = '';
-    document.getElementById('sample-top').textContent = '샘플 신청';
-    document.getElementById('sample-bot').textContent = '';
-  }
+  renderFnChips();
+  renderTodos();
 
   renderPhotos();
   renderBizCards();
@@ -2695,7 +2759,8 @@ function syncUIFromCur() {
 
 function resetCur() {
   clearTimeout(autoSaveTimer);
-  cur.name = ''; cur.photos = []; cur.bizCards = []; cur.category = null;
+  cur.name = ''; cur.memo = ''; cur.todos = [];
+  cur.photos = []; cur.bizCards = []; cur.category = null;
   cur.moq = null; cur.cb = null; cur.sample = null;
 
   // edit mode 해제 (저장/취소/삭제로 명시적으로 끝냈을 때만 여기로 옴)
@@ -2706,6 +2771,11 @@ function resetCur() {
 
   document.getElementById('name-ta').value = '';
   document.getElementById('name-ta').style.height = '';
+  document.getElementById('memo-ta').value = '';
+  document.getElementById('memo-ta').style.height = '';
+  var tdi = document.getElementById('td-input');
+  if (tdi) tdi.value = '';
+  renderTodos();
   document.getElementById('save-btn').disabled = true;
 
   // 사진 섹션들은 빈 상태로 리렌더 (드롭존 힌트 다시 표시)
@@ -2718,26 +2788,8 @@ function resetCur() {
   document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('active'); });
 
   // Reset QA buttons
-  document.getElementById('qa-moq').className = 'qa-btn';
-  document.getElementById('moq-icon').style.display = '';
-  document.getElementById('moq-icon').className = 'qa-icon c-orange';
-  document.getElementById('moq-icon').textContent = '$';
-  document.getElementById('moq-top').textContent = 'MOQ';
-  document.getElementById('moq-bot').textContent = '';
 
-  document.getElementById('qa-cb').className = 'qa-btn';
-  document.getElementById('cb-icon').style.display = '';
-  document.getElementById('cb-icon').className = 'qa-icon c-orange';
-  document.getElementById('cb-icon').textContent = '📋';
-  document.getElementById('cb-top').textContent = 'CB 없음';
-  document.getElementById('cb-bot').textContent = '';
 
-  document.getElementById('qa-sample').className = 'qa-btn';
-  document.getElementById('sample-icon').style.display = '';
-  document.getElementById('sample-icon').className = 'qa-icon c-orange';
-  document.getElementById('sample-icon').textContent = '📅';
-  document.getElementById('sample-top').textContent = '샘플 신청';
-  document.getElementById('sample-bot').textContent = '';
 
   updateCardBtn();
 }
@@ -2783,9 +2835,12 @@ function renderList() {
       if (p.cb.owned) badges.push('<span class="badge green">CB보유</span>');
       else if (p.cb.date) badges.push('<span class="badge amber">CB예정 ' + fmtDate(p.cb.date) + '</span>');
     }
-    if (p.sample) badges.push(p.sample.days
-      ? '<span class="badge green">샘플 D+' + p.sample.days + ' · ' + fmtDate(p.sample.expected) + '</span>'
-      : '<span class="badge green">샘플 신청</span>');
+    if (p.sample) {
+      var dl = dLeftFromDate(p.sample.expected);
+      if (dl === null) badges.push('<span class="badge green">샘플 신청</span>');
+      else if (dl < 0) badges.push('<span class="badge" style="background:rgba(224,85,85,.18);color:#f3a9a4;">샘플 지연 ' + (-dl) + '일</span>');
+      else badges.push('<span class="badge green">샘플 D-' + dl + ' · ' + fmtDate(p.sample.expected) + '</span>');
+    }
     if (p.bizCards && p.bizCards.length > 0) badges.push('<span class="badge" style="background:rgba(74,158,255,.15);color:var(--blue);">📇 명함 ' + p.bizCards.length + '장</span>');
     if (!p.moq && !p.cb && !p.sample) badges.push('<span class="badge grey">정보 없음</span>');
 
@@ -2798,10 +2853,24 @@ function renderList() {
           : '<div class="p-photo" style="display:flex;align-items:center;justify-content:center;background:rgba(224,85,85,.1);color:var(--red);font-size:14px;">⚠️</div>';
       }).join('') + '</div>' : '';
 
+    // 확인할 것 — 아직 체크 안 한 항목을 카드에 그대로 보여준다
+    var todos = Array.isArray(p.todos) ? p.todos : migrateTodos(p);
+    var undone = todos.filter(function(t){ return !t.done; });
+    var todoHtml = '';
+    if (undone.length) {
+      todoHtml = '<div class="p-todo">' +
+        undone.slice(0, 3).map(function(t) {
+          return '<div class="p-todo-item">☐ ' + escapeHtmlLite(t.text) + '</div>';
+        }).join('') +
+        (undone.length > 3 ? '<div class="p-todo-more">외 ' + (undone.length - 3) + '건</div>' : '') +
+        '</div>';
+    }
+
     html += '<div class="p-card" onclick="editProduct(' + p.id + ')">' +
-      '<div class="p-head"><div class="p-name">' + p.name + '</div><div class="p-date">' + p.date + '</div></div>' +
+      '<div class="p-head"><div class="p-name">' + escapeHtmlLite(p.name) + '</div><div class="p-date">' + p.date + '</div></div>' +
       (catBadge ? '<div class="p-cat-row">' + catBadge + '</div>' : '') +
-      (p.memo ? '<div class="p-memo">' + p.memo + '</div>' : '') +
+      (p.memo ? '<div class="p-memo">' + escapeHtmlLite(p.memo) + '</div>' : '') +
+      todoHtml +
       photos +
       '<div class="p-badges">' + badges.join('') + '</div>' +
       '</div>';
@@ -2817,7 +2886,6 @@ function switchNav(el, page) {
   var sp = document.getElementById('sample-page');
   var pp = document.getElementById('photos-page');
   var curArea = document.querySelector('.cur-area');
-  var qaGrid = document.getElementById('qa-grid');
   main.style.display = 'none';
   sp.style.display = 'none';
   pp.style.display = 'none';
@@ -2825,17 +2893,14 @@ function switchNav(el, page) {
     sp.style.display = 'flex';
     sp.style.flexDirection = 'column';
     if (curArea) curArea.style.display = 'none';
-    if (qaGrid) qaGrid.style.display = 'none';
     renderSamplePage();
   } else if (page === 'photos') {
     pp.style.display = '';
     if (curArea) curArea.style.display = 'none';
-    if (qaGrid) qaGrid.style.display = 'none';
     renderPhotosPage();
   } else {
     main.style.display = '';
     if (curArea) curArea.style.display = '';
-    if (qaGrid) qaGrid.style.display = '';
   }
 }
 
@@ -3794,7 +3859,7 @@ function exportDayBackup(day) {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v15',
+      version: 'v16',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -3830,7 +3895,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v15',
+      version: 'v16',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
