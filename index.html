@@ -699,7 +699,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v17</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v18</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -812,6 +812,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       <button class="fn-chip" id="fn-cb" type="button"><span class="fn-chip-ico">📋</span><span id="fn-cb-t">CB 미입력</span></button>
       <button class="fn-chip" id="fn-sample" type="button"><span class="fn-chip-ico">📅</span><span id="fn-sample-t">샘플 신청</span></button>
       <button class="fn-chip" id="fn-card" type="button"><span class="fn-chip-ico">📇</span><span id="fn-card-t">명함</span></button>
+      <button class="fn-chip" id="fn-cat" type="button" onclick="openCatPicker()"><span class="fn-chip-ico">🏷</span><span id="fn-cat-t">카테고리</span></button>
     </div>
 
     <!-- 카테고리 선택 줄은 화면에서 제거 (데이터 필드는 보존) -->
@@ -1050,6 +1051,17 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <button class="confirm-btn" id="ppt-confirm" onclick="runExport()">
       ✓ PPT 파일 생성 &amp; 다운로드
     </button>
+  </div>
+</div>
+
+<!-- 카테고리 선택 -->
+<div class="overlay" id="cat-overlay" onclick="closeOverlay('cat')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🏷 카테고리</div>
+    <div id="cat-pick-row" style="display:flex; flex-wrap:wrap; gap:7px; margin-top:4px;"></div>
+    <button class="confirm-btn" style="background:rgba(255,255,255,.08); color:var(--t2); margin-top:14px;"
+            onclick="pickCategory(null)">선택 안 함</button>
   </div>
 </div>
 
@@ -1522,7 +1534,10 @@ function resumeDraftIfAny() {
   var id = Number(savedId);
   var exists = products.some(function(p){ return p.id === id; });
   if (exists) {
-    editProduct(id); // 이름·사진·정보를 그대로 불러와 이어서 입력할 수 있게 복원
+    // 이름·사진·정보를 그대로 불러와 이어서 입력할 수 있게 복원.
+    // 단 이건 "새로 쓰다 만 것"이므로 수정 중 배너는 띄우지 않는다.
+    editProduct(id, true);
+    renderList();   // 작성 중 항목을 목록에서 감추기 위해 다시 그린다
   } else {
     clearDraftId(); // 대상이 없으면(삭제됨 등) 기록만 정리
   }
@@ -1697,8 +1712,30 @@ function removeTodo(id) {
 function selectCat(el, cat) {
   cur.category = (cur.category === cat) ? null : cat;
   renderCatUI();
+  renderFnChips();
   updateSaveBtn();
   scheduleAutoSave();
+}
+
+// 카테고리 칩 → 선택 시트 열기 (언제든 바꿀 수 있다)
+function openCatPicker() {
+  var row = document.getElementById('cat-pick-row');
+  row.innerHTML = CATS.map(function(c) {
+    var on = (cur.category === c);
+    return '<button class="fn-chip' + (on ? ' on-orange' : '') + '" type="button" ' +
+           'style="min-height:36px;font-size:13px;" ' +
+           'onclick="pickCategory(\'' + c + '\')">' + c + '</button>';
+  }).join('');
+  openOverlay('cat');
+}
+
+function pickCategory(cat) {
+  cur.category = cat;
+  renderCatUI();
+  renderFnChips();
+  updateSaveBtn();
+  scheduleAutoSave();
+  closeOverlay('cat');
 }
 
 function clearCategory() {
@@ -1712,14 +1749,9 @@ function clearCategory() {
 function renderCatUI() {
   var pill = document.getElementById('cat-tag-pill');
   var row = document.getElementById('cat-row');
-  // 카테고리 선택 줄은 화면에서 제거됨. 기존에 저장된 값만 태그로 보여준다.
+  // 카테고리는 칩으로만 표시한다 (제품명 옆 태그·선택 줄은 사용하지 않음)
   if (row) row.style.display = 'none';
-  if (cur.category) {
-    pill.textContent = '🏷 ' + cur.category;
-    pill.style.display = 'inline-flex';
-  } else {
-    pill.style.display = 'none';
-  }
+  if (pill) pill.style.display = 'none';
 }
 
 // ── SAVE BTN ──────────────────────────────────────────
@@ -1793,6 +1825,10 @@ function renderFnChips() {
   var nc = (cur.bizCards || []).length;
   if (nc) fnSet('fn-card', 'fn-card-t', '명함 ' + nc, 'on-orange');
   else fnSet('fn-card', 'fn-card-t', '명함', '');
+
+  // 카테고리
+  if (cur.category) fnSet('fn-cat', 'fn-cat-t', cur.category, 'on-orange');
+  else fnSet('fn-cat', 'fn-cat-t', '카테고리', '');
 }
 
 // 예정일 기준 남은 일수 (오늘 기준)
@@ -2604,6 +2640,7 @@ function performAutoSave() {
     products.unshift(p);
     editingId = p.id;          // 이후 입력은 같은 항목에 계속 자동 저장됨
     isEditingExisting = false; // 새로 만드는 중 → "수정 중" 배너는 띄우지 않는다
+    draftingId = p.id;         // 저장 전까지 목록에서 숨김
     saveDraftId(editingId);
     /* 제품명 없이 사진·버튼만으로 새 제품이 생기는 경우가 있다.
        (예: 저장 직후 화면에서 사진을 더 넣을 때)
@@ -2647,6 +2684,7 @@ function saveProduct() {
         }
         /* 수정 저장 → 편집 종료 (수정 중 배너도 사라진다).
            입력창을 비우고 목록으로 초점을 옮겨, 이어서 잘못 입력하는 일을 막는다. */
+        draftingId = null;
         resetCur();
         renderList();
         updateStorageBar();
@@ -2685,6 +2723,7 @@ function saveProduct() {
         showToast('🚨 저장 실패 - 저장공간이 부족해요. 사진을 줄여주세요');
         return;
       }
+      draftingId = null;
       resetCur();
       renderList();
       updateStorageBar();
@@ -2707,12 +2746,20 @@ function migrateTodos(p) {
 /* 목록에서 눌러 "기존 제품을 고치는 중"일 때만 true. */
 var isEditingExisting = false;
 
-function editProduct(id) {
+/* 아직 저장 버튼을 누르지 않은 "작성 중" 항목의 id.
+   자동저장으로 이미 만들어져 있지만, 위 입력창과 아래 목록에
+   같은 내용이 두 번 보이면 헷갈리므로 목록에서는 숨긴다.
+   (저장을 누르면 목록에 나타난다. 앱을 꺼도 다음에 이어서 열린다.) */
+var draftingId = null;
+
+// asDraft=true 이면 "작성 중이던 것 이어쓰기"로 보고 수정 중 배너를 띄우지 않는다.
+function editProduct(id, asDraft) {
   var p = products.find(function(x){ return x.id === id; });
   if (!p) return;
 
   editingId = id;
-  isEditingExisting = true;
+  isEditingExisting = !asDraft;
+  draftingId = asDraft ? id : null;
   saveDraftId(editingId);
   cur.name = p.name || '';
   cur.memo = p.memo || '';
@@ -2736,8 +2783,13 @@ function editProduct(id) {
 
   syncUIFromCur();
 
-  document.getElementById('edit-banner').classList.add('show');
-  document.getElementById('save-btn').textContent = '수정 저장';
+  if (isEditingExisting) {
+    document.getElementById('edit-banner').classList.add('show');
+    document.getElementById('save-btn').textContent = '수정 저장';
+  } else {
+    document.getElementById('edit-banner').classList.remove('show');
+    document.getElementById('save-btn').textContent = '저장';
+  }
 
   // 상단으로 스크롤
   document.querySelector('.app').scrollTop = 0;
@@ -2797,6 +2849,7 @@ function resetCur() {
   // edit mode 해제 (저장/취소/삭제로 명시적으로 끝냈을 때만 여기로 옴)
   editingId = null;
   isEditingExisting = false;
+  draftingId = null;
   clearDraftId();
   document.getElementById('edit-banner').classList.remove('show');
   document.getElementById('save-btn').textContent = '저장';
@@ -2842,9 +2895,15 @@ function filterCat(el, cat) {
   renderList();
 }
 
+function visibleProducts() {
+  // 아직 저장하지 않은 "작성 중" 항목은 목록에 보이지 않게 한다
+  return products.filter(function(p) { return p.id !== draftingId; });
+}
+
 function renderList() {
-  var base = curTab === 'all' ? products :
-    products.filter(function(p){ return curTab === 'sample' ? p.sample : !p.sample; });
+  var vis = visibleProducts();   // 작성 중인 항목은 목록에서 제외
+  var base = curTab === 'all' ? vis :
+    vis.filter(function(p){ return curTab === 'sample' ? p.sample : !p.sample; });
   var filtered = curCat === 'all' ? base :
     base.filter(function(p){ return p.category === curCat; });
 
@@ -2854,6 +2913,7 @@ function renderList() {
   if (filtered.length === 0) {
     empty.style.display = 'flex';
     list.style.display = 'none';
+    list.innerHTML = '';   // 남아있던 카드를 확실히 지운다
     return;
   }
   empty.style.display = 'none';
@@ -3999,7 +4059,7 @@ function exportDayBackup(day) {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v17',
+      version: 'v18',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -4035,7 +4095,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v17',
+      version: 'v18',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
