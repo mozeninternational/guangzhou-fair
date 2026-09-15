@@ -699,7 +699,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v18</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v19</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1077,136 +1077,105 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 <div class="overlay" id="backup-overlay" onclick="overlayClick(event,'backup')">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">💾 백업 · 데이터 옮기기</div>
+    <div class="sheet-title">💾 백업</div>
 
-    <!-- 날짜별 백업 카드 (권장) -->
-    <div class="bk-card" style="border-color: rgba(46,125,91,.45);">
+    <!-- ① 날짜별 백업 (주력) -->
+    <div class="bk-card" style="border-color: rgba(46,125,91,.5); background: rgba(46,125,91,.07);">
       <div class="bk-card-top">
         <span class="bk-card-icon">📅</span>
-        <span class="bk-card-title">날짜별 백업 <span style="font-size:10px;color:#4ade80;">권장</span></span>
+        <span class="bk-card-title">날짜별 백업</span>
       </div>
       <div class="bk-card-desc">
-        하루치씩 나눠 저장해요. 사진과 정보가 <b>한 파일에 같이</b> 들어가서 짝이 어긋나지 않아요.<br>
-        <b>회색으로 남은 날짜만</b> 누르시면 됩니다.
+        <b>회색으로 남은 날짜를 누르세요.</b> 사진과 정보가 한 파일에 같이 들어갑니다.
       </div>
-      <div id="bk-day-list" style="margin-top:10px;"></div>
-      <div style="font-size:11px; color:var(--t2); margin-top:8px; line-height:1.5;">
-        💡 만든 파일은 카카오톡 <b>"나와의 채팅"</b>에 올려두세요.
-      </div>
+      <div id="bk-day-list" style="margin-top:6px;"></div>
+
     </div>
 
-    <!-- 가벼운 백업 카드 -->
-    <div class="bk-card">
-      <div class="bk-card-top">
-        <span class="bk-card-icon">⚡</span>
-        <span class="bk-card-title">가벼운 백업 (사진 제외)</span>
-      </div>
-      <div class="bk-card-desc">
-        가격·MOQ·샘플일정·메모만 담아요. <b>1초면 끝나고 아주 가볍습니다.</b><br>
-        시간이 없을 때 이것만이라도 해두시면 상담 기록은 지킬 수 있어요.
-      </div>
-      <div class="bk-card-info" id="bk-light-info">현재 제품: <b>0개</b></div>
-      <button class="bk-action-btn" style="background:#6b7a8f;" onclick="exportLightBackup()">
-        ⚡ 가볍게 백업하기
-      </button>
-    </div>
-
-    <!-- 내보내기 카드 -->
+    <!-- ② 전체 내보내기 -->
     <div class="bk-card">
       <div class="bk-card-top">
         <span class="bk-card-icon">📤</span>
         <span class="bk-card-title">전체 내보내기</span>
       </div>
       <div class="bk-card-desc">
-        전체를 파일 하나로 만들어요. 사진이 많으면 폰이 버거워할 수 있으니<br>
-        <b>인터넷과 시간이 넉넉한 곳(호텔·집)</b>에서 쓰세요.
+        전부를 파일 하나로 만듭니다. 사진이 많으면 오래 걸리니 <b>귀국 후·호텔에서</b> 쓰세요.
       </div>
       <div class="bk-card-info" id="bk-export-info">
         현재 제품: <b>0개</b> · 예상 파일 크기 <b>0 MB</b>
       </div>
-      <button class="bk-action-btn" onclick="exportBackup()">
-        ⬇ 방법 1: 파일 다운로드
-      </button>
-      <button class="bk-action-btn" style="margin-top:8px; background:#6b7a8f;" onclick="copyBackupToClipboard()">
-        📋 방법 2: 클립보드에 복사
-      </button>
+      <button class="bk-action-btn" onclick="exportBackup()">⬇ 파일 다운로드</button>
+    </div>
+
+    <!-- ③ 그 밖의 기능 (접힘) -->
+    <button class="bk-action-btn" id="bk-more-btn" type="button"
+            style="background:transparent; border:1px solid var(--border); color:var(--t2); margin-top:4px;"
+            onclick="toggleBackupMore()">⌄ 그 밖의 기능</button>
+
+    <div id="bk-more" style="display:none; margin-top:10px;">
+
+      <div class="bk-card import">
+        <div class="bk-card-top">
+          <span class="bk-card-icon">📥</span>
+          <span class="bk-card-title">가져오기 (복구)</span>
+        </div>
+        <div class="bk-card-desc">
+          백업 파일을 불러와 복구합니다. 여러 개를 순서대로 불러오면 합쳐집니다.
+        </div>
+        <button class="bk-action-btn green" onclick="document.getElementById('backup-input').click()">
+          📁 백업 파일 선택하기
+        </button>
+      </div>
+
+      <div class="bk-card">
+        <div class="bk-card-top">
+          <span class="bk-card-icon">⏪</span>
+          <span class="bk-card-title">되돌리기</span>
+        </div>
+        <div class="bk-card-desc">
+          앱이 하루 한 번 자동 저장한 최근 5일치로 되돌립니다. (사진은 지금 폰의 것을 그대로 사용)
+        </div>
+        <button class="bk-action-btn" style="background:#6b7a8f;" onclick="restoreFromSnapshot()">
+          ⏪ 예전 시점으로 되돌리기
+        </button>
+      </div>
+
+      <div class="bk-card">
+        <div class="bk-card-top">
+          <span class="bk-card-icon">🗜️</span>
+          <span class="bk-card-title">사진 재압축</span>
+        </div>
+        <div class="bk-card-desc">
+          저장공간이 부족할 때만 쓰세요. <b>원본 화질로 되돌릴 수 없습니다.</b>
+        </div>
+        <button class="bk-action-btn" style="background:#6b7a8f;" onclick="recompressAllPhotos(this)">
+          🗜️ 사진 다시 압축하기
+        </button>
+      </div>
+
+      <div class="bk-card" style="border-color: rgba(224,85,85,.3);">
+        <div class="bk-card-top">
+          <span class="bk-card-icon">🗑️</span>
+          <span class="bk-card-title" style="color:var(--red);">전체 데이터 삭제</span>
+        </div>
+        <div class="bk-card-desc">
+          제품 정보를 전부 지웁니다. <b>되돌릴 수 없으니 먼저 백업하세요.</b>
+        </div>
+        <button class="bk-action-btn" style="background:var(--red);" onclick="resetAllData()">
+          🗑️ 모든 제품 데이터 삭제
+        </button>
+      </div>
+
       <div id="bk-fallback-area" style="display:none; margin-top:12px;">
         <div style="font-size:11px; color:var(--t2); margin-bottom:6px; line-height:1.5;">
-          👇 <b>복사가 안 되면</b> 아래 내용을 전체 선택(Ctrl+A) → 복사(Ctrl+C) 후<br>
-          메모장에 붙여넣고 <code>백업.json</code> 파일로 저장하세요.
+          👇 <b>복사가 안 되면</b> 아래 내용을 전체 선택 → 복사 후 메모장에 붙여넣고
+          <code>백업.json</code> 파일로 저장하세요.
         </div>
         <textarea id="bk-textarea" readonly
           style="width:100%; min-height:100px; max-height:200px; padding:8px;
                  background:#111827; border:1px solid var(--border); border-radius:8px;
-                 color:var(--t2); font-size:10px; font-family:monospace;
-                 resize:vertical;"></textarea>
+                 color:var(--t2); font-size:10px; font-family:monospace; resize:vertical;"></textarea>
       </div>
-    </div>
-
-    <!-- 가져오기 카드 -->
-    <div class="bk-card import">
-      <div class="bk-card-top">
-        <span class="bk-card-icon">📥</span>
-        <span class="bk-card-title">가져오기</span>
-      </div>
-      <div class="bk-card-desc">
-        다른 기기에서 만든 백업 파일을 불러와요.<br>
-        전체 교체와 합치기 중 선택할 수 있어요.
-      </div>
-      <button class="bk-action-btn green" onclick="document.getElementById('backup-input').click()">
-        📁 백업 파일 선택하기
-      </button>
-    </div>
-
-    <!-- 되돌리기 카드 -->
-    <div class="bk-card">
-      <div class="bk-card-top">
-        <span class="bk-card-icon">⏪</span>
-        <span class="bk-card-title">되돌리기 (자동 저장본)</span>
-      </div>
-      <div class="bk-card-desc">
-        앱이 <b>하루 한 번 자동으로</b> 최근 5일치를 폰 안에 저장해 둡니다.<br>
-        실수로 지웠거나 내용이 이상해졌을 때 예전 시점으로 되돌릴 수 있어요.<br>
-        <span style="color:var(--t2);font-size:11px;">사진은 지금 폰에 있는 것을 그대로 씁니다.</span>
-      </div>
-      <button class="bk-action-btn" style="background:#6b7a8f;" onclick="restoreFromSnapshot()">
-        ⏪ 예전 시점으로 되돌리기
-      </button>
-    </div>
-
-    <!-- 사진 재압축 카드 -->
-    <div class="bk-card" style="border-color: rgba(245,165,0,.3);">
-      <div class="bk-card-top">
-        <span class="bk-card-icon">🗜️</span>
-        <span class="bk-card-title">사진 한번에 재압축</span>
-      </div>
-      <div class="bk-card-desc">
-        평소엔 쓸 일이 없어요. 기기 저장공간이 정말 부족할 때만 사용하세요.<br>
-        실행하면 화질이 다소 낮아지며, 원래 화질로 되돌릴 수 없어요.
-      </div>
-      <button class="bk-action-btn" style="background:var(--orange);" onclick="recompressAllPhotos()">
-        🗜️ 모든 사진 재압축
-      </button>
-    </div>
-
-    <!-- 데이터 삭제 카드 -->
-    <div class="bk-card" style="border-color: rgba(224,85,85,.35);">
-      <div class="bk-card-top">
-        <span class="bk-card-icon">🗑️</span>
-        <span class="bk-card-title" style="color:var(--red);">전체 데이터 삭제</span>
-      </div>
-      <div class="bk-card-desc">
-        저장된 제품 정보를 전부 지우고 깨끗하게 새로 시작해요.<br>
-        <b>되돌릴 수 없으니, 먼저 위에서 내보내기로 백업해두세요.</b>
-      </div>
-      <button class="bk-action-btn" style="background:var(--red);" onclick="resetAllData()">
-        🗑️ 모든 제품 데이터 삭제
-      </button>
-    </div>
-
-    <div class="info-box" style="font-size:11px;">
-      💡 <b>박람회 팁:</b> 매일 저녁 내보내기 한 파일을 본인한테 카톡으로 보내두면,
-      혹시 폰에 문제가 생겨도 PC에서 가져오기로 바로 복구 가능해요.
     </div>
   </div>
 </div>
@@ -4059,7 +4028,7 @@ function exportDayBackup(day) {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v18',
+      version: 'v19',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -4095,7 +4064,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v18',
+      version: 'v19',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
@@ -4192,11 +4161,22 @@ function restoreFromSnapshot() {
   });
 }
 
-// 백업 화면을 열 때 날짜별 목록·요약을 갱신
+// 백업 화면을 열 때 날짜별 목록 갱신 + "그 밖의 기능"은 항상 접은 상태로 시작
 function refreshBackupSheet() {
   renderDayBackupList();
-  var li = document.getElementById('bk-light-info');
-  if (li) li.innerHTML = '현재 제품: <b>' + products.length + '개</b> · 예상 파일 크기 <b>수십 KB</b>';
+  var more = document.getElementById('bk-more');
+  var btn = document.getElementById('bk-more-btn');
+  if (more) more.style.display = 'none';
+  if (btn) btn.textContent = '\u2304 그 밖의 기능';
+}
+
+function toggleBackupMore() {
+  var more = document.getElementById('bk-more');
+  var btn = document.getElementById('bk-more-btn');
+  if (!more) return;
+  var open = more.style.display !== 'none';
+  more.style.display = open ? 'none' : 'block';
+  btn.textContent = open ? '\u2304 그 밖의 기능' : '\u2303 접기';
 }
 
 function handleBackupFile(e) {
