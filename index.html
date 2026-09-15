@@ -699,7 +699,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v19</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v20</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1086,7 +1086,8 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
         <span class="bk-card-title">날짜별 백업</span>
       </div>
       <div class="bk-card-desc">
-        <b>회색으로 남은 날짜를 누르세요.</b> 사진과 정보가 한 파일에 같이 들어갑니다.
+        <b style="color:#f5a500;">주황색 날짜를 누르세요.</b> 그 날짜 것만 저장됩니다.
+        사진과 정보가 한 파일에 같이 들어갑니다.
       </div>
       <div id="bk-day-list" style="margin-top:6px;"></div>
 
@@ -1099,12 +1100,14 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
         <span class="bk-card-title">전체 내보내기</span>
       </div>
       <div class="bk-card-desc">
-        전부를 파일 하나로 만듭니다. 사진이 많으면 오래 걸리니 <b>귀국 후·호텔에서</b> 쓰세요.
+        <b style="color:#f5c97a;">평소에는 쓰지 마세요.</b> 지금까지의 <b>모든 날짜</b>가 한 파일에 들어가
+        오래 걸립니다. 귀국 후 한 번에 정리할 때만 쓰세요.
       </div>
       <div class="bk-card-info" id="bk-export-info">
         현재 제품: <b>0개</b> · 예상 파일 크기 <b>0 MB</b>
       </div>
-      <button class="bk-action-btn" onclick="exportBackup()">⬇ 파일 다운로드</button>
+      <button class="bk-action-btn" style="background:transparent; border:1px solid var(--border); color:var(--t2);"
+              onclick="exportBackup()">⬇ 전체를 파일 하나로 (느림)</button>
     </div>
 
     <!-- ③ 그 밖의 기능 (접힘) -->
@@ -2783,16 +2786,24 @@ function deleteCurrentProduct() {
   var p = products.find(function(x){ return x.id === editingId; });
   var name = p ? p.name : '이 제품';
   if (!confirm('"' + name + '"을(를) 삭제할까요?\n이 동작은 되돌릴 수 없습니다.')) return;
+  var backup = products.slice();
   products = products.filter(function(p){ return p.id !== editingId; });
-  persist(); // 삭제는 용량이 줄어드므로 실패할 일 거의 없음
-  cleanupOrphanPhotos().then(function(n) {
-    if (n) { updateStorageBar(); }
-  });
   resetCur();
   renderList();
-  updateStorageBar();
-  checkAndShowRecoveryBanner(); // 삭제 후 손상 데이터 다시 집계
-  showToast('삭제되었습니다');
+
+  persistSafe().then(function(ok) {
+    if (!ok) {
+      products = backup;
+      renderList();
+      showToast('\U0001F6A8 삭제 실패 — 다시 시도해주세요');
+      return;
+    }
+    cleanupOrphanPhotos().then(function(n){ if (n) updateStorageBar(); });
+    updateStorageBar();
+    checkAndShowRecoveryBanner();
+    renderDayBackupList();
+    showToast('삭제되었습니다');
+  });
 }
 
 // cur 상태를 모든 UI 컴포넌트에 동기화
@@ -3036,15 +3047,26 @@ function confirmDeleteProduct(id) {
     closeSwipeRow();
     return;
   }
+  var backup = products.slice();
   products = products.filter(function(x){ return x.id !== id; });
   if (editingId === id) resetCur();
   closeSwipeRow();
-  persist();
-  cleanupOrphanPhotos().then(function(n){ if (n) updateStorageBar(); });
   renderList();
-  updateStorageBar();
-  checkAndShowRecoveryBanner();
-  showToast('삭제되었습니다');
+
+  // 저장이 실제로 됐는지 확인한다. 실패하면 되돌려서 화면과 저장 내용이 어긋나지 않게 한다.
+  persistSafe().then(function(ok) {
+    if (!ok) {
+      products = backup;
+      renderList();
+      showToast('\U0001F6A8 삭제 실패 — 다시 시도해주세요');
+      return;
+    }
+    cleanupOrphanPhotos().then(function(n){ if (n) updateStorageBar(); });
+    updateStorageBar();
+    checkAndShowRecoveryBanner();
+    renderDayBackupList();   // 백업 날짜 목록도 즉시 갱신
+    showToast('삭제되었습니다');
+  });
 }
 
 // ── NAV ───────────────────────────────────────────────
@@ -3954,10 +3976,19 @@ function groupProductsByDay() {
     if (!map[d]) map[d] = [];
     map[d].push(p);
   });
+  // 날짜 문자열에서 월·일을 뽑는다. 앱이 만드는 형식은 "9. 15." (ko-KR)
+  function md(s) {
+    var n = String(s).match(/\d+/g);
+    if (!n || n.length < 2) return null;
+    return [parseInt(n[0], 10), parseInt(n[1], 10)];
+  }
+
   return Object.keys(map).sort(function(a, b) {
-    var pa = a.split('/').map(Number), pb = b.split('/').map(Number);
-    if (isNaN(pa[0])) return 1;
-    if (isNaN(pb[0])) return -1;
+    var pa = md(a), pb = md(b);
+    if (!pa) return 1;
+    if (!pb) return -1;
+    // 12월 → 1월처럼 해가 바뀌는 경우까지 고려하지는 않지만,
+    // 월이 다르면 월 우선으로 정렬한다 (9월 말 ~ 10월 초 대응)
     return (pa[0] - pb[0]) || (pa[1] - pb[1]);
   }).map(function(d) {
     var list = map[d];
@@ -3987,18 +4018,22 @@ function renderDayBackupList() {
   box.innerHTML = groups.map(function(g) {
     var isDone = done[g.day] && done[g.day].count === g.list.length;
     var isStale = done[g.day] && done[g.day].count !== g.list.length;
-    var mark = isDone ? '✅' : (isStale ? '\u26A0\uFE0F' : '⬜');
-    var label = isDone ? '백업 완료' : (isStale ? '내용이 바뀜 — 다시' : '아직');
-    var bg = isDone ? 'rgba(46,125,91,.15)' : (isStale ? 'rgba(245,165,0,.15)' : 'rgba(255,255,255,.05)');
-    var bd = isDone ? 'rgba(46,125,91,.5)' : (isStale ? 'rgba(245,165,0,.5)' : 'var(--border)');
+
+    // 아직 안 한 날짜 = 주황 버튼(누르라는 뜻) / 완료 = 초록 / 내용 바뀜 = 노랑
+    var bg, bd, fg, label;
+    if (isDone)      { bg='rgba(46,125,91,.18)';  bd='rgba(46,125,91,.55)';  fg='#6ee7b7'; label='✓ 완료'; }
+    else if (isStale){ bg='rgba(245,165,0,.16)';  bd='rgba(245,165,0,.6)';   fg='#f5c97a'; label='다시 백업 →'; }
+    else             { bg='rgba(245,165,0,.22)';  bd='var(--orange)';        fg='#f5a500'; label='백업하기 →'; }
+
     return '<button onclick="exportDayBackup(\'' + g.day.replace(/'/g, "") + '\')" ' +
-      'style="width:100%;display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:6px;' +
-      'background:' + bg + ';border:1px solid ' + bd + ';border-radius:10px;color:var(--t1);' +
-      'font-family:inherit;font-size:13px;text-align:left;cursor:pointer;">' +
-      '<span>' + mark + '</span>' +
-      '<span style="font-weight:700;min-width:44px;">' + g.day + '</span>' +
-      '<span style="color:var(--t2);font-size:11px;flex:1;">제품 ' + g.list.length + '개 · 사진 ' + g.photos + '장 · ' + g.mb.toFixed(0) + 'MB</span>' +
-      '<span style="font-size:11px;color:' + (isDone ? '#4ade80' : 'var(--t2)') + ';">' + label + '</span>' +
+      'style="width:100%;display:flex;align-items:center;gap:10px;padding:13px 14px;margin-bottom:7px;' +
+      'background:' + bg + ';border:1.5px solid ' + bd + ';border-radius:12px;color:var(--t1);' +
+      'font-family:inherit;text-align:left;cursor:pointer;">' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:15px;font-weight:800;">' + g.day + '</div>' +
+        '<div style="color:var(--t2);font-size:11px;margin-top:2px;">제품 ' + g.list.length + '개 · 사진 ' + g.photos + '장 · ' + g.mb.toFixed(0) + 'MB</div>' +
+      '</div>' +
+      '<span style="font-size:13px;font-weight:700;color:' + fg + ';white-space:nowrap;">' + label + '</span>' +
       '</button>';
   }).join('');
 }
@@ -4016,34 +4051,46 @@ function downloadJson(obj, fname) {
 }
 
 // 하루치 백업 (사진 포함 — 짝이 어긋나지 않음)
+// "9. 15." → "0915" (파일명용)
+function dayToFileTag(day) {
+  var n = String(day).match(/\d+/g);
+  if (!n || n.length < 2) return String(day).replace(/[^0-9A-Za-z가-힣]/g, '');
+  return ('0' + n[0]).slice(-2) + ('0' + n[1]).slice(-2);
+}
+
 function exportDayBackup(day) {
   var g = groupProductsByDay().filter(function(x){ return x.day === day; })[0];
   if (!g) { showToast('해당 날짜의 제품이 없어요'); return; }
 
-  if (g.mb > 90) {
-    if (!window.confirm('이 날짜는 사진이 많아 약 ' + Math.round(g.mb) + 'MB입니다.\n' +
-                        '만드는 데 시간이 걸리고 폰이 잠시 느려질 수 있어요.\n\n계속할까요?')) return;
-  }
+  // 무엇이 담기는지 먼저 보여준다 (엉뚱한 자료가 들어가는 오해 방지)
+  var names = g.list.slice(0, 5).map(function(p){ return '· ' + (p.name || '(이름 없음)'); }).join('\n');
+  var more = g.list.length > 5 ? '\n· 외 ' + (g.list.length - 5) + '건' : '';
+  var msg = '\u3010' + day + ' 백업\u3011\n\n' +
+            '제품 ' + g.list.length + '개 · 사진 ' + g.photos + '장 · 약 ' + Math.round(g.mb) + 'MB\n\n' +
+            names + more + '\n\n이 내용만 저장합니다. 계속할까요?';
+  if (!window.confirm(msg)) return;
 
+  var t0 = Date.now();
   try {
+    showToast('\u23F3 백업 파일을 만드는 중...');
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v19',
+      version: 'v20',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
       productCount: g.list.length,
       products: g.list
-    }, '광저우_' + day.replace('/', '월') + '일_' + g.list.length + '개.json');
+    }, '광저우_' + dayToFileTag(day) + '_' + g.list.length + '개.json');
 
     setDayBackupDone(day, g.list.length);
     markBackupDone();
     renderDayBackupList();
-    showToast('✓ ' + day 
-      + ' 백업 완료 (제품 ' + g.list.length + '개)');
+    showToast('✓ ' + day + ' 백업 완료 (제품 ' + g.list.length + '개 · ' +
+              ((Date.now() - t0) / 1000).toFixed(1) + '초)');
   } catch (err) {
     console.error(err);
-    showToast('\U0001F6A8 백업 실패: ' + (err.message || '오류') + ' — 가벼운 백업을 써보세요');
+    showToast('\U0001F6A8 백업 실패: ' + (err.message || '오류'));
   }
 }
 
@@ -4064,7 +4111,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v19',
+      version: 'v20',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
