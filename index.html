@@ -699,7 +699,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v20</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v21</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -787,24 +787,6 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       <button class="save-btn" id="save-btn" onclick="saveProduct()" disabled>저장</button>
     </div>
 
-    <!-- 메모 -->
-    <div class="memo-box">
-      <textarea class="memo-ta" id="memo-ta" rows="1"
-        placeholder="메모 — 특장점, 부스 위치, 상담 내용" oninput="onMemoInput()"></textarea>
-      <button class="mic-btn" id="mic-memo" type="button" onclick="toggleVoice('memo-ta','mic-memo')" title="메모 음성입력">🎤</button>
-    </div>
-
-    <!-- 확인할 것 -->
-    <div class="td-wrap">
-      <div id="td-list"></div>
-      <div class="td-add">
-        <span style="color:var(--t3);font-size:14px;">＋</span>
-        <input class="td-add-in" id="td-input" type="text" placeholder="확인할 것 추가"
-               onkeydown="if(event.key==='Enter'){event.preventDefault();addTodoFromInput();}">
-        <button class="mic-btn" id="mic-todo" type="button" onclick="toggleVoice('td-input','mic-todo')" title="확인할 것 음성입력">🎤</button>
-      </div>
-    </div>
-
     <!-- 기능 칩 -->
     <div class="fn-row">
       <button class="fn-chip" id="fn-price" type="button"><span class="fn-chip-ico">$</span><span id="fn-price-t">단가</span></button>
@@ -841,6 +823,26 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
         <div class="photo-hint" id="biz-hint"></div>
       </div>
     </div>
+
+    <!-- 메모 -->
+    <div class="memo-box">
+      <textarea class="memo-ta" id="memo-ta" rows="1"
+        placeholder="메모 — 특장점, 부스 위치, 상담 내용" oninput="onMemoInput()"></textarea>
+      <button class="mic-btn" id="mic-memo" type="button" onclick="toggleVoice('memo-ta','mic-memo')" title="메모 음성입력">🎤</button>
+    </div>
+
+
+    <!-- 확인할 것 -->
+    <div class="td-wrap">
+      <div id="td-list"></div>
+      <div class="td-add">
+        <span style="color:var(--t3);font-size:14px;">＋</span>
+        <input class="td-add-in" id="td-input" type="text" placeholder="확인할 것 추가"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();addTodoFromInput();}">
+        <button class="mic-btn" id="mic-todo" type="button" onclick="toggleVoice('td-input','mic-todo')" title="확인할 것 음성입력">🎤</button>
+      </div>
+    </div>
+
 
   </div>
 
@@ -4075,7 +4077,7 @@ function exportDayBackup(day) {
     showToast('\u23F3 백업 파일을 만드는 중...');
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v20',
+      version: 'v21',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -4111,7 +4113,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v20',
+      version: 'v21',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
