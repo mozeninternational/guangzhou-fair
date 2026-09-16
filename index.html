@@ -177,8 +177,8 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .cur-area {
   margin: 0 16px 10px;
   /* 새로 기록 중인 영역. 아래 제품 목록과 확실히 구분되도록 주황 테두리를 두른다. */
-  background: var(--card); border: 2px solid var(--orange);
-  box-shadow: 0 0 0 4px rgba(245,165,0,.08);
+  background: var(--card); border: 2px solid rgba(245,165,0,.5);
+  box-shadow: 0 0 0 4px rgba(245,165,0,.04);
   border-radius: 16px; padding: 13px 14px; flex-shrink: 0;
   max-height: 50dvh; overflow-y: auto;
   scrollbar-width: thin; scrollbar-color: var(--border) transparent;
@@ -503,7 +503,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .storage-bar-text { font-weight: 700; white-space: nowrap; }
 
 /* 기존 제품을 고치는 중일 때는 파란 테두리 (새 기록과 구분) */
-.cur-area.editing { border-color: #4a9eff; box-shadow: 0 0 0 4px rgba(74,158,255,.10); }
+.cur-area.editing { border-color: rgba(74,158,255,.5); box-shadow: 0 0 0 4px rgba(74,158,255,.05); }
 
 /* ── 입력 카드 안 구역 구분선 ──────────────────────────
    제품명 / 기능 칩 / 사진 / 메모 / 확인할 것 이 한 덩어리로 보이지 않도록
@@ -727,7 +727,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v23</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v24</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -4110,7 +4110,7 @@ function exportDayBackup(day) {
     showToast('\u23F3 백업 파일을 만드는 중...');
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v23',
+      version: 'v24',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -4146,7 +4146,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v23',
+      version: 'v24',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
