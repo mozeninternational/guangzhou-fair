@@ -502,6 +502,16 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .storage-bar.danger .storage-bar-fill > div { background: var(--red); }
 .storage-bar-text { font-weight: 700; white-space: nowrap; }
 
+/* 편집 종료 ✕ — 수정 중일 때만 보인다 */
+.edit-x {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--t2); font-size: 13px; font-family: inherit;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.edit-x:active { background: rgba(255,255,255,.08); }
+
 /* 기존 제품을 고치는 중일 때는 파란 테두리 (새 기록과 구분) */
 .cur-area.editing { border-color: rgba(74,158,255,.5); box-shadow: 0 0 0 4px rgba(74,158,255,.05); }
 
@@ -727,7 +737,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v24</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v26</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -737,7 +747,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
         <button class="backup-btn" onclick="openSheet('backup')">
           <span>💾</span><span>백업</span>
         </button>
-        <button class="fab-inline" onclick="document.getElementById('product-input').click()">+</button>
+        <button class="fab-inline" id="fab-add" type="button" title="탭=촬영 · 길게=앨범">+</button>
       </div>
     </div>
   </div>
@@ -799,13 +809,8 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 
   <!-- CURRENT INPUT -->
   <div class="cur-area">
-    <div class="edit-banner" id="edit-banner">
-      <span>📝 수정 중</span>
-      <div class="edit-banner-actions">
-        <button class="del-btn" onclick="deleteCurrentProduct()">🗑 삭제</button>
-        <button class="cancel-btn" onclick="cancelEdit()">취소</button>
-      </div>
-    </div>
+    <!-- 수정 중 배너는 v25에서 제거 (파란 테두리로 구분, 삭제는 목록 스와이프로) -->
+    <div class="edit-banner" id="edit-banner" style="display:none !important;"></div>
     <!-- 제품명 -->
     <div class="nm-row">
       <textarea class="nm-ta" id="name-ta" rows="1"
@@ -813,6 +818,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       <span class="cat-tag-pill" id="cat-tag-pill" style="display:none;"></span>
       <button class="mic-btn" id="mic-name" type="button" onclick="toggleVoice('name-ta','mic-name')" title="제품명 음성입력">🎤</button>
       <button class="save-btn" id="save-btn" onclick="saveProduct()" disabled>저장</button>
+      <button class="edit-x" id="edit-x" type="button" onclick="cancelEdit()" title="편집 끝내기" style="display:none;">✕</button>
     </div>
 
     <!-- 기능 칩 -->
@@ -954,6 +960,9 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 <input type="file" id="product-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handleProductPhoto(event)">
 <input type="file" id="photo-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handleProductPhoto(event)">
 <input type="file" id="biz-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handleBizPhoto(event)">
+<!-- 앨범(사진첩)에서 불러오기 — capture 속성이 없어야 사진 보관함이 열린다 -->
+<input type="file" id="album-input" accept="image/*" multiple style="display:none" onchange="handleProductPhoto(event)">
+<input type="file" id="album-biz-input" accept="image/*" multiple style="display:none" onchange="handleBizPhoto(event)">
 
 <!-- MOQ SHEET -->
 <div class="overlay" id="moq-overlay" onclick="overlayClick(event,'moq')">
@@ -963,18 +972,21 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <div class="f2">
       <div class="fg">
         <div class="fl">단가 (USD $)</div>
-        <input class="fi" id="moq-price" type="number" placeholder="0.00" inputmode="decimal" step="0.01">
+        <input class="fi" id="moq-price" type="number" placeholder="0.00" inputmode="decimal" step="0.01"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();saveMoq();}">
       </div>
       <div class="fg">
         <div class="fl">MOQ (최소수량)</div>
-        <input class="fi" id="moq-qty" type="number" placeholder="0" inputmode="numeric">
+        <input class="fi" id="moq-qty" type="number" placeholder="0" inputmode="numeric"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();saveMoq();}">
       </div>
     </div>
     <div class="fg">
       <div class="fl">메모 (선택)</div>
-      <input class="fi" id="moq-memo" type="text" placeholder="ex) 색상별 MOQ 다름...">
+      <input class="fi" id="moq-memo" type="text" placeholder="ex) 색상별 MOQ 다름..."
+             onkeydown="if(event.key==='Enter'){event.preventDefault();saveMoq();}">
     </div>
-    <button class="confirm-btn" onclick="saveMoq()">✓ 저장</button>
+    <button class="confirm-btn" onclick="saveMoq()">저장</button>
     <button class="clear-btn" onclick="clearMoq()">초기화</button>
   </div>
 </div>
@@ -1564,6 +1576,7 @@ function resumeDraftIfAny() {
 
   // 기능 칩 이벤트 (짧게 / 꾹 누르기)
   setupFnChips();
+  bindPhotoEntryPoints();   // 사진 추가: 탭=촬영 / 길게=앨범
   renderFnChips();
   renderTodos();
 
@@ -1894,8 +1907,8 @@ function setupFnChips() {
   // 샘플 — 짧게: 신청 표시 / 꾹: 상세(소요일·메모)
   bindChip('fn-sample', function() { quickToggleSample(); }, function() { openOverlay('sample'); });
 
-  // 명함 — 바로 카메라
-  bindChip('fn-card', function() { document.getElementById('biz-input').click(); });
+  // 명함 — 짧게: 바로 촬영 / 꾹: 앨범에서 불러오기
+  bindChip('fn-card', openBizCamera, openBizAlbum);
 }
 
 // 단가·MOQ 입력창을 열고 지정한 칸에 커서를 놓는다
@@ -2007,6 +2020,56 @@ function handleBizPhoto(e) {
   e.target.value = '';
 }
 
+/* ══════════════════════════════════════════════════════
+   사진 추가 — 짧게 탭 = 촬영 / 길게 누르기 = 앨범에서 불러오기
+   박람회 전에 미리 받은 제안 제품 사진을 정리할 때 앨범을 쓴다.
+   ══════════════════════════════════════════════════════ */
+function openCamera()      { document.getElementById('product-input').click(); }
+function openAlbum()       { document.getElementById('album-input').click(); }
+function openBizCamera()   { document.getElementById('biz-input').click(); }
+function openBizAlbum()    { document.getElementById('album-biz-input').click(); }
+
+/* 요소에 "짧게=촬영 / 길게=앨범"을 붙인다.
+   길게 누른 순간 진동으로 알려주고, 손을 떼도 촬영이 열리지 않게 한다. */
+function bindPhotoHold(el, onTap, onHold) {
+  if (!el || el.__photoHold) return;
+  el.__photoHold = true;
+  var timer = null, fired = false;
+
+  function start() {
+    fired = false;
+    timer = setTimeout(function() {
+      fired = true;
+      if (navigator.vibrate) { try { navigator.vibrate(18); } catch (e) {} }
+      onHold();
+    }, 500);
+  }
+  function end(e) {
+    clearTimeout(timer);
+    if (fired) { if (e && e.preventDefault) e.preventDefault(); fired = false; return; }
+    onTap();
+  }
+  function cancel() { clearTimeout(timer); fired = false; }
+
+  el.addEventListener('touchstart', start, { passive: true });
+  el.addEventListener('touchend', end);
+  el.addEventListener('touchcancel', cancel);
+  el.addEventListener('touchmove', cancel, { passive: true });
+  el.addEventListener('mousedown', start);
+  el.addEventListener('mouseup', end);
+  el.addEventListener('mouseleave', cancel);
+  // 기본 click은 위에서 처리하므로 막는다
+  el.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); });
+  el.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+}
+
+// 사진 추가 자리(+ 타일, 빈 드롭존, 헤더 + 버튼)에 매번 다시 붙인다
+function bindPhotoEntryPoints() {
+  ['fab-add', 'add-photo-btn-el', 'dropzone-empty-el'].forEach(function(id) {
+    bindPhotoHold(document.getElementById(id), openCamera, openAlbum);
+  });
+}
+
 function renderPhotos() {
   var scroll = document.getElementById('photo-scroll');
   var hint = document.getElementById('photo-hint');
@@ -2017,11 +2080,12 @@ function renderPhotos() {
   if (cur.photos.length === 0) {
     // 빈 상태 — 한 줄로 컴팩트
     scroll.innerHTML =
-      '<div class="dropzone-empty" onclick="document.getElementById(\'product-input\').click()">' +
+      '<div class="dropzone-empty" id="dropzone-empty-el">' +
       '<span class="dropzone-empty-icon">📸</span>' +
-      '<span class="dropzone-empty-text"><b>드래그</b>하거나 탭해서 <b>추가</b></span>' +
+      '<span class="dropzone-empty-text">탭해서 <b>촬영</b> · 길게 눌러 <b>앨범</b></span>' +
       '</div>';
     hint.textContent = '';
+    bindPhotoEntryPoints();
     if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
     return;
   }
@@ -2034,9 +2098,12 @@ function renderPhotos() {
       imgHtml +
       '<button class="photo-del" onclick="event.stopPropagation(); delPhoto(' + i + ')">×</button>' +
       '</div>';
-  }).join('') + '<button class="add-photo-btn" onclick="document.getElementById(\'product-input\').click()">+</button>';
+  }).join('') + '<button class="add-photo-btn" id="add-photo-btn-el">+</button>';
   scroll.innerHTML = html;
-  hint.textContent = cur.photos.length > 1 ? '📌 길게 눌러 순서 변경 · 맨 위가 PPT 대표 이미지' : '';
+  hint.textContent = cur.photos.length > 1
+    ? '📌 사진 길게 눌러 순서 변경 · 맨 위가 PPT 대표 이미지'
+    : '💡 + 를 길게 누르면 앨범에서 불러옵니다';
+  bindPhotoEntryPoints();
   scroll.scrollTop = scroll.scrollHeight;
   initPhotoSortable();
 }
@@ -2786,14 +2853,15 @@ function editProduct(id, asDraft) {
   syncUIFromCur();
 
   var area = document.querySelector('.cur-area');
+  var ex = document.getElementById('edit-x');
   if (isEditingExisting) {
-    document.getElementById('edit-banner').classList.add('show');
     document.getElementById('save-btn').textContent = '수정 저장';
     if (area) area.classList.add('editing');
+    if (ex) ex.style.display = 'flex';
   } else {
-    document.getElementById('edit-banner').classList.remove('show');
     document.getElementById('save-btn').textContent = '저장';
     if (area) area.classList.remove('editing');
+    if (ex) ex.style.display = 'none';
   }
 
   // 상단으로 스크롤
@@ -2865,6 +2933,8 @@ function resetCur() {
   draftingId = null;
   var _area = document.querySelector('.cur-area');
   if (_area) _area.classList.remove('editing');
+  var _ex = document.getElementById('edit-x');
+  if (_ex) _ex.style.display = 'none';
   clearDraftId();
   document.getElementById('edit-banner').classList.remove('show');
   document.getElementById('save-btn').textContent = '저장';
@@ -4110,7 +4180,7 @@ function exportDayBackup(day) {
     showToast('\u23F3 백업 파일을 만드는 중...');
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v24',
+      version: 'v26',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -4146,7 +4216,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v24',
+      version: 'v26',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
