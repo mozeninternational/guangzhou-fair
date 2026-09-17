@@ -502,6 +502,25 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .storage-bar.danger .storage-bar-fill > div { background: var(--red); }
 .storage-bar-text { font-weight: 700; white-space: nowrap; }
 
+/* ── 사진 영역 스와이프 → 앨범 버튼 ──────────────────── */
+.ph-swipe { position: relative; overflow: hidden; border-radius: 12px; }
+.ph-swipe-album {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 86px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  background: #2e5d7a; color: #fff; border: none; cursor: pointer;
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  border-radius: 0 12px 12px 0; -webkit-tap-highlight-color: transparent;
+}
+.ph-swipe-album span { font-size: 19px; line-height: 1; }
+.ph-swipe-album:active { background: #24485e; }
+.ph-swipe-body {
+  position: relative; z-index: 1;
+  transition: transform .22s cubic-bezier(.22,.61,.36,1);
+  will-change: transform;
+}
+.ph-swipe.dragging .ph-swipe-body { transition: none; }
+.ph-swipe.open .ph-swipe-body { transform: translateX(-86px); }
+
 /* 길게 누르는 중 표시 */
 .hold-on { background: rgba(245,165,0,.22) !important; border-color: var(--orange) !important; }
 
@@ -740,7 +759,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v27</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v28</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -842,9 +861,18 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       <div class="ps-title">
         <span class="ps-count" id="photos-count">0</span>
       </div>
-      <div class="dropzone" id="dropzone-photos">
-        <div class="photo-scroll" id="photo-scroll"></div>
-        <div class="photo-hint" id="photo-hint"></div>
+      <!-- 왼쪽으로 밀면 "앨범" 버튼이 나온다.
+           (길게 누르기는 아이폰에서 사진첩을 열 수 없어 스와이프 방식으로 변경) -->
+      <div class="ph-swipe" id="ph-swipe">
+        <button class="ph-swipe-album" type="button" onclick="openAlbum()">
+          <span>🖼️</span>앨범
+        </button>
+        <div class="ph-swipe-body">
+          <div class="dropzone" id="dropzone-photos">
+            <div class="photo-scroll" id="photo-scroll"></div>
+            <div class="photo-hint" id="photo-hint"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1579,7 +1607,8 @@ function resumeDraftIfAny() {
 
   // 기능 칩 이벤트 (짧게 / 꾹 누르기)
   setupFnChips();
-  bindPhotoEntryPoints();   // 사진 추가: 탭=촬영 / 길게=앨범
+  bindPhotoEntryPoints();   // 사진 추가: 탭 = 촬영
+  setupPhotoSwipe();        // 사진 영역 왼쪽 스와이프 → 앨범 버튼
   renderFnChips();
   renderTodos();
 
@@ -1910,8 +1939,8 @@ function setupFnChips() {
   // 샘플 — 짧게: 신청 표시 / 꾹: 상세(소요일·메모)
   bindChip('fn-sample', function() { quickToggleSample(); }, function() { openOverlay('sample'); });
 
-  // 명함은 파일 선택창을 열어야 해서 bindPhotoHold(손 뗄 때 실행)로 처리한다.
-  // bindChip은 타이머 안에서 실행하므로 아이폰에서 앨범이 차단된다.
+  // 명함 — 탭하면 바로 촬영
+  bindChip('fn-card', openBizCamera);
 }
 
 // 단가·MOQ 입력창을 열고 지정한 칸에 커서를 놓는다
@@ -2028,54 +2057,87 @@ function handleBizPhoto(e) {
    박람회 전에 미리 받은 제안 제품 사진을 정리할 때 앨범을 쓴다.
    ══════════════════════════════════════════════════════ */
 function openCamera()      { document.getElementById('product-input').click(); }
-function openAlbum()       { document.getElementById('album-input').click(); }
+function openAlbum()       { document.getElementById('album-input').click(); closePhotoSwipe(); }
 function openBizCamera()   { document.getElementById('biz-input').click(); }
 function openBizAlbum()    { document.getElementById('album-biz-input').click(); }
 
-/* 요소에 "짧게=촬영 / 길게=앨범"을 붙인다.
+/* 사진 추가 자리는 "탭 = 촬영"으로 단순하게 둔다.
+   앨범은 사진 영역을 왼쪽으로 밀어서 나오는 버튼으로 연다.
 
-   ⚠️ 아이폰 Safari는 사진 선택창을 "사용자 동작 안에서"만 열 수 있다.
-   0.5초 타이머 안에서 열면 차단되므로, 타이머는 "길게 눌렀다"는 표시만 하고
-   실제로 여는 것은 손을 뗄 때(touchend) 한다. */
-function bindPhotoHold(el, onTap, onHold) {
-  if (!el || el.__photoHold) return;
-  el.__photoHold = true;
-  var timer = null, isLong = false;
-
-  function start() {
-    isLong = false;
-    clearTimeout(timer);
-    timer = setTimeout(function() {
-      isLong = true;
-      el.classList.add('hold-on');   // 눌린 상태를 눈으로 보여줌
-      if (navigator.vibrate) { try { navigator.vibrate(18); } catch (e) {} }
-    }, 500);
-  }
-  function end(e) {
-    clearTimeout(timer);
-    el.classList.remove('hold-on');
-    if (e && e.cancelable) e.preventDefault();   // 뒤따르는 click 중복 방지
-    if (isLong) { isLong = false; onHold(); }    // ← 손 뗄 때 실행 (제스처 안)
-    else { onTap(); }
-  }
-  function cancel() { clearTimeout(timer); el.classList.remove('hold-on'); isLong = false; }
-
-  el.addEventListener('touchstart', start, { passive: true });
-  el.addEventListener('touchend', end);
-  el.addEventListener('touchcancel', cancel);
-  el.addEventListener('touchmove', cancel, { passive: true });
-  el.addEventListener('mousedown', start);
-  el.addEventListener('mouseup', end);
-  el.addEventListener('mouseleave', cancel);
-  el.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-}
-
-// 사진 추가 자리(+ 타일, 빈 드롭존, 헤더 + 버튼)에 매번 다시 붙인다
+   ⚠️ 아이폰 Safari는 파일 선택창을 사용자가 직접 누른 순간에만 열어준다.
+   타이머(길게 누르기) 안에서는 조용히 무시되므로 쓰지 않는다. */
 function bindPhotoEntryPoints() {
   ['fab-add', 'add-photo-btn-el', 'dropzone-empty-el'].forEach(function(id) {
-    bindPhotoHold(document.getElementById(id), openCamera, openAlbum);
+    var el = document.getElementById(id);
+    if (!el || el.__camBound) return;
+    el.__camBound = true;
+    el.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); openCamera(); });
   });
-  bindPhotoHold(document.getElementById('fn-card'), openBizCamera, openBizAlbum);
+}
+
+/* 사진 영역 왼쪽 스와이프 → 앨범 버튼 노출.
+   세로 스크롤 중에는 반응하지 않는다. */
+function setupPhotoSwipe() {
+  var row = document.getElementById('ph-swipe');
+  if (!row || row.__swipeBound) return;
+  row.__swipeBound = true;
+  var body = row.querySelector('.ph-swipe-body');
+  var THRESHOLD = 44, MAX = 86;
+  var x0 = 0, y0 = 0, dx = 0, decided = null, active = false;
+
+  function start(e) {
+    var t = e.touches ? e.touches[0] : e;
+    x0 = t.clientX; y0 = t.clientY; dx = 0; decided = null; active = true;
+  }
+  function move(e) {
+    if (!active) return;
+    var t = e.touches ? e.touches[0] : e;
+    var mx = t.clientX - x0, my = t.clientY - y0;
+    if (decided === null) {
+      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+      decided = Math.abs(mx) > Math.abs(my) * 1.4 ? 'x' : 'y';
+      if (decided === 'x') row.classList.add('dragging');
+    }
+    if (decided !== 'x') return;
+    if (e.cancelable) e.preventDefault();
+    var base = row.classList.contains('open') ? -MAX : 0;
+    dx = Math.max(-MAX, Math.min(0, base + mx));
+    body.style.transform = 'translateX(' + dx + 'px)';
+  }
+  function end() {
+    if (!active) return;
+    active = false;
+    row.classList.remove('dragging');
+    body.style.transform = '';
+    if (decided !== 'x') return;
+    if (dx <= -THRESHOLD) row.classList.add('open');
+    else row.classList.remove('open');
+  }
+  function cancel() {
+    if (!active) return;
+    active = false;
+    row.classList.remove('dragging');
+    body.style.transform = '';
+  }
+
+  body.addEventListener('touchstart', start, { passive: true });
+  body.addEventListener('touchmove', move, { passive: false });
+  body.addEventListener('touchend', end);
+  body.addEventListener('touchcancel', cancel);
+  body.addEventListener('mousedown', function(e) {
+    start(e);
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', function up() {
+      end();
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+    });
+  });
+}
+
+function closePhotoSwipe() {
+  var row = document.getElementById('ph-swipe');
+  if (row) row.classList.remove('open');
 }
 
 function renderPhotos() {
@@ -2090,10 +2152,11 @@ function renderPhotos() {
     scroll.innerHTML =
       '<div class="dropzone-empty" id="dropzone-empty-el">' +
       '<span class="dropzone-empty-icon">＋</span>' +
-      '<span class="dropzone-empty-text">탭해서 <b>촬영</b> · 길게 눌러 <b>앨범</b></span>' +
+      '<span class="dropzone-empty-text">사진</span>' +
       '</div>';
     hint.textContent = '';
     bindPhotoEntryPoints();
+    setupPhotoSwipe();
     if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
     return;
   }
@@ -2110,8 +2173,9 @@ function renderPhotos() {
   scroll.innerHTML = html;
   hint.textContent = cur.photos.length > 1
     ? '사진을 길게 눌러 순서 변경 · 맨 위가 PPT 대표 이미지'
-    : '＋ 를 길게 누르면 앨범에서 불러옵니다';
+    : '';
   bindPhotoEntryPoints();
+  setupPhotoSwipe();
   scroll.scrollTop = scroll.scrollHeight;
   initPhotoSortable();
 }
@@ -4188,7 +4252,7 @@ function exportDayBackup(day) {
     showToast('\u23F3 백업 파일을 만드는 중...');
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v27',
+      version: 'v28',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -4224,7 +4288,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v27',
+      version: 'v28',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
