@@ -515,6 +515,8 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .ph-swipe-album:active { background: #24485e; }
 .ph-swipe-body {
   position: relative; z-index: 1;
+  /* 뒤에 있는 앨범 버튼이 비쳐 보이지 않도록 카드와 같은 색으로 덮는다 */
+  background: var(--card);
   transition: transform .22s cubic-bezier(.22,.61,.36,1);
   will-change: transform;
 }
@@ -759,7 +761,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v29</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v30</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -4291,7 +4293,7 @@ function exportDayBackup(day) {
     showToast('\u23F3 백업 파일을 만드는 중...');
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v29',
+      version: 'v30',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -4327,7 +4329,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v29',
+      version: 'v30',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
