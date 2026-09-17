@@ -759,7 +759,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v28</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v29</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -2071,68 +2071,107 @@ function bindPhotoEntryPoints() {
     var el = document.getElementById(id);
     if (!el || el.__camBound) return;
     el.__camBound = true;
-    el.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); openCamera(); });
+    el.addEventListener('click', function(e) {
+      e.preventDefault(); e.stopPropagation();
+
+      // 방금 스와이프한 동작이면 카메라를 열지 않는다
+      if (photoSwipeGuard) return;
+
+      // 앨범 버튼이 열려 있으면 첫 탭은 닫기만 (실수로 카메라가 켜지지 않게)
+      var row = document.getElementById('ph-swipe');
+      if (id !== 'fab-add' && row && row.classList.contains('open')) {
+        closePhotoSwipe();
+        return;
+      }
+      openCamera();
+    });
   });
 }
 
 /* 사진 영역 왼쪽 스와이프 → 앨범 버튼 노출.
-   세로 스크롤 중에는 반응하지 않는다. */
+
+   주의점 두 가지
+   1) 스와이프가 끝나면 브라우저가 click을 만들어 "탭 = 촬영"이 실행돼 버린다.
+      → 가로로 움직였으면 다음 click을 한 번 막는다.
+   2) 사진이 있을 때는 순서 변경(SortableJS)이 터치를 먼저 가져간다.
+      → 래퍼에 캡처 단계로 붙여 우리가 먼저 판정한다. */
+var photoSwipeGuard = false;   // true면 다음 click을 무시한다
+
 function setupPhotoSwipe() {
   var row = document.getElementById('ph-swipe');
   if (!row || row.__swipeBound) return;
   row.__swipeBound = true;
   var body = row.querySelector('.ph-swipe-body');
-  var THRESHOLD = 44, MAX = 86;
+  var THRESHOLD = 34, MAX = 86;
   var x0 = 0, y0 = 0, dx = 0, decided = null, active = false;
 
   function start(e) {
+    if (e.target.closest && e.target.closest('.ph-swipe-album')) return;
     var t = e.touches ? e.touches[0] : e;
     x0 = t.clientX; y0 = t.clientY; dx = 0; decided = null; active = true;
   }
+
   function move(e) {
     if (!active) return;
     var t = e.touches ? e.touches[0] : e;
     var mx = t.clientX - x0, my = t.clientY - y0;
+
     if (decided === null) {
-      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
-      decided = Math.abs(mx) > Math.abs(my) * 1.4 ? 'x' : 'y';
-      if (decided === 'x') row.classList.add('dragging');
+      if (Math.abs(mx) < 6 && Math.abs(my) < 6) return;
+      decided = Math.abs(mx) > Math.abs(my) ? 'x' : 'y';
+      if (decided === 'x') {
+        row.classList.add('dragging');
+        photoSwipeGuard = true;   // 이 동작은 스와이프 → 클릭 막기
+      }
     }
     if (decided !== 'x') return;
+
+    // 순서 변경(Sortable)이 끼어들지 못하게 여기서 끊는다
+    e.stopPropagation();
     if (e.cancelable) e.preventDefault();
+
     var base = row.classList.contains('open') ? -MAX : 0;
     dx = Math.max(-MAX, Math.min(0, base + mx));
     body.style.transform = 'translateX(' + dx + 'px)';
   }
-  function end() {
+
+  function end(e) {
     if (!active) return;
     active = false;
     row.classList.remove('dragging');
     body.style.transform = '';
-    if (decided !== 'x') return;
+    if (decided !== 'x') { photoSwipeGuard = false; return; }
+
+    e.stopPropagation();
     if (dx <= -THRESHOLD) row.classList.add('open');
     else row.classList.remove('open');
+
+    // 뒤따라 오는 click 한 번만 막고 해제
+    setTimeout(function() { photoSwipeGuard = false; }, 400);
   }
+
   function cancel() {
     if (!active) return;
     active = false;
     row.classList.remove('dragging');
     body.style.transform = '';
+    photoSwipeGuard = false;
   }
 
-  body.addEventListener('touchstart', start, { passive: true });
-  body.addEventListener('touchmove', move, { passive: false });
-  body.addEventListener('touchend', end);
-  body.addEventListener('touchcancel', cancel);
-  body.addEventListener('mousedown', function(e) {
+  // 캡처 단계(true) — 내부 요소의 핸들러보다 먼저 받는다
+  row.addEventListener('touchstart', start, { passive: true, capture: true });
+  row.addEventListener('touchmove', move, { passive: false, capture: true });
+  row.addEventListener('touchend', end, { capture: true });
+  row.addEventListener('touchcancel', cancel, { capture: true });
+  row.addEventListener('mousedown', function(e) {
     start(e);
-    document.addEventListener('mousemove', move);
-    document.addEventListener('mouseup', function up() {
-      end();
-      document.removeEventListener('mousemove', move);
-      document.removeEventListener('mouseup', up);
-    });
-  });
+    document.addEventListener('mousemove', move, true);
+    document.addEventListener('mouseup', function up(ev) {
+      end(ev);
+      document.removeEventListener('mousemove', move, true);
+      document.removeEventListener('mouseup', up, true);
+    }, true);
+  }, true);
 }
 
 function closePhotoSwipe() {
@@ -4252,7 +4291,7 @@ function exportDayBackup(day) {
     showToast('\u23F3 백업 파일을 만드는 중...');
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v28',
+      version: 'v29',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -4288,7 +4327,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v28',
+      version: 'v29',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
