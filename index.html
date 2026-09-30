@@ -782,7 +782,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v33</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v34</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1251,7 +1251,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v33)
+          ⬇️ 최신 버전 받기 (현재 v34)
         </button>
       </div>
 
@@ -4104,7 +4104,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v33';
+var APP_VERSION = 'v34';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -4654,7 +4654,7 @@ function exportDayBackup(day) {
     showToast('\u23F3 백업 파일을 만드는 중...');
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v33',
+      version: 'v34',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -4690,7 +4690,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v33',
+      version: 'v34',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
@@ -4969,7 +4969,8 @@ var PT = {
   sage: "5A7A5A", sageSoft: "E3EDE3",
   amber: "B8892D", amberSoft: "F7EDD5",
   red: "B8352E", redSoft: "F5DCDA",
-  blue: "2E5D7A", blueSoft: "D9E7EE"
+  blue: "2E5D7A", blueSoft: "D9E7EE",
+  noteBg: "EFF5F9", noteLine: "CFE0EA"   // 메모 칸 (아주 연한 블루)
 };
 var FH = "Georgia", FB = "Calibri", FM = "Consolas";
 // 한글은 Georgia/Calibri에 글자가 없어 대체 폰트로 제각각 그려진다 → 한글 전용 폰트 지정
@@ -5126,18 +5127,20 @@ function pptAddProductSlide(pres, p, productNo, photoIdx, photoTotal, curSlideId
   // ═══ 좌측 — 제품 사진 (명함은 PPT에서 제외, 엑셀에만 들어간다) ═══
   var L_X = 0.5, L_Y = 0.95, L_W = 5.9, L_H = 5.7;
 
-  s.addShape(pres.shapes.RECTANGLE, {
-    x:L_X, y:L_Y, w:L_W, h:L_H, fill:{color:PT.paper}, line:{color:PT.line, width:0.5}
-  });
-
   var mainPhoto = p.photos && p.photos[photoIdx];
+  var photoBox = { x:L_X, y:L_Y, w:L_W, h:L_H };   // 배지를 붙일 기준
   if (mainPhoto && isValidPhoto(mainPhoto)) {
     // 원본 비율 그대로 (늘어나지 않게 직접 계산)
     var fit = pptFitBox(mainPhoto, L_X, L_Y, L_W, L_H);
+    photoBox = fit;
     var imgOpts = { data: toPptImageData(mainPhoto), x:fit.x, y:fit.y, w:fit.w, h:fit.h };
     if (!isSingleMode && photoTotal > 1) imgOpts.hyperlink = { slide: nextSlideIdx };
     s.addImage(imgOpts);
   } else {
+    // 사진이 없을 때만 빈 칸을 그린다 (사진이 있으면 배경 없이 사진만)
+    s.addShape(pres.shapes.RECTANGLE, {
+      x:L_X, y:L_Y, w:L_W, h:L_H, fill:{color:PT.bg}, line:{color:PT.line, width:0.5}
+    });
     s.addText(mainPhoto ? "손상된 사진" : "사진 없음", {
       x:L_X, y:L_Y, w:L_W, h:L_H, fontFace:FK, fontSize:15,
       color:PT.muted, align:"center", valign:"middle", margin:0
@@ -5148,12 +5151,14 @@ function pptAddProductSlide(pres, p, productNo, photoIdx, photoTotal, curSlideId
   if (photoTotal > 1) {
     var badgeW = isSingleMode ? 1.25 : 1.35;
     var badgeText = isSingleMode ? ("사진 " + photoTotal + "장") : (String(photoIdx+1) + " / " + photoTotal);
+    var bx = photoBox.x + photoBox.w - badgeW - 0.12;
+    var by = photoBox.y + 0.12;
     s.addShape(pres.shapes.RECTANGLE, {
-      x: L_X + L_W - badgeW - 0.15, y: L_Y + 0.15, w: badgeW, h: 0.34,
-      fill: { color: PT.ink }, line: { type: 'none' }
+      x: bx, y: by, w: badgeW, h: 0.34,
+      fill: { color: PT.ink }, line: { type: 'none' }, transparency: 12
     });
     s.addText(badgeText, {
-      x: L_X + L_W - badgeW - 0.15, y: L_Y + 0.15, w: badgeW, h: 0.34,
+      x: bx, y: by, w: badgeW, h: 0.34,
       fontFace: FK, fontSize: 10, color: PT.paper, bold: true,
       align: "center", valign: "middle", margin: 0
     });
@@ -5162,16 +5167,17 @@ function pptAddProductSlide(pres, p, productNo, photoIdx, photoTotal, curSlideId
   // ═══ 우측 ═══
   var R_X = 6.85, R_W = 5.95;
 
-  // ── 제품명 (제목 칸을 줄였다) ──
+  // ── 제품명 ──
+  // 아래 정렬이라 한 줄이든 두 줄이든 구분선과의 간격이 항상 같다
   s.addText(p.name || '(이름 없음)', {
-    x:R_X, y:0.92, w:R_W, h:0.95, fontFace:FK, fontSize:24, bold:true, color:PT.ink,
-    valign:"top", margin:0, fit:"shrink", lineSpacingMultiple:1.1
+    x:R_X, y:0.88, w:R_W, h:0.82, fontFace:FK, fontSize:24, bold:true, color:PT.ink,
+    valign:"bottom", margin:0, fit:"shrink", lineSpacingMultiple:1.05
   });
 
-  s.addShape(pres.shapes.RECTANGLE, { x:R_X, y:2.02, w:R_W, h:0.02, fill:{color:PT.ink}, line:{type:'none'} });
+  s.addShape(pres.shapes.RECTANGLE, { x:R_X, y:1.80, w:R_W, h:0.02, fill:{color:PT.ink}, line:{type:'none'} });
 
   // ── 단가 · MOQ · 샘플 (한 줄에 셋) ──
-  var statY = 2.24;
+  var statY = 2.02;
   var gap = 0.2;
   var colW = (R_W - gap * 2) / 3;
   var price = (p.moq && p.moq.price && p.moq.price !== '-') ? p.moq.price : '';
@@ -5231,38 +5237,42 @@ function pptAddProductSlide(pres, p, productNo, photoIdx, photoTotal, curSlideId
   }
   statCol(2, "SAMPLE", smpRuns, smpSub, smpSubColor);
 
-  s.addShape(pres.shapes.RECTANGLE, { x:R_X, y:3.62, w:R_W, h:0.01, fill:{color:PT.line}, line:{type:'none'} });
+  s.addShape(pres.shapes.RECTANGLE, { x:R_X, y:3.40, w:R_W, h:0.01, fill:{color:PT.line}, line:{type:'none'} });
 
-  // ── 메모 (CB 상태 + 직접 적은 내용만) ──
+  // ── 메모 칸 (연한 블루 패널) ──
   s.addText("NOTE · 메모", {
-    x:R_X, y:3.8, w:R_W, h:0.24, fontFace:FM, fontSize:9, color:PT.muted, bold:true, charSpacing:3, margin:0
+    x:R_X, y:3.56, w:R_W, h:0.24, fontFace:FM, fontSize:9, color:PT.muted, bold:true, charSpacing:3, margin:0
   });
 
-  var noteY = 4.12;
+  var noteY = 3.86;                 // 패널 위쪽
+  var noteMaxBottom = SH - 0.55;    // 패널이 내려갈 수 있는 한계
+  var pad = 0.22;                   // 안쪽 여백
+  var textW = R_W - pad * 2;
 
-  // CB 상태 배지
   var cb = getCbInfo(p.cb);
-  var cbW = 2.1;
-  s.addShape(pres.shapes.RECTANGLE, {
-    x:R_X, y:noteY, w:cbW, h:0.42, fill:{color:cb.bg}, line:{color:cb.color, width:1}
-  });
-  s.addText(cb.label + (cb.date ? "  " + pptFmtDate(cb.date) : ""), {
-    x:R_X, y:noteY, w:cbW, h:0.42, fontFace:FK, fontSize:12, bold:true,
-    color:cb.color, align:"center", valign:"middle", margin:0
-  });
-
   // 직접 적은 메모들
   var noteRuns = [];
+  var noteLines = 0;
+
+  // 한 줄에 대략 몇 글자가 들어가는지로 줄 수를 어림한다 (한글 기준)
+  function countLines(text, perLine) {
+    return String(text).split('\n').reduce(function(a, ln) {
+      return a + Math.max(1, Math.ceil(ln.length / perLine));
+    }, 0);
+  }
   if (p.memo) {
     noteRuns.push({ text: p.memo, options:{ fontSize:14, color:PT.ink, breakLine:true } });
+    noteLines += countLines(p.memo, 30);
   }
   if (p.moq && p.moq.memo) {
     noteRuns.push({ text: "단가·MOQ  ", options:{ fontSize:11, color:PT.muted, bold:true } });
     noteRuns.push({ text: p.moq.memo, options:{ fontSize:14, color:PT.ink, breakLine:true } });
+    noteLines += countLines(p.moq.memo, 25);
   }
   if (p.sample && p.sample.memo) {
     noteRuns.push({ text: "샘플  ", options:{ fontSize:11, color:PT.muted, bold:true } });
     noteRuns.push({ text: p.sample.memo, options:{ fontSize:14, color:PT.ink, breakLine:true } });
+    noteLines += countLines(p.sample.memo, 27);
   }
 
   var todos = Array.isArray(p.todos) ? p.todos : migrateTodos(p);
@@ -5271,15 +5281,43 @@ function pptAddProductSlide(pres, p, productNo, photoIdx, photoTotal, curSlideId
       text: (t.done ? "■ " : "□ ") + t.text,
       options: { fontSize:13, color: t.done ? PT.muted : PT.inkSoft, breakLine:true }
     });
+    noteLines += countLines(t.text, 30);
   });
 
   if (!noteRuns.length) {
     noteRuns.push({ text:"적어둔 메모 없음", options:{ fontSize:13, color:PT.muted, italic:true } });
+    noteLines = 1;
   }
 
+  // 내용만큼만 칸을 만든다 — 메모가 적을 때 빈 칸이 크게 남지 않도록
+  var bodyY = noteY + 0.56;
+  var needH = 0.56 + noteLines * 0.30 + 0.20;
+  var noteH = Math.max(1.25, Math.min(needH, noteMaxBottom - noteY));
+  var noteBottom = noteY + noteH;
+
+  s.addShape(pres.shapes.ROUNDED_RECTANGLE, {
+    x:R_X, y:noteY, w:R_W, h:noteH,
+    fill:{color:PT.noteBg}, line:{color:PT.noteLine, width:0.75}, rectRadius:0.08
+  });
+
+  // CB 상태 — 패널 안쪽 맨 위에 작게
+  s.addText([
+    { text:"CB  ", options:{ fontFace:FM, fontSize:8.5, color:PT.muted, bold:true, charSpacing:2 } },
+    { text:cb.label, options:{ fontFace:FK, fontSize:10.5, color:cb.color, bold:true } },
+    cb.date ? { text:"  " + pptFmtDate(cb.date), options:{ fontFace:FK, fontSize:9.5, color:PT.muted } }
+            : { text:"", options:{ fontSize:9.5 } }
+  ], {
+    x:R_X + pad, y:noteY + 0.12, w:textW, h:0.24, valign:"middle", margin:0
+  });
+
+  s.addShape(pres.shapes.RECTANGLE, {
+    x:R_X + pad, y:noteY + 0.42, w:textW, h:0.008,
+    fill:{color:PT.noteLine}, line:{type:'none'}
+  });
+
   s.addText(noteRuns, {
-    x:R_X, y:noteY + 0.62, w:R_W, h:SH - (noteY + 0.62) - 0.55,
-    fontFace:FK, valign:"top", margin:0, lineSpacingMultiple:1.35, fit:"shrink"
+    x:R_X + pad, y:bodyY, w:textW, h:noteBottom - bodyY - 0.14,
+    fontFace:FK, valign:"top", margin:0, lineSpacingMultiple:1.3, fit:"shrink"
   });
 
   // ── 푸터 ──
