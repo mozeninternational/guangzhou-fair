@@ -580,7 +580,6 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   border-top: 1px solid var(--border);
 }
 .cur-area .td-wrap { padding-bottom: 2px; }
-.cur-area .td-add { border-top: none; padding-top: 4px; }
 
 /* ── 목록 카드 스와이프 삭제 ───────────────────────── */
 .p-row { position: relative; overflow: hidden; border-radius: 14px; }
@@ -631,6 +630,16 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   padding: 0; resize: none; overflow: hidden; min-height: 20px;
 }
 .memo-ta::placeholder { color: var(--t3); font-size: 13px; }
+/* 메모에 적은 줄을 "확인할 것"으로 보내는 버튼 */
+.todo-add-btn {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  border: 1.5px solid rgba(46,125,91,.55); background: rgba(46,125,91,.15);
+  color: #6fbf92; font-size: 16px; font-weight: 700; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-family: inherit; touch-action: manipulation; -webkit-appearance: none;
+  padding: 0;
+}
+.todo-add-btn:active { background: rgba(46,125,91,.32); }
 
 /* ── 확인할 것 (체크리스트) ────────────────────────── */
 .td-wrap { margin-top: 8px; }
@@ -651,15 +660,6 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   flex-shrink: 0; background: none; border: none; color: var(--t3);
   font-size: 14px; cursor: pointer; padding: 0 2px; font-family: inherit;
 }
-.td-add {
-  display: flex; align-items: center; gap: 6px; margin-top: 2px;
-  padding: 6px 2px; border-top: 1px dashed var(--border);
-}
-.td-add-in {
-  flex: 1; min-width: 0; background: transparent; border: none; outline: none;
-  color: var(--t1); font-family: inherit; font-size: 13px; padding: 0;
-}
-.td-add-in::placeholder { color: var(--t3); }
 
 /* ── 기능 칩 (단가 / MOQ / CB / 샘플 / 명함) ────────── */
 .fn-row {
@@ -782,7 +782,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v37</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v40</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -899,18 +899,13 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       <textarea class="memo-ta" id="memo-ta" rows="1"
         placeholder="메모 — 특장점, 부스 위치, 상담 내용" oninput="onMemoInput()"></textarea>
       <button class="mic-btn" id="mic-memo" type="button" onclick="toggleVoice('memo-ta','mic-memo')" title="메모 음성입력">🎤</button>
+      <button class="todo-add-btn" id="btn-todo-add" type="button"
+              onclick="addTodoFromMemo()" title="이 줄을 확인할 것으로">＋</button>
     </div>
-
 
     <!-- 확인할 것 -->
     <div class="td-wrap">
       <div id="td-list"></div>
-      <div class="td-add">
-        <span style="color:var(--t3);font-size:14px;">＋</span>
-        <input class="td-add-in" id="td-input" type="text" placeholder="확인할 것 추가"
-               onkeydown="if(event.key==='Enter'){event.preventDefault();addTodoFromInput();}">
-        <button class="mic-btn" id="mic-todo" type="button" onclick="toggleVoice('td-input','mic-todo')" title="확인할 것 음성입력">🎤</button>
-      </div>
     </div>
 
 
@@ -1079,7 +1074,11 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">📅 샘플 신청</div>
-    <div class="info-box">짧게 탭 → 샘플 신청 완료 토글<br>소요일 입력 → 샘플 진행 중 (완성 예정일 설정)</div>
+    <div class="info-box">짧게 탭 → 샘플 신청 완료 토글<br>신청일 + 소요일 → 샘플 완성 예정일이 정해집니다</div>
+    <div class="fg">
+      <div class="fl">샘플 신청일</div>
+      <input class="fi" id="sample-req" type="date" onchange="calcExpected()">
+    </div>
     <div class="fg">
       <div class="fl">샘플 제작 소요일</div>
       <input class="fi" id="sample-days" type="number" placeholder="예) 14" inputmode="numeric" oninput="calcExpected()">
@@ -1251,7 +1250,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v37)
+          ⬇️ 최신 버전 받기 (현재 v40)
         </button>
       </div>
 
@@ -1783,6 +1782,11 @@ function renderTodos() {
       '<button class="td-del" type="button" onclick="removeTodo(\'' + t.id + '\')">✕</button>' +
       '</div>';
   }).join('');
+  // 항목이 없을 때는 자리를 차지하지 않게 접어둔다
+  var wrap = box.parentNode;
+  if (wrap && wrap.classList && wrap.classList.contains('td-wrap')) {
+    wrap.style.display = list.length ? '' : 'none';
+  }
 }
 
 function escapeHtmlLite(s) {
@@ -1800,10 +1804,30 @@ function addTodo(text) {
   scheduleAutoSave();
 }
 
-function addTodoFromInput() {
-  var el = document.getElementById('td-input');
-  addTodo(el.value);
-  el.value = '';
+/* 메모에 적은 마지막 줄을 "확인할 것"으로 옮긴다.
+   메모를 쓰다가 ＋ 만 누르면 그 줄이 체크 항목이 된다.        */
+function addTodoFromMemo() {
+  var el = document.getElementById('memo-ta');
+  if (!el) return;
+
+  var lines = el.value.split('\n');
+  var idx = -1;
+  for (var i = lines.length - 1; i >= 0; i--) {
+    if (lines[i].trim()) { idx = i; break; }
+  }
+  if (idx < 0) {
+    showToast('메모에 적은 뒤 ＋ 를 눌러주세요');
+    el.focus();
+    return;
+  }
+
+  var text = lines[idx].trim();
+  lines.splice(idx, 1);
+  el.value = lines.join('\n').replace(/\n+$/, '');
+  onMemoInput();
+
+  addTodo(text);
+  showToast('확인할 것에 추가 · ' + text);
   el.focus();
 }
 
@@ -1931,6 +1955,8 @@ function renderFnChips() {
       sub = (d === null) ? '' : (d < 0 ? '지연 ' + (-d) + '일' : 'D-' + d);
     } else if (cur.sample.days) {
       sub = cur.sample.days + '일';
+    } else if (cur.sample.requested) {
+      sub = fmtDate(cur.sample.requested) + ' 신청';
     }
     fnSet('fn-sample', 'fn-sample-t', '샘플 신청', 'on-green', sub);
   }
@@ -2690,8 +2716,8 @@ function toggleSampleQuick() {
   if (cur.sample) {
     cur.sample = null;
   } else {
-    cur.sample = { days: null, expected: null, memo: '' };
-    showToast('샘플 신청 표시');
+    cur.sample = { requested: todayISO(), days: null, expected: null, memo: '' };
+    showToast('샘플 신청 표시 · ' + fmtDate(todayISO()));
   }
   renderFnChips();
   renderChips();
@@ -2740,6 +2766,7 @@ function openOverlay(name) {
   }
   if (name === 'sample') {
     if (!cur.sample) cur.sample = { days: null, expected: null, memo: '', checklist: defaultChecklist() };
+    document.getElementById('sample-req').value = cur.sample.requested || todayISO();
     document.getElementById('sample-days').value = cur.sample.days || '';
     document.getElementById('sample-memo').value = cur.sample.memo || '';
     calcExpected();
@@ -2812,26 +2839,42 @@ function calcExpected() {
   var edd = document.getElementById('edd');
   if (!days || days < 1) { edd.style.display = 'none'; return; }
   var d = new Date();
-  d.setDate(d.getDate() + days);
-  var dateStr = d.toISOString().split('T')[0];
+  var reqEl = document.getElementById('sample-req');
+  var req = (reqEl && reqEl.value) || todayISO();
+  var dateStr = addDaysISO(req, days);
   edd.style.display = 'block';
   document.getElementById('edd-date').textContent = fmtDate(dateStr);
-  document.getElementById('edd-sub').textContent = '오늘로부터 ' + days + '일 후';
+  document.getElementById('edd-sub').textContent = fmtDate(req) + ' 신청 기준 ' + days + '일 후';
+}
+
+// 오늘 날짜 (YYYY-MM-DD) — 시간대에 영향받지 않게 직접 만든다
+function todayISO() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// 날짜에 며칠을 더한다
+function addDaysISO(iso, days) {
+  var p = String(iso).split('-');
+  var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  d.setDate(d.getDate() + days);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 function saveSample() {
+  var req = document.getElementById('sample-req').value || todayISO();
   var days = parseInt(document.getElementById('sample-days').value);
   if (!days || days < 1) { showToast('소요일을 입력해주세요'); return; }
-  var d = new Date();
-  d.setDate(d.getDate() + days);
-  var expected = d.toISOString().split('T')[0];
+  var expected = addDaysISO(req, days);
   var checklist = (cur.sample && cur.sample.checklist) ? cur.sample.checklist : defaultChecklist();
-  cur.sample = { days: days, expected: expected, memo: document.getElementById('sample-memo').value, checklist: checklist };
+  cur.sample = { requested: req, days: days, expected: expected,
+                 memo: document.getElementById('sample-memo').value, checklist: checklist };
   closeOverlay('sample');
   renderChips(); updateSaveBtn();
   showToast('샘플 신청 완료!');
 }
 function clearSample() {
   cur.sample = null;
+  document.getElementById('sample-req').value = todayISO();
   document.getElementById('sample-days').value = '';
   document.getElementById('sample-memo').value = '';
   document.getElementById('cl-new-item').value = '';
@@ -3121,8 +3164,6 @@ function resetCur() {
   document.getElementById('name-ta').style.height = '';
   document.getElementById('memo-ta').value = '';
   document.getElementById('memo-ta').style.height = '';
-  var tdi = document.getElementById('td-input');
-  if (tdi) tdi.value = '';
   renderTodos();
   document.getElementById('save-btn').disabled = true;
 
@@ -3740,8 +3781,11 @@ var SAMPLE_TPL_B64 = "UEsDBAoAAAAAAIdO4kAAAAAAAAAAAAAAAAAJAAAAZG9jUHJvcHMvUEsDBB
 
 var TPL_SHEET = '샘플현황';
 var TPL_FIRST_ROW = 5;          // 데이터 시작 행
+/* 열 순서 (2차 샘플 신청일을 샘플 테스트 오른쪽으로 옮겼다)
+   A No · B 이미지 · C 제품명 · D 견적단가 · E 샘플 신청일 · F 입고일
+   G 샘플 테스트 · H 2차 샘플 신청일 · I 현황 · J 비고 · K 명함        */
 var COL_IMG = 2, COL_NAME = 3, COL_PRICE = 4, COL_REQ = 5,
-    COL_IN = 6, COL_REQ2 = 7, COL_TEST = 8, COL_STATUS = 9,
+    COL_IN = 6, COL_TEST = 7, COL_REQ2 = 8, COL_STATUS = 9,
     COL_NOTE = 10, COL_CARD = 11;
 
 // 엑셀 날짜 일련번호 (1900-01-01 = 1, 1900년 윤년 버그 포함)
@@ -3837,7 +3881,7 @@ function findCardBox(img) {
       var b = { x: cs2.start / sc, y: rs.start / sc, w: cs2.len / sc, h: rs.len / sc };
 
       var area = (b.w * b.h) / (img.naturalWidth * img.naturalHeight);
-      if (area < 0.06 || area > 0.97) return null;
+      if (area < 0.06 || area > 0.93) return null;   // 사진 전체를 명함으로 착각하지 않게
       if (b.w < img.naturalWidth * 0.15 || b.h < img.naturalHeight * 0.10) return null;
       var rr = b.w / b.h;
       if (rr < 0.4 || rr > 4) return null;        // 명함이라기엔 너무 길쭉하면 버린다
@@ -3852,6 +3896,8 @@ function findCardBox(img) {
     var cands = [tryPolarity(true), tryPolarity(false)].filter(Boolean);
     if (!cands.length) return null;
     cands.sort(function(p, q) { return p.score - q.score; });
+    // 명함 비율과 너무 동떨어지면 잘못 찾은 것으로 보고 포기한다
+    if (cands[0].score > 0.55) return null;
     return cands[0];
   } catch (e) { return null; }
 }
@@ -3885,11 +3931,11 @@ function cropToCard(dataUrl) {
           if (box.w > W) { box.w = W; box.x = 0; }
           if (box.h > H) { box.h = H; box.y = 0; }
         } else {
-          // 못 찾으면 가운데를 명함 비율로 자른다
+          // 못 찾으면 가운데를 명함 비율로 자른다 (배경이 덜 남도록 조금 더 당겨서)
           ratio = (H > W) ? (1 / CARD_RATIO) : CARD_RATIO;
           var cw = W, ch = W / ratio;
           if (ch > H) { ch = H; cw = H * ratio; }
-          cw *= 0.92; ch *= 0.92;
+          cw *= 0.86; ch *= 0.86;
           box = { x: (W - cw) / 2, y: (H - ch) / 2, w: cw, h: ch };
         }
 
@@ -3951,6 +3997,55 @@ async function exportSampleSheet(list, btn) {
   var ws = wb.getWorksheet(TPL_SHEET);
   if (!ws) throw new Error('샘플현황 시트를 찾지 못했습니다');
 
+  /* ── 2차 샘플 신청일 ↔ 샘플 테스트 자리 바꾸기 ──
+     머리글·너비뿐 아니라 드롭다운·색상 규칙·대시보드 수식까지 같이 옮겨야
+     기존 기능이 그대로 동작한다. */
+  var hG = ws.getCell(4, 7), hH = ws.getCell(4, 8);
+  var gv = hG.value, gs = null, hs = null;
+  try { gs = JSON.parse(JSON.stringify(hG.style)); hs = JSON.parse(JSON.stringify(hH.style)); } catch (e) {}
+  hG.value = hH.value;          // G ← 샘플 테스트
+  hH.value = gv;                // H ← 2차 샘플 신청일
+  if (gs && hs) { try { hG.style = hs; hH.style = gs; } catch (e) {} }
+
+  ws.getColumn(7).width = 13;   // 샘플 테스트
+  ws.getColumn(8).width = 14;   // 2차 샘플 신청일
+
+  // 색상 규칙: 샘플 테스트에 걸려 있던 규칙을 새 자리(G)로
+  (ws.conditionalFormattings || []).forEach(function(cf) {
+    if (cf.ref === 'H5:H1004') cf.ref = 'G5:G1004';
+  });
+
+  // 대시보드 수식에서 G/H 참조를 맞바꾼다
+  var dash = wb.getWorksheet('대시보드');
+  if (dash) {
+    dash.eachRow({ includeEmpty: false }, function(row) {
+      row.eachCell({ includeEmpty: false }, function(cell) {
+        if (cell.type !== ExcelJS.ValueType.Formula) return;
+        var f = cell.formula;
+        if (!f || f.indexOf('샘플현황!') < 0) return;
+        var swapped = f.replace(/\$G\$5:\$G\$1004/g, '@@G@@')
+                       .replace(/\$H\$5:\$H\$1004/g, '$G$5:$G$1004')
+                       .replace(/@@G@@/g, '$H$5:$H$1004');
+        if (swapped !== f) cell.value = { formula: swapped };
+      });
+    });
+  }
+
+  /* ── 드롭다운·달력 다시 깔기 ──
+     칸마다 따로 들어가 있으면 저장할 때 범위가 겹쳐 엑셀이 통째로 무시한다.
+     범위 단위로 한 번에 지정한다. */
+  /* 날짜 칸은 "날짜만 받는 칸"으로 지정한다 → 구글시트·모바일에서 달력이 열린다.
+     범위는 아주 넉넉하게 잡아 실제 입력을 막지 않는다.
+     (숫자로 넣으면 1970년으로 잘못 해석되므로 반드시 날짜 객체로 넣는다) */
+  var DMIN = new Date(Date.UTC(2000, 0, 1));
+  var DMAX = new Date(Date.UTC(2050, 11, 31));
+  ws.dataValidations.model = {
+    'G5:G1004': { type: 'list', allowBlank: true, formulae: ['목록!$B$2:$B$21'] },   // 샘플 테스트
+    'I5:I1004': { type: 'list', allowBlank: true, formulae: ['목록!$A$2:$A$21'] },   // 현황
+    'E5:F1004': { type: 'date', allowBlank: true, operator: 'between', formulae: [DMIN, DMAX] },
+    'H5:H1004': { type: 'date', allowBlank: true, operator: 'between', formulae: [DMIN, DMAX] }
+  };
+
   // ── 명함 열(K) 만들기 — 비고 오른쪽 ──
   var hdrJ = ws.getCell(4, COL_NOTE);
   var hdrK = ws.getCell(4, COL_CARD);
@@ -3966,7 +4061,7 @@ async function exportSampleSheet(list, btn) {
   var IMG_BOX = 96;        // 제품 사진이 들어갈 정사각 칸(px)
   var CARD_W  = 152;       // 명함 가로(px)
   var ROW_H_MIN = 82;      // 최소 행 높이(pt) — 사진·명함이 들어가는 높이
-  var NOTE_CHARS = 48;     // 비고 한 줄에 들어가는 대략 글자 수
+  var NOTE_CHARS = 58;     // 비고 한 줄에 들어가는 대략 글자 폭 (한글 2, 영문 1)
   var NOTE_PT = 9.5;       // 비고 글자 크기
 
   for (var i = 0; i < list.length; i++) {
@@ -3979,20 +4074,37 @@ async function exportSampleSheet(list, btn) {
     var price = (p.moq && p.moq.price && p.moq.price !== '-') ? parseFloat(p.moq.price) : null;
     if (price !== null && isFinite(price)) ws.getCell(r, COL_PRICE).value = price;
 
-    // 샘플 신청일 = 박람회에서 제품을 기록한 날
-    // 날짜를 Date 객체로 넣으면 시간대에 따라 하루가 밀린다.
-    // 엑셀이 쓰는 "일련번호"로 직접 넣어 어느 기기에서든 같은 날이 나오게 한다.
-    var t = Number(p.id);
-    if (isFinite(t) && t > 1000000000000) {
-      var d = new Date(t);
+    /* 샘플 신청일 — 앱에 적어둔 신청일을 쓰고, 없으면 제품을 기록한 날을 쓴다.
+       날짜를 Date 객체로 넣으면 시간대에 따라 하루가 밀리므로
+       엑셀이 쓰는 "일련번호"로 직접 넣는다. */
+    var reqY = null, reqM = null, reqD = null;
+    if (p.sample && p.sample.requested) {
+      var pr = String(p.sample.requested).split('-');
+      if (pr.length === 3) { reqY = +pr[0]; reqM = +pr[1]; reqD = +pr[2]; }
+    }
+    if (reqY === null) {
+      var t = Number(p.id);
+      if (isFinite(t) && t > 1000000000000) {
+        var d0 = new Date(t);
+        reqY = d0.getFullYear(); reqM = d0.getMonth() + 1; reqD = d0.getDate();
+      }
+    }
+    if (reqY !== null) {
       var c = ws.getCell(r, COL_REQ);
-      c.value = excelSerialDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
+      c.value = excelSerialDate(reqY, reqM, reqD);
       c.numFmt = 'yyyy-mm-dd';
       c.alignment = { vertical: 'middle', horizontal: 'center' };
     }
 
-    ws.getCell(r, COL_TEST).value = '미착수';        // 드롭다운 값
-    ws.getCell(r, COL_STATUS).value = '1. 샘플 요청'; // 드롭다운 값
+    ws.getCell(r, COL_TEST).value = '미착수';         // 드롭다운 값
+    ws.getCell(r, COL_STATUS).value = '1. 샘플 요청';  // 드롭다운 값
+
+    // 아직 비어 있는 날짜 칸에도 날짜 서식을 미리 넣어둔다 (달력으로 고르기 쉽게)
+    [COL_IN, COL_REQ2].forEach(function(cc) {
+      var dc = ws.getCell(r, cc);
+      dc.numFmt = 'yyyy-mm-dd';
+      dc.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
 
     var noteText = buildSampleNote(p);
     var note = ws.getCell(r, COL_NOTE);
@@ -4005,7 +4117,7 @@ async function exportSampleSheet(list, btn) {
     noteText.split('\n').forEach(function(ln) {
       noteLines += Math.max(1, Math.ceil(krWidth(ln) / NOTE_CHARS));
     });
-    row.height = Math.max(ROW_H_MIN, Math.min(300, noteLines * (NOTE_PT + 3.2) + 8));
+    row.height = Math.max(ROW_H_MIN, Math.min(300, noteLines * (NOTE_PT + 3.2) + 10));
 
     // ── 제품 대표 사진 (B열) ──
     var main = p.photos && p.photos[0];
@@ -4016,9 +4128,11 @@ async function exportSampleSheet(list, btn) {
           var sz = await getImageNaturalSize(main);
           var sc = Math.min(IMG_BOX / sz.w, IMG_BOX / sz.h, 1);
           var id1 = wb.addImage({ base64: main, extension: m[1].toLowerCase() === 'jpg' ? 'jpeg' : m[1].toLowerCase() });
+          // 열·행 번호를 정수로 지정해 항상 그 제품 줄에 들어가게 한다
           ws.addImage(id1, {
-            tl: { col: COL_IMG - 1 + 0.08, row: r - 1 + 0.06 },
-            ext: { width: Math.round(sz.w * sc), height: Math.round(sz.h * sc) }
+            tl: { col: COL_IMG - 1, row: r - 1 },
+            ext: { width: Math.round(sz.w * sc), height: Math.round(sz.h * sc) },
+            editAs: 'oneCell'
           });
         }
       } catch (e) {}
@@ -4029,9 +4143,11 @@ async function exportSampleSheet(list, btn) {
     if (card) {
       try {
         var id2 = wb.addImage({ base64: card.data, extension: 'jpeg' });
+        // 열·행 번호를 정수로 지정 — 명함이 항상 그 제품 줄, 명함 칸에 들어간다
         ws.addImage(id2, {
-          tl: { col: COL_CARD - 1 + 0.06, row: r - 1 + 0.10 },
-          ext: { width: CARD_W, height: Math.round(CARD_W / card.ratio) }
+          tl: { col: COL_CARD - 1, row: r - 1 },
+          ext: { width: CARD_W, height: Math.round(CARD_W / card.ratio) },
+          editAs: 'oneCell'
         });
       } catch (e) {}
     }
@@ -4451,7 +4567,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v37';
+var APP_VERSION = 'v40';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5001,7 +5117,7 @@ function exportDayBackup(day) {
     showToast('\u23F3 백업 파일을 만드는 중...');
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v37',
+      version: 'v40',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -5037,7 +5153,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v37',
+      version: 'v40',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
