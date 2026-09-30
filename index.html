@@ -782,7 +782,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v40</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v41</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1250,7 +1250,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v40)
+          ⬇️ 최신 버전 받기 (현재 v41)
         </button>
       </div>
 
@@ -3807,10 +3807,16 @@ function b64ToArrayBuffer(b64) {
    못 찾으면 가운데를 명함 비율로 자르는 방식으로 되돌아간다.        */
 var CARD_RATIO = 91 / 55;   // 표준 명함 91 x 55mm
 
-// 사진 안에서 명함으로 보이는 영역을 찾는다
+/* ── 사진에서 명함 찾기 ───────────────────────────────
+   두 가지 방법을 모두 써 보고 더 명함다운 쪽을 고른다.
+
+   ① 배경 걷어내기 : 사진 테두리 색 = 배경으로 보고, 그와 다른 부분을 찾는다.
+                     (책상 위의 흰 명함, 흰 종이 위의 감색 명함 모두 잘 잡힌다)
+   ② 명암 가르기   : 밝은 덩어리 / 어두운 덩어리를 찾는다.
+                     (배경이 알록달록해서 ①이 흔들릴 때 보조)          */
 function findCardBox(img) {
   try {
-    var AW = 240;
+    var AW = 220;
     var sc = AW / img.naturalWidth;
     var AH = Math.max(1, Math.round(img.naturalHeight * sc));
     if (AH < 8) return null;
@@ -3820,84 +3826,116 @@ function findCardBox(img) {
     var ctx = cv.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(img, 0, 0, AW, AH);
     var d = ctx.getImageData(0, 0, AW, AH).data;
-
-    // 밝기 히스토그램
     var N = AW * AH;
-    var lum = new Uint8Array(N);
-    var hist = new Int32Array(256);
+
+    var R = new Uint8Array(N), G = new Uint8Array(N), B = new Uint8Array(N), L = new Uint8Array(N);
     for (var i = 0; i < N; i++) {
-      var v = (d[i*4] * 299 + d[i*4+1] * 587 + d[i*4+2] * 114) / 1000 | 0;
-      lum[i] = v; hist[v]++;
+      R[i] = d[i*4]; G[i] = d[i*4+1]; B[i] = d[i*4+2];
+      L[i] = (d[i*4]*299 + d[i*4+1]*587 + d[i*4+2]*114) / 1000 | 0;
     }
 
-    // 오츠 방법으로 밝은 부분/어두운 부분을 가르는 값을 구한다
-    var sum = 0, k;
-    for (k = 0; k < 256; k++) sum += k * hist[k];
-    var sumB = 0, wB = 0, best = 0, thr = 128;
-    for (k = 0; k < 256; k++) {
-      wB += hist[k];
-      if (!wB) continue;
-      var wF = N - wB;
-      if (!wF) break;
-      sumB += k * hist[k];
-      var mB = sumB / wB, mF = (sum - sumB) / wF;
-      var between = wB * wF * (mB - mF) * (mB - mF);
-      if (between > best) { best = between; thr = k; }
+    function med(arr) {
+      if (!arr.length) return 0;
+      var a = arr.slice().sort(function(x, y){ return x - y; });
+      return a[a.length >> 1];
     }
 
-    /* 가로줄·세로줄마다 "명함 색 픽셀 비율"을 세어, 명함이 차지한 구간을 찾는다.
-       기준값은 고정하지 않고 그 사진에서 가장 진한 줄의 절반 정도로 잡는다.
-       (명함을 멀리서 찍어 작게 나온 사진도 찾을 수 있게) */
-    function span(counts, total, minNeed) {
-      var mx = 0;
-      for (var q = 0; q < counts.length; q++) if (counts[q] > mx) mx = counts[q];
+    /* 가로줄·세로줄마다 "명함 픽셀 비율"을 세어 명함이 차지한 구간을 찾는다.
+       기준값은 그 사진에서 가장 진한 줄의 절반쯤으로 잡아,
+       멀리서 찍어 명함이 작게 나온 사진도 찾을 수 있게 한다. */
+    function spanOf(counts, total) {
+      var mx = 0, q;
+      for (q = 0; q < counts.length; q++) if (counts[q] > mx) mx = counts[q];
       if (!mx) return null;
-      var need = Math.max(minNeed, (mx / total) * 0.55);
+      var need = Math.max(0.10, (mx / total) * 0.5);
       var bs = -1, bl = 0, cs = -1;
       for (var j = 0; j < counts.length; j++) {
-        if (counts[j] / total >= need) {
-          if (cs < 0) cs = j;
-        } else {
-          if (cs >= 0 && j - cs > bl) { bl = j - cs; bs = cs; }
-          cs = -1;
-        }
+        if (counts[j] / total >= need) { if (cs < 0) cs = j; }
+        else { if (cs >= 0 && j - cs > bl) { bl = j - cs; bs = cs; } cs = -1; }
       }
       if (cs >= 0 && counts.length - cs > bl) { bl = counts.length - cs; bs = cs; }
       return bl > 0 ? { start: bs, len: bl } : null;
     }
 
-    /* 밝은 명함(흰 명함)과 어두운 명함(감색·검정 명함) 둘 다 시도해서
-       더 명함다운 쪽을 고른다. */
-    function tryPolarity(wantBright) {
+    function boxFromMask(mask) {
       var rowC = new Int32Array(AH), colC = new Int32Array(AW);
       for (var y = 0; y < AH; y++) {
         for (var x = 0; x < AW; x++) {
-          var on = wantBright ? (lum[y * AW + x] > thr) : (lum[y * AW + x] <= thr);
-          if (on) { rowC[y]++; colC[x]++; }
+          if (mask[y * AW + x]) { rowC[y]++; colC[x]++; }
         }
       }
-      var rs = span(rowC, AW, 0.12), cs2 = span(colC, AH, 0.12);
+      var rs = spanOf(rowC, AW), cs2 = spanOf(colC, AH);
       if (!rs || !cs2) return null;
-      var b = { x: cs2.start / sc, y: rs.start / sc, w: cs2.len / sc, h: rs.len / sc };
-
+      var b = {
+        x: cs2.start / sc, y: rs.start / sc,
+        w: cs2.len / sc,   h: rs.len / sc
+      };
       var area = (b.w * b.h) / (img.naturalWidth * img.naturalHeight);
-      if (area < 0.06 || area > 0.93) return null;   // 사진 전체를 명함으로 착각하지 않게
-      if (b.w < img.naturalWidth * 0.15 || b.h < img.naturalHeight * 0.10) return null;
+      if (area < 0.05) return null;
+      if (b.w < img.naturalWidth * 0.12 || b.h < img.naturalHeight * 0.08) return null;
       var rr = b.w / b.h;
-      if (rr < 0.4 || rr > 4) return null;        // 명함이라기엔 너무 길쭉하면 버린다
-
-      // 명함 비율(가로형·세로형)에 가까울수록 좋은 후보
+      if (rr < 0.45 || rr > 3.6) return null;          // 명함이라기엔 너무 길쭉
       var d1 = Math.abs(rr - CARD_RATIO) / CARD_RATIO;
       var d2 = Math.abs(rr - 1 / CARD_RATIO) * CARD_RATIO;
       b.score = Math.min(d1, d2);
+      b.area = area;
       return b;
     }
 
-    var cands = [tryPolarity(true), tryPolarity(false)].filter(Boolean);
+    // ── ① 배경 걷어내기 ──
+    var bandX = Math.max(2, Math.round(AW * 0.05));
+    var bandY = Math.max(2, Math.round(AH * 0.05));
+    var br = [], bg = [], bb = [];
+    for (var y2 = 0; y2 < AH; y2++) {
+      for (var x2 = 0; x2 < AW; x2++) {
+        var edge = (x2 < bandX || x2 >= AW - bandX || y2 < bandY || y2 >= AH - bandY);
+        if (!edge) continue;
+        var k2 = y2 * AW + x2;
+        br.push(R[k2]); bg.push(G[k2]); bb.push(B[k2]);
+      }
+    }
+    var mr = med(br), mg = med(bg), mb = med(bb);
+
+    // 테두리 색이 얼마나 들쭉날쭉한지 → 기준값을 그만큼 넉넉히
+    var devs = [];
+    for (var t = 0; t < br.length; t += 3) {
+      devs.push(Math.abs(br[t]-mr) + Math.abs(bg[t]-mg) + Math.abs(bb[t]-mb));
+    }
+    var tol = Math.max(48, med(devs) * 3);
+
+    var maskBg = new Uint8Array(N);
+    for (var p2 = 0; p2 < N; p2++) {
+      var dist = Math.abs(R[p2]-mr) + Math.abs(G[p2]-mg) + Math.abs(B[p2]-mb);
+      maskBg[p2] = dist > tol ? 1 : 0;
+    }
+    var cand1 = boxFromMask(maskBg);
+
+    // ── ② 명암 가르기 (오츠) ──
+    var hist = new Int32Array(256), s3;
+    for (s3 = 0; s3 < N; s3++) hist[L[s3]]++;
+    var sum = 0, k3;
+    for (k3 = 0; k3 < 256; k3++) sum += k3 * hist[k3];
+    var sumB = 0, wB = 0, best = 0, thr = 128;
+    for (k3 = 0; k3 < 256; k3++) {
+      wB += hist[k3];
+      if (!wB) continue;
+      var wF = N - wB;
+      if (!wF) break;
+      sumB += k3 * hist[k3];
+      var between = wB * wF * (sumB / wB - (sum - sumB) / wF) * (sumB / wB - (sum - sumB) / wF);
+      if (between > best) { best = between; thr = k3; }
+    }
+    var maskHi = new Uint8Array(N), maskLo = new Uint8Array(N);
+    for (var p3 = 0; p3 < N; p3++) {
+      if (L[p3] > thr) maskHi[p3] = 1; else maskLo[p3] = 1;
+    }
+    var cand2 = boxFromMask(maskHi);
+    var cand3 = boxFromMask(maskLo);
+
+    var cands = [cand1, cand2, cand3].filter(Boolean);
     if (!cands.length) return null;
-    cands.sort(function(p, q) { return p.score - q.score; });
-    // 명함 비율과 너무 동떨어지면 잘못 찾은 것으로 보고 포기한다
-    if (cands[0].score > 0.55) return null;
+    cands.sort(function(a, b2) { return a.score - b2.score; });
+    if (cands[0].score > 0.6) return null;     // 명함 비율과 너무 동떨어지면 포기
     return cands[0];
   } catch (e) { return null; }
 }
@@ -3931,11 +3969,11 @@ function cropToCard(dataUrl) {
           if (box.w > W) { box.w = W; box.x = 0; }
           if (box.h > H) { box.h = H; box.y = 0; }
         } else {
-          // 못 찾으면 가운데를 명함 비율로 자른다 (배경이 덜 남도록 조금 더 당겨서)
+          /* 못 찾으면 가운데를 명함 비율에 맞춰 자르기만 한다.
+             더 깎으면 명함이 꽉 차게 찍힌 사진에서 글씨가 잘려나간다. */
           ratio = (H > W) ? (1 / CARD_RATIO) : CARD_RATIO;
           var cw = W, ch = W / ratio;
           if (ch > H) { ch = H; cw = H * ratio; }
-          cw *= 0.86; ch *= 0.86;
           box = { x: (W - cw) / 2, y: (H - ch) / 2, w: cw, h: ch };
         }
 
@@ -4060,6 +4098,7 @@ async function exportSampleSheet(list, btn) {
 
   var IMG_BOX = 96;        // 제품 사진이 들어갈 정사각 칸(px)
   var CARD_W  = 152;       // 명함 가로(px)
+  var CARD_H_MAX = 132;    // 명함 세로 최대(px) — 세로로 찍은 명함이 너무 커지지 않게
   var ROW_H_MIN = 82;      // 최소 행 높이(pt) — 사진·명함이 들어가는 높이
   var NOTE_CHARS = 58;     // 비고 한 줄에 들어가는 대략 글자 폭 (한글 2, 영문 1)
   var NOTE_PT = 9.5;       // 비고 글자 크기
@@ -4112,12 +4151,25 @@ async function exportSampleSheet(list, btn) {
     note.alignment = { vertical: 'top', wrapText: true };
     note.font = Object.assign({}, note.font || {}, { size: NOTE_PT });
 
-    // 비고가 잘리지 않게 줄 수만큼 행을 늘린다 (명함이 들어갈 높이는 항상 확보)
+    /* 명함을 먼저 잘라 크기를 정한다.
+       세로로 찍은 명함은 키가 커서 행 높이를 그만큼 확보해야 잘리지 않는다. */
+    var card = await cropToCard(p.bizCards && p.bizCards[0]);
+    var cardW = 0, cardH = 0;
+    if (card) {
+      cardH = Math.min(CARD_W / card.ratio, CARD_H_MAX);
+      cardW = cardH * card.ratio;
+      if (cardW > CARD_W) { cardW = CARD_W; cardH = CARD_W / card.ratio; }
+      cardW = Math.round(cardW); cardH = Math.round(cardH);
+    }
+
+    // 비고가 잘리지 않게 줄 수만큼 행을 늘린다 (사진·명함이 들어갈 높이는 항상 확보)
     var noteLines = 0;
     noteText.split('\n').forEach(function(ln) {
       noteLines += Math.max(1, Math.ceil(krWidth(ln) / NOTE_CHARS));
     });
-    row.height = Math.max(ROW_H_MIN, Math.min(300, noteLines * (NOTE_PT + 3.2) + 10));
+    var needNote = noteLines * (NOTE_PT + 3.2) + 10;
+    var needCard = cardH ? (cardH * 0.75 + 8) : 0;      // px → pt
+    row.height = Math.max(ROW_H_MIN, needCard, Math.min(300, needNote));
 
     // ── 제품 대표 사진 (B열) ──
     var main = p.photos && p.photos[0];
@@ -4138,15 +4190,14 @@ async function exportSampleSheet(list, btn) {
       } catch (e) {}
     }
 
-    // ── 명함 (K열) — 명함 크기로 잘라서 넣는다 ──
-    var card = await cropToCard(p.bizCards && p.bizCards[0]);
-    if (card) {
+    // ── 명함 (K열) ──
+    if (card && cardW > 0) {
       try {
         var id2 = wb.addImage({ base64: card.data, extension: 'jpeg' });
         // 열·행 번호를 정수로 지정 — 명함이 항상 그 제품 줄, 명함 칸에 들어간다
         ws.addImage(id2, {
           tl: { col: COL_CARD - 1, row: r - 1 },
-          ext: { width: CARD_W, height: Math.round(CARD_W / card.ratio) },
+          ext: { width: cardW, height: cardH },
           editAs: 'oneCell'
         });
       } catch (e) {}
@@ -4567,7 +4618,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v40';
+var APP_VERSION = 'v41';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5117,7 +5168,7 @@ function exportDayBackup(day) {
     showToast('\u23F3 백업 파일을 만드는 중...');
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v40',
+      version: 'v41',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -5153,7 +5204,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v40',
+      version: 'v41',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
