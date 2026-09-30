@@ -3,10 +3,10 @@
    인터넷이 없어도 앱이 열리도록 앱 파일을 기기에 저장해 둔다.
 
    ⚠️ 앱을 수정해서 다시 올릴 때는 아래 CACHE 값의 숫자를 반드시 올릴 것.
-      (예: v32 → v33) 숫자를 안 올리면 폰이 예전 화면을 계속 보여준다.
+      (예: v33 → v34) 숫자를 안 올리면 폰이 예전 화면을 계속 보여준다.
    ══════════════════════════════════════════════════════ */
 
-var CACHE = 'gz-fair-v32';
+var CACHE = 'gz-fair-v33';
 
 var PRECACHE = [
   './',
@@ -52,8 +52,9 @@ self.addEventListener('fetch', function (e) {
   // 다른 도메인(CDN, 폰트 등)은 그대로 통과
   if (url.origin !== self.location.origin) return;
 
-  // 버전 확인용 요청(index.html?_v=...)은 항상 네트워크로
+  // 버전 확인용·강제 갱신 요청은 저장해 둔 것을 쓰지 않고 항상 네트워크로
   if (url.search.indexOf('_v=') !== -1) return;
+  if (url.search.indexOf('fresh=') !== -1) return;
 
   var isPage = req.mode === 'navigate' ||
                (req.headers.get('accept') || '').indexOf('text/html') !== -1;
