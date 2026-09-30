@@ -5,17 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#111827">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<!-- 홈 화면 아이콘으로 열 때 브라우저 UI 없이 앱처럼 실행 (iOS/Android) -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="광저우 박람회">
-<link rel="manifest" href="manifest.json">
 <title>광저우 박람회</title>
-<!-- 한글 웹폰트 — 중국 등 Google 접속이 막힌 환경에서 화면이 멈추지 않도록 "논블로킹"으로 로드.
-     불러오지 못하면 기기 기본 한글 폰트로 바로 표시된다. -->
-<link rel="stylesheet" media="print" onload="this.media='all'; this.onload=null;"
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"
         onerror="this.onerror=null;this.src='https://unpkg.com/sortablejs@1.15.2/Sortable.min.js';"></script>
 <style>
@@ -36,7 +27,7 @@ button { touch-action: manipulation; }
   --t3: #4a5a70;
 }
 html, body { min-height: 100%; height: 100%; height: -webkit-fill-available; background: var(--bg); overscroll-behavior: none; }
-body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif; color: var(--t1); display: flex; justify-content: center; overflow: hidden; -webkit-overflow-scrolling: touch; }
+body { font-family: 'Noto Sans KR', sans-serif; color: var(--t1); display: flex; justify-content: center; overflow: hidden; -webkit-overflow-scrolling: touch; }
 
 .app { width: 100%; max-width: 430px; height: 100dvh; min-height: 100vh; min-height: -webkit-fill-available; background: var(--bg); display: flex; flex-direction: column; overflow: hidden; }
 
@@ -138,7 +129,31 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .ppt-opt-label { font-size: 10px; }
 
 /* QUICK ACTION BUTTONS */
+.qa-anchor { height: 0; margin: 0; padding: 0; flex-shrink: 0; }
+.qa-grid {
+  width: 100%; max-width: 430px; box-sizing: border-box;
+  margin: 0 auto;
+  position: relative;
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 9px;
+  padding: 10px 44px 10px 16px;
+  flex-shrink: 0;
+}
+.qa-grid.at-bot { padding-bottom: 12px; margin-bottom: 66px; }
 /* 오른쪽 측면 이동 컨트롤 (위/아래 버튼) */
+.qa-move {
+  position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.qa-move-btn {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: rgba(255,255,255,.06); border: 1px solid var(--border);
+  color: var(--t2); font-size: 14px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; touch-action: manipulation; -webkit-appearance: none;
+  font-family: inherit; padding: 0;
+}
+.qa-move-btn:active { background: rgba(245,165,0,.2); color: var(--orange); border-color: var(--orange); }
+.qa-move-btn:disabled { opacity: .25; cursor: default; }
 .qa-btn {
   background: var(--card);
   border: 1.5px solid var(--border);
@@ -176,10 +191,8 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 /* CURRENT INPUT AREA */
 .cur-area {
   margin: 0 16px 10px;
-  /* 새로 기록 중인 영역. 아래 제품 목록과 확실히 구분되도록 주황 테두리를 두른다. */
-  background: var(--card); border: 2px solid rgba(245,165,0,.5);
-  box-shadow: 0 0 0 4px rgba(245,165,0,.04);
-  border-radius: 16px; padding: 13px 14px; flex-shrink: 0;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 12px 14px; flex-shrink: 0;
   max-height: 50dvh; overflow-y: auto;
   scrollbar-width: thin; scrollbar-color: var(--border) transparent;
 }
@@ -501,257 +514,6 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .storage-bar.warn .storage-bar-fill > div { background: var(--amber); }
 .storage-bar.danger .storage-bar-fill > div { background: var(--red); }
 .storage-bar-text { font-weight: 700; white-space: nowrap; }
-
-/* ── 사진 영역 스와이프 → 앨범 버튼 ──────────────────── */
-.ph-swipe { position: relative; overflow: hidden; border-radius: 12px; }
-.ph-swipe-album {
-  position: absolute; top: 0; right: 0; bottom: 0; width: 86px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  background: #2e5d7a; color: #fff; border: none; cursor: pointer;
-  font-family: inherit; font-size: 12px; font-weight: 700;
-  border-radius: 0 12px 12px 0; -webkit-tap-highlight-color: transparent;
-}
-.ph-swipe-album span { font-size: 19px; line-height: 1; }
-.ph-swipe-album:active { background: #24485e; }
-.ph-swipe-body {
-  position: relative; z-index: 1;
-  /* 뒤에 있는 앨범 버튼이 비쳐 보이지 않도록 카드와 같은 색으로 덮는다 */
-  background: var(--card);
-  transition: transform .22s cubic-bezier(.22,.61,.36,1);
-  will-change: transform;
-}
-.ph-swipe.dragging .ph-swipe-body { transition: none; }
-.ph-swipe.open .ph-swipe-body { transform: translateX(-86px); }
-
-/* 길게 누르는 중 표시 */
-.hold-on { background: rgba(245,165,0,.22) !important; border-color: var(--orange) !important; }
-
-/* 편집 종료 ✕ — 수정 중일 때만 보인다 */
-.edit-x {
-  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
-  background: transparent; border: 1px solid var(--border);
-  color: var(--t2); font-size: 13px; font-family: inherit;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  -webkit-tap-highlight-color: transparent;
-}
-.edit-x:active { background: rgba(255,255,255,.08); }
-
-/* 기존 제품을 고치는 중일 때는 파란 테두리 (새 기록과 구분) */
-.cur-area.editing { border-color: rgba(74,158,255,.5); box-shadow: 0 0 0 4px rgba(74,158,255,.05); }
-
-/* ── 입력 카드 안 구역 구분선 ──────────────────────────
-   제품명 / 기능 칩 / 사진 / 메모 / 확인할 것 이 한 덩어리로 보이지 않도록
-   각 구역 위에 얇은 선을 둔다. */
-.fn-row,
-.cur-area .photo-section:not([style*="display:none"]),
-.cur-area .memo-box,
-.cur-area .td-wrap {
-  border-top: 1px solid var(--border) !important;
-  padding-top: 12px;
-  margin-top: 12px;
-}
-/* 메모는 상자 그대로 두되, 위쪽 구분선은 상자 바깥에 그린다 */
-.cur-area .memo-box {
-  border-top: none !important;
-  position: relative;
-}
-.cur-area .memo-box::before {
-  content: ''; position: absolute; left: -10px; right: -10px; top: -12px;
-  border-top: 1px solid var(--border);
-}
-.cur-area .td-wrap { padding-bottom: 2px; }
-.cur-area .td-add { border-top: none; padding-top: 4px; }
-
-/* ── 목록 카드 스와이프 삭제 ───────────────────────── */
-.p-row { position: relative; overflow: hidden; border-radius: 14px; }
-.p-row-del {
-  position: absolute; top: 0; right: 0; bottom: 0; width: 84px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px; background: #b8352e; color: #fff;
-  font-family: inherit; font-size: 12px; font-weight: 700;
-  border: none; cursor: pointer; border-radius: 0 14px 14px 0;
-}
-.p-row-del span { font-size: 18px; line-height: 1; }
-.p-row .p-card {
-  position: relative; z-index: 1;
-  transition: transform .22s cubic-bezier(.22,.61,.36,1);
-  will-change: transform;
-}
-.p-row.dragging .p-card { transition: none; }
-.p-row.open .p-card { transform: translateX(-84px); }
-
-/* ── 목록 카드: 확인할 것 ──────────────────────────── */
-.p-todo { margin: 4px 0 2px; }
-.p-todo-item {
-  font-size: 12px; color: #f5c97a; line-height: 1.55;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.p-todo-more { font-size: 11px; color: var(--t3); margin-top: 1px; }
-
-/* ── 제품명 / 메모 분리 입력 ───────────────────────── */
-.nm-row { display: flex; align-items: flex-start; gap: 6px; }
-.nm-ta {
-  flex: 1; min-width: 0; background: transparent; border: none; outline: none;
-  color: var(--t1); font-family: inherit; font-size: 17px; font-weight: 700;
-  line-height: 1.35; padding: 2px 0; resize: none; overflow: hidden;
-}
-.nm-ta::placeholder { color: var(--t3); font-weight: 400; font-size: 14px; }
-
-.memo-box {
-  margin-top: 8px; padding: 8px 10px; border-radius: 10px;
-  background: rgba(255,255,255,.045); border: 1px solid var(--border);
-  display: flex; align-items: flex-start; gap: 6px;
-  transition: border-color .15s, background .15s;
-}
-.memo-box:focus-within { border-color: rgba(245,165,0,.55); background: rgba(245,165,0,.06); }
-.memo-ta {
-  flex: 1; min-width: 0; background: transparent; border: none; outline: none;
-  color: var(--t2); font-family: inherit; font-size: 13px; line-height: 1.5;
-  padding: 0; resize: none; overflow: hidden; min-height: 19px;
-}
-.memo-ta::placeholder { color: var(--t3); font-size: 13px; }
-
-/* ── 확인할 것 (체크리스트) ────────────────────────── */
-.td-wrap { margin-top: 8px; }
-.td-item {
-  display: flex; align-items: flex-start; gap: 7px; padding: 5px 2px;
-  font-size: 13px; line-height: 1.4; color: var(--t1);
-}
-.td-box {
-  flex-shrink: 0; width: 17px; height: 17px; margin-top: 1px; border-radius: 5px;
-  border: 1.5px solid var(--t3); background: transparent; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; color: #fff; padding: 0; font-family: inherit;
-}
-.td-box.done { background: #2e7d5b; border-color: #2e7d5b; }
-.td-text { flex: 1; min-width: 0; word-break: break-word; cursor: pointer; }
-.td-item.done .td-text { color: var(--t3); text-decoration: line-through; }
-.td-del {
-  flex-shrink: 0; background: none; border: none; color: var(--t3);
-  font-size: 14px; cursor: pointer; padding: 0 2px; font-family: inherit;
-}
-.td-add {
-  display: flex; align-items: center; gap: 6px; margin-top: 2px;
-  padding: 6px 2px; border-top: 1px dashed var(--border);
-}
-.td-add-in {
-  flex: 1; min-width: 0; background: transparent; border: none; outline: none;
-  color: var(--t1); font-family: inherit; font-size: 13px; padding: 0;
-}
-.td-add-in::placeholder { color: var(--t3); }
-
-/* ── 기능 칩 (단가 / MOQ / CB / 샘플 / 명함) ────────── */
-.fn-row {
-  display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px;
-}
-.fn-chip {
-  flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px;
-  min-height: 30px; padding: 5px 11px; border-radius: 15px;
-  background: rgba(255,255,255,.05); border: 1.5px solid var(--border);
-  color: var(--t2); font-family: inherit; font-size: 12px; font-weight: 600;
-  white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent;
-  transition: transform .1s, background .15s, border-color .15s, color .15s;
-  touch-action: manipulation; user-select: none; -webkit-user-select: none;
-}
-.fn-chip:active { transform: scale(.94); }
-.fn-chip.holding { background: rgba(245,165,0,.22); border-color: var(--orange); }
-.fn-chip.on-orange { background: rgba(245,165,0,.16); border-color: var(--orange); color: var(--orange); }
-.fn-chip.on-green  { background: rgba(46,125,91,.20); border-color: #3fa87a; color: #6ee7b7; }
-.fn-chip.on-amber  { background: rgba(184,137,45,.20); border-color: #d4a14a; color: #f5c97a; }
-.fn-chip.on-red    { background: rgba(184,53,46,.18); border-color: #c9605a; color: #f3a9a4; }
-.fn-chip-ico { font-size: 13px; line-height: 1; }
-.fn-chip-sub { font-size: 10px; opacity: .75; font-weight: 500; }
-
-/* ══════════════════════════════════════════════════
-   PDF 내보내기 전용 (화면에서는 숨김, 인쇄 시에만 표시)
-   별도 라이브러리 없이 브라우저 인쇄 → "PDF로 저장" 사용
-   ══════════════════════════════════════════════════ */
-#print-report { display: none; }
-
-@media print {
-  html, body {
-    height: auto !important; min-height: 0 !important;
-    overflow: visible !important; display: block !important;
-    background: #fff !important;
-  }
-  body > * { display: none !important; }
-  body > #print-report { display: block !important; }
-
-  @page { size: A4 portrait; margin: 12mm 11mm 13mm; }
-
-  #print-report {
-    color: #1a1613; background: #fff;
-    font-family: 'Noto Sans KR', sans-serif;
-    -webkit-print-color-adjust: exact; print-color-adjust: exact;
-    padding-right: 0.8mm;   /* 표 우측 테두리가 인쇄 경계에 잘리지 않도록 */
-  }
-  .pr-head { border-bottom: 2.2pt solid #1a1613; padding-bottom: 5pt; margin-bottom: 9pt; }
-  .pr-eyebrow { font-size: 7pt; letter-spacing: 2pt; font-weight: 700; color: #c2410c; }
-  .pr-title { font-size: 15pt; font-weight: 800; margin-top: 2pt; }
-  .pr-sub { font-size: 8pt; color: #6b6259; margin-top: 3pt; }
-  .pr-stats { display: flex; gap: 14pt; margin-top: 5pt; }
-  .pr-stat { font-size: 8pt; color: #4a423a; }
-  .pr-stat b { font-size: 11pt; font-weight: 800; color: #1a1613; margin-right: 2pt; }
-
-  .pr-card {
-    display: flex; gap: 6mm; padding: 4mm 0;
-    border-bottom: 0.6pt solid #d9d1c2;
-    page-break-inside: avoid; break-inside: avoid;
-  }
-  .pr-left { width: 38mm; flex-shrink: 0; }
-  .pr-main {
-    width: 38mm; height: 38mm; border: 0.6pt solid #d9d1c2; border-radius: 2mm;
-    overflow: hidden; background: #f7f5f0;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .pr-main img { width: 100%; height: 100%; object-fit: cover; }
-  .pr-noimg { font-size: 7pt; color: #a89f93; }
-  .pr-thumbs { display: flex; gap: 1.2mm; margin-top: 1.4mm; }
-  .pr-thumbs img {
-    width: 8.8mm; height: 8.8mm; object-fit: cover;
-    border: 0.5pt solid #d9d1c2; border-radius: 1mm;
-  }
-  .pr-cardimg { margin-top: 1.4mm; font-size: 6.5pt; color: #6b6259; }
-  .pr-cardimg img {
-    width: 17mm; height: 10mm; object-fit: cover;
-    border: 0.5pt solid #d9d1c2; border-radius: 1mm; vertical-align: middle; margin-right: 1.5mm;
-  }
-
-  .pr-body { flex: 1; min-width: 0; }
-  .pr-name { font-size: 11pt; font-weight: 800; line-height: 1.3; }
-  .pr-no {
-    display: inline-block; background: #1a1613; color: #fff;
-    font-size: 7.5pt; font-weight: 700; padding: 0.6mm 1.8mm;
-    border-radius: 1mm; margin-right: 2mm; vertical-align: 1pt;
-  }
-  .pr-tags { margin-top: 2pt; }
-  .pr-tag {
-    display: inline-block; font-size: 7pt; font-weight: 700;
-    padding: 0.5mm 1.8mm; border-radius: 1mm; margin-right: 1.5mm;
-    border: 0.5pt solid #d9d1c2; color: #4a423a; background: #f7f5f0;
-  }
-  .pr-tag.cb-y { border-color: #5a7a5a; color: #3f5c3f; background: #e9f1e9; }
-  .pr-tag.cb-w { border-color: #b8892d; color: #8a6416; background: #f9f0dc; }
-  .pr-tag.cb-n { border-color: #b8352e; color: #93251f; background: #f7e2e0; }
-  .pr-tag.smp  { border-color: #2e5d7a; color: #23485e; background: #e2edf3; }
-
-  .pr-tbl { width: 100%; border-collapse: collapse; margin-top: 3mm; table-layout: fixed; }
-  .pr-tbl th, .pr-tbl td {
-    border: 0.5pt solid #e0dacd; padding: 1.2mm 2mm;
-    font-size: 8pt; text-align: left; vertical-align: middle;
-  }
-  .pr-tbl th { background: #f7f5f0; color: #6b6259; font-weight: 700; width: 15mm; white-space: nowrap; }
-  .pr-tbl td { color: #1a1613; overflow-wrap: anywhere; word-break: keep-all; }
-  .pr-tbl td.hi { font-weight: 800; color: #c2410c; }
-
-  .pr-memo { margin-top: 2mm; font-size: 8pt; color: #4a423a; line-height: 1.5; white-space: pre-wrap; }
-  .pr-memo b { color: #6b6259; font-weight: 700; }
-  .pr-check { margin-top: 1.5mm; font-size: 7.5pt; color: #6b6259; }
-  .pr-check .done { color: #3f5c3f; }
-
-  .pr-foot { margin-top: 8pt; font-size: 7pt; color: #a89f93; text-align: center; }
-}
-
 </style>
 </head>
 <body>
@@ -761,17 +523,17 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v30</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span style="opacity:.5;font-size:10px;">v10</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
         <button class="ppt-btn" id="ppt-hdr-btn" onclick="openSheet('ppt')">
-          <span>📄</span><span>리포트</span>
+          <span>📄</span><span>PPT</span>
         </button>
         <button class="backup-btn" onclick="openSheet('backup')">
           <span>💾</span><span>백업</span>
         </button>
-        <button class="fab-inline" id="fab-add" type="button" title="탭=촬영 · 길게=앨범">+</button>
+        <button class="fab-inline" onclick="document.getElementById('product-input').click()">+</button>
       </div>
     </div>
   </div>
@@ -788,22 +550,6 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <div class="rc-banner-actions">
       <button class="rc-clean-btn" onclick="exportBackup()">💾 지금 백업하기</button>
       <button class="rc-dismiss-btn" onclick="document.getElementById('bk-reminder-banner').classList.remove('show')">나중에</button>
-    </div>
-  </div>
-
-  <!-- 저장소 읽기 실패 경고 (자동저장 잠금 상태) -->
-  <div class="rc-banner" id="data-error-banner">
-    <div class="rc-banner-top">
-      <span>\U0001F6A8</span>
-      <span>저장된 자료를 불러오지 못했어요</span>
-    </div>
-    <div class="rc-banner-desc">
-      기존 자료가 지워지지 않도록 <b>새 입력 저장을 잠갔습니다.</b><br>
-      앱을 완전히 껐다가 다시 열어보세요. 그래도 같으면 백업 파일로 복구하세요.
-    </div>
-    <div class="rc-banner-actions">
-      <button class="rc-clean-btn" onclick="location.reload()">\U0001F504 앱 다시 열기</button>
-      <button class="rc-dismiss-btn" onclick="openSheet('backup')">\U0001F4BE 백업에서 복구</button>
     </div>
   </div>
 
@@ -830,51 +576,34 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <span class="storage-bar-text" id="storage-text">0.0 MB</span>
   </div>
 
+  <div class="qa-anchor" id="qa-anchor-top"></div>
 
   <!-- CURRENT INPUT -->
   <div class="cur-area">
-    <!-- 수정 중 배너는 v25에서 제거 (파란 테두리로 구분, 삭제는 목록 스와이프로) -->
-    <div class="edit-banner" id="edit-banner" style="display:none !important;"></div>
-    <!-- 제품명 -->
-    <div class="nm-row">
-      <textarea class="nm-ta" id="name-ta" rows="1"
-        placeholder="제품명" oninput="onNameInput()"></textarea>
+    <div class="edit-banner" id="edit-banner">
+      <span>📝 수정 중</span>
+      <div class="edit-banner-actions">
+        <button class="del-btn" onclick="deleteCurrentProduct()">🗑 삭제</button>
+        <button class="cancel-btn" onclick="cancelEdit()">취소</button>
+      </div>
+    </div>
+    <div class="cur-row">
+      <textarea class="name-ta" id="name-ta" rows="2"
+        placeholder="제품명을 입력하세요...&#10;엔터로 줄바꿈 후 특장점 메모 가능"
+        oninput="onNameInput()"></textarea>
       <span class="cat-tag-pill" id="cat-tag-pill" style="display:none;"></span>
-      <button class="mic-btn" id="mic-name" type="button" onclick="toggleVoice('name-ta','mic-name')" title="제품명 음성입력">🎤</button>
+      <button class="mic-btn" id="mic-name" type="button" onclick="toggleVoice('name-ta','mic-name')" title="음성으로 입력">🎤</button>
       <button class="save-btn" id="save-btn" onclick="saveProduct()" disabled>저장</button>
-      <button class="edit-x" id="edit-x" type="button" onclick="cancelEdit()" title="편집 끝내기" style="display:none;">✕</button>
     </div>
-
-    <!-- 기능 칩 -->
-    <div class="fn-row">
-      <button class="fn-chip" id="fn-price" type="button"><span class="fn-chip-ico">$</span><span id="fn-price-t">단가</span></button>
-      <button class="fn-chip" id="fn-moq" type="button"><span id="fn-moq-t">MOQ</span></button>
-      <button class="fn-chip" id="fn-cb" type="button"><span class="fn-chip-ico">📋</span><span id="fn-cb-t">CB 미입력</span></button>
-      <button class="fn-chip" id="fn-sample" type="button"><span class="fn-chip-ico">📅</span><span id="fn-sample-t">샘플 신청</span></button>
-      <button class="fn-chip" id="fn-card" type="button"><span class="fn-chip-ico">📇</span><span id="fn-card-t">명함</span></button>
-      <button class="fn-chip" id="fn-cat" type="button" onclick="openCatPicker()"><span class="fn-chip-ico">🏷</span><span id="fn-cat-t">카테고리</span></button>
-    </div>
-
-    <!-- 카테고리 선택 줄은 화면에서 제거 (데이터 필드는 보존) -->
-    <div class="cat-row" id="cat-row" style="display:none;"></div>
 
     <!-- 📸 제품 사진 섹션 (이름/메모 바로 아래, 깔끔하게) -->
     <div class="photo-section">
       <div class="ps-title">
         <span class="ps-count" id="photos-count">0</span>
       </div>
-      <!-- 왼쪽으로 밀면 "앨범" 버튼이 나온다.
-           (길게 누르기는 아이폰에서 사진첩을 열 수 없어 스와이프 방식으로 변경) -->
-      <div class="ph-swipe" id="ph-swipe">
-        <button class="ph-swipe-album" type="button" onclick="openAlbum()">
-          <span>🖼️</span>앨범
-        </button>
-        <div class="ph-swipe-body">
-          <div class="dropzone" id="dropzone-photos">
-            <div class="photo-scroll" id="photo-scroll"></div>
-            <div class="photo-hint" id="photo-hint"></div>
-          </div>
-        </div>
+      <div class="dropzone" id="dropzone-photos">
+        <div class="photo-scroll" id="photo-scroll"></div>
+        <div class="photo-hint" id="photo-hint"></div>
       </div>
     </div>
 
@@ -891,28 +620,41 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       </div>
     </div>
 
-    <!-- 메모 -->
-    <div class="memo-box">
-      <textarea class="memo-ta" id="memo-ta" rows="1"
-        placeholder="메모 — 특장점, 부스 위치, 상담 내용" oninput="onMemoInput()"></textarea>
-      <button class="mic-btn" id="mic-memo" type="button" onclick="toggleVoice('memo-ta','mic-memo')" title="메모 음성입력">🎤</button>
-    </div>
-
-
-    <!-- 확인할 것 -->
-    <div class="td-wrap">
-      <div id="td-list"></div>
-      <div class="td-add">
-        <span style="color:var(--t3);font-size:14px;">＋</span>
-        <input class="td-add-in" id="td-input" type="text" placeholder="확인할 것 추가"
-               onkeydown="if(event.key==='Enter'){event.preventDefault();addTodoFromInput();}">
-        <button class="mic-btn" id="mic-todo" type="button" onclick="toggleVoice('td-input','mic-todo')" title="확인할 것 음성입력">🎤</button>
-      </div>
-    </div>
-
-
+    <div class="cat-row" id="cat-row"></div>
   </div>
 
+  <div class="qa-anchor" id="qa-anchor-mid"></div>
+
+  <!-- QUICK ACTIONS (오른쪽 ▲▼ 버튼으로 위치를 위/중간/아래로 이동. 놓으면 그 자리에 고정) -->
+  <div class="qa-grid" id="qa-grid">
+    <div class="qa-move">
+      <button class="qa-move-btn" id="qa-move-up" type="button" onclick="moveQaGrid(-1)" title="위로 이동">▲</button>
+      <button class="qa-move-btn" id="qa-move-down" type="button" onclick="moveQaGrid(1)" title="아래로 이동">▼</button>
+    </div>
+    <button class="qa-btn" id="qa-moq" onclick="openSheet('moq')">
+      <div class="qa-icon c-orange" id="moq-icon">$</div>
+      <div class="qa-top" id="moq-top">MOQ</div>
+      <div class="qa-bot qa-val" id="moq-bot"></div>
+    </button>
+
+    <button class="qa-btn" id="qa-cb">
+      <div class="qa-icon c-orange" id="cb-icon">📋</div>
+      <div class="qa-top" id="cb-top">CB 없음</div>
+      <div class="qa-bot" id="cb-bot"></div>
+    </button>
+
+    <button class="qa-btn" id="qa-sample">
+      <div class="qa-icon c-orange" id="sample-icon">📅</div>
+      <div class="qa-top" id="sample-top">샘플 신청</div>
+      <div class="qa-bot" id="sample-bot"></div>
+    </button>
+
+    <button class="qa-btn" id="qa-card" onclick="document.getElementById('biz-input').click()">
+      <div class="qa-icon c-orange" id="card-icon">📇</div>
+      <div class="qa-top" id="card-top">명함사진</div>
+      <div class="qa-bot" id="card-bot"></div>
+    </button>
+  </div>
 
   <!-- PRODUCT LIST -->
   <div class="content" id="main-page">
@@ -944,10 +686,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="content" id="photos-page" style="display:none;">
     <div class="sm-top">
       <div class="sm-label" id="ph-count">저장된 사진</div>
-      <div style="display:flex; gap:6px; flex-shrink:0;">
-        <button class="excel-btn" style="background:#2e7d5b;" id="ph-save-btn" onclick="savePhotosToAlbum('today')">\U0001F4E5 사진첩 저장</button>
-        <button class="excel-btn" style="background:#6b4fa0;" onclick="exportAllPhotosZip()">⬇ ZIP</button>
-      </div>
+      <button class="excel-btn" style="background:#6b4fa0;" onclick="exportAllPhotosZip()">⬇ 전체 사진 ZIP</button>
     </div>
     <div class="empty" id="ph-empty" style="display:none;">
       <div class="empty-icon">🖼️</div>
@@ -956,6 +695,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <div class="ph-grid" id="ph-grid" style="display:none;"></div>
   </div>
 
+  <div class="qa-anchor" id="qa-anchor-bot"></div>
 
   <!-- BOTTOM NAV -->
   <nav class="bnav">
@@ -993,9 +733,6 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 <input type="file" id="product-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handleProductPhoto(event)">
 <input type="file" id="photo-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handleProductPhoto(event)">
 <input type="file" id="biz-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handleBizPhoto(event)">
-<!-- 앨범(사진첩)에서 불러오기 — capture 속성이 없어야 사진 보관함이 열린다 -->
-<input type="file" id="album-input" accept="image/*" multiple style="display:none" onchange="handleProductPhoto(event)">
-<input type="file" id="album-biz-input" accept="image/*" multiple style="display:none" onchange="handleBizPhoto(event)">
 
 <!-- MOQ SHEET -->
 <div class="overlay" id="moq-overlay" onclick="overlayClick(event,'moq')">
@@ -1005,21 +742,18 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <div class="f2">
       <div class="fg">
         <div class="fl">단가 (USD $)</div>
-        <input class="fi" id="moq-price" type="number" placeholder="0.00" inputmode="decimal" step="0.01"
-               onkeydown="if(event.key==='Enter'){event.preventDefault();saveMoq();}">
+        <input class="fi" id="moq-price" type="number" placeholder="0.00" inputmode="decimal" step="0.01">
       </div>
       <div class="fg">
         <div class="fl">MOQ (최소수량)</div>
-        <input class="fi" id="moq-qty" type="number" placeholder="0" inputmode="numeric"
-               onkeydown="if(event.key==='Enter'){event.preventDefault();saveMoq();}">
+        <input class="fi" id="moq-qty" type="number" placeholder="0" inputmode="numeric">
       </div>
     </div>
     <div class="fg">
       <div class="fl">메모 (선택)</div>
-      <input class="fi" id="moq-memo" type="text" placeholder="ex) 색상별 MOQ 다름..."
-             onkeydown="if(event.key==='Enter'){event.preventDefault();saveMoq();}">
+      <input class="fi" id="moq-memo" type="text" placeholder="ex) 색상별 MOQ 다름...">
     </div>
-    <button class="confirm-btn" onclick="saveMoq()">저장</button>
+    <button class="confirm-btn" onclick="saveMoq()">✓ 저장</button>
     <button class="clear-btn" onclick="clearMoq()">초기화</button>
   </div>
 </div>
@@ -1061,7 +795,13 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
         <button class="mic-btn" id="mic-sample-memo" type="button" onclick="toggleVoice('sample-memo','mic-sample-memo')" title="음성으로 입력">🎤</button>
       </div>
     </div>
-    
+    <div class="fg">
+      <div class="fl">진행 체크리스트</div>
+      <div class="cl-wrap" id="sample-checklist"></div>
+      <div class="cl-add-row">
+        <input class="fi" id="cl-new-item" type="text" placeholder="체크리스트 항목 추가...">
+        <button class="cl-add-btn" type="button" onclick="addChecklistItem()">+ 추가</button>
+      </div>
     </div>
     <button class="confirm-btn g" onclick="saveSample()">✓ 샘플 신청 완료</button>
     <button class="clear-btn" onclick="clearSample()">초기화</button>
@@ -1072,27 +812,13 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 <div class="overlay" id="ppt-overlay" onclick="overlayClick(event,'ppt')">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">📄 리포트 내보내기</div>
+    <div class="sheet-title">📄 PPT 프레젠테이션 내보내기</div>
 
-    <div class="info-box" id="exp-info">
+    <div class="info-box">
       제품 발굴 리포트를 PowerPoint 파일로 저장합니다.<br>
       · 사진은 원본 비율 그대로 배치됩니다<br>
       · <b>대표 이미지만</b>: 제품당 1장 (출력·공유용)<br>
       · <b>사진 전부</b>: 메인 이미지 탭하면 다음 사진으로 순환 (발표모드)
-    </div>
-
-    <div class="fg">
-      <div class="fl">파일 형식</div>
-      <div class="ppt-options">
-        <button class="ppt-opt-btn active" id="fmt-ppt" onclick="setExpFormat('ppt')">
-          <span class="ppt-opt-label" style="font-size:12px;font-weight:700;">📊 PPT</span>
-          <span class="ppt-opt-label" style="opacity:.8;">발표용 · 인터넷 필요</span>
-        </button>
-        <button class="ppt-opt-btn" id="fmt-pdf" onclick="setExpFormat('pdf')">
-          <span class="ppt-opt-label" style="font-size:12px;font-weight:700;">🖨 PDF</span>
-          <span class="ppt-opt-label" style="opacity:.8;">인쇄용 · 오프라인 OK</span>
-        </button>
-      </div>
     </div>
 
     <div class="fg">
@@ -1110,38 +836,24 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     </div>
 
     <div class="fg">
-      <div class="fl" id="exp-photo-label">사진 슬라이드</div>
+      <div class="fl">사진 슬라이드</div>
       <div class="ppt-options">
         <button class="ppt-opt-btn active" id="mode-single" onclick="setPptMode('single')">
           <span class="ppt-opt-label" style="font-size:12px;font-weight:700;">대표 이미지만</span>
-          <span class="ppt-opt-label" style="opacity:.8;" id="mode-single-sub">제품당 1장 · 출력용</span>
+          <span class="ppt-opt-label" style="opacity:.8;">제품당 1장 · 출력용</span>
         </button>
         <button class="ppt-opt-btn" id="mode-all" onclick="setPptMode('all')">
           <span class="ppt-opt-label" style="font-size:12px;font-weight:700;">사진 전부</span>
-          <span class="ppt-opt-label" style="opacity:.8;" id="mode-all-sub">탭 순환 · 발표용</span>
+          <span class="ppt-opt-label" style="opacity:.8;">탭 순환 · 발표용</span>
         </button>
       </div>
     </div>
 
-    <button class="confirm-btn" id="ppt-confirm" onclick="runExport()">
+    <button class="confirm-btn" id="ppt-confirm" onclick="exportToPpt()">
       ✓ PPT 파일 생성 &amp; 다운로드
     </button>
   </div>
 </div>
-
-<!-- 카테고리 선택 -->
-<div class="overlay" id="cat-overlay" onclick="closeOverlay('cat')">
-  <div class="sheet" onclick="event.stopPropagation()">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">🏷 카테고리</div>
-    <div id="cat-pick-row" style="display:flex; flex-wrap:wrap; gap:7px; margin-top:4px;"></div>
-    <button class="confirm-btn" style="background:rgba(255,255,255,.08); color:var(--t2); margin-top:14px;"
-            onclick="pickCategory(null)">선택 안 함</button>
-  </div>
-</div>
-
-<!-- PDF(인쇄) 리포트 컨테이너 — 화면에서는 숨김, 인쇄 시에만 표시 -->
-<div id="print-report"></div>
 
 <div class="toast" id="toast"></div>
 
@@ -1152,108 +864,88 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 <div class="overlay" id="backup-overlay" onclick="overlayClick(event,'backup')">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">💾 백업</div>
+    <div class="sheet-title">💾 백업 · 데이터 옮기기</div>
 
-    <!-- ① 날짜별 백업 (주력) -->
-    <div class="bk-card" style="border-color: rgba(46,125,91,.5); background: rgba(46,125,91,.07);">
-      <div class="bk-card-top">
-        <span class="bk-card-icon">📅</span>
-        <span class="bk-card-title">날짜별 백업</span>
-      </div>
-      <div class="bk-card-desc">
-        <b style="color:#f5a500;">주황색 날짜를 누르세요.</b> 그 날짜 것만 저장됩니다.
-        사진과 정보가 한 파일에 같이 들어갑니다.
-      </div>
-      <div id="bk-day-list" style="margin-top:6px;"></div>
-
-    </div>
-
-    <!-- ② 전체 내보내기 -->
+    <!-- 내보내기 카드 -->
     <div class="bk-card">
       <div class="bk-card-top">
         <span class="bk-card-icon">📤</span>
-        <span class="bk-card-title">전체 내보내기</span>
+        <span class="bk-card-title">내보내기</span>
       </div>
       <div class="bk-card-desc">
-        <b style="color:#f5c97a;">평소에는 쓰지 마세요.</b> 지금까지의 <b>모든 날짜</b>가 한 파일에 들어가
-        오래 걸립니다. 귀국 후 한 번에 정리할 때만 쓰세요.
+        지금까지 입력한 모든 제품 정보를 파일로 저장해요.<br>
+        카카오톡 "나와의 채팅"에 올려두면 안전합니다.
       </div>
       <div class="bk-card-info" id="bk-export-info">
         현재 제품: <b>0개</b> · 예상 파일 크기 <b>0 MB</b>
       </div>
-      <button class="bk-action-btn" style="background:transparent; border:1px solid var(--border); color:var(--t2);"
-              onclick="exportBackup()">⬇ 전체를 파일 하나로 (느림)</button>
-    </div>
-
-    <!-- ③ 그 밖의 기능 (접힘) -->
-    <button class="bk-action-btn" id="bk-more-btn" type="button"
-            style="background:transparent; border:1px solid var(--border); color:var(--t2); margin-top:4px;"
-            onclick="toggleBackupMore()">⌄ 그 밖의 기능</button>
-
-    <div id="bk-more" style="display:none; margin-top:10px;">
-
-      <div class="bk-card import">
-        <div class="bk-card-top">
-          <span class="bk-card-icon">📥</span>
-          <span class="bk-card-title">가져오기 (복구)</span>
-        </div>
-        <div class="bk-card-desc">
-          백업 파일을 불러와 복구합니다. 여러 개를 순서대로 불러오면 합쳐집니다.
-        </div>
-        <button class="bk-action-btn green" onclick="document.getElementById('backup-input').click()">
-          📁 백업 파일 선택하기
-        </button>
-      </div>
-
-      <div class="bk-card">
-        <div class="bk-card-top">
-          <span class="bk-card-icon">⏪</span>
-          <span class="bk-card-title">되돌리기</span>
-        </div>
-        <div class="bk-card-desc">
-          앱이 하루 한 번 자동 저장한 최근 5일치로 되돌립니다. (사진은 지금 폰의 것을 그대로 사용)
-        </div>
-        <button class="bk-action-btn" style="background:#6b7a8f;" onclick="restoreFromSnapshot()">
-          ⏪ 예전 시점으로 되돌리기
-        </button>
-      </div>
-
-      <div class="bk-card">
-        <div class="bk-card-top">
-          <span class="bk-card-icon">🗜️</span>
-          <span class="bk-card-title">사진 재압축</span>
-        </div>
-        <div class="bk-card-desc">
-          저장공간이 부족할 때만 쓰세요. <b>원본 화질로 되돌릴 수 없습니다.</b>
-        </div>
-        <button class="bk-action-btn" style="background:#6b7a8f;" onclick="recompressAllPhotos(this)">
-          🗜️ 사진 다시 압축하기
-        </button>
-      </div>
-
-      <div class="bk-card" style="border-color: rgba(224,85,85,.3);">
-        <div class="bk-card-top">
-          <span class="bk-card-icon">🗑️</span>
-          <span class="bk-card-title" style="color:var(--red);">전체 데이터 삭제</span>
-        </div>
-        <div class="bk-card-desc">
-          제품 정보를 전부 지웁니다. <b>되돌릴 수 없으니 먼저 백업하세요.</b>
-        </div>
-        <button class="bk-action-btn" style="background:var(--red);" onclick="resetAllData()">
-          🗑️ 모든 제품 데이터 삭제
-        </button>
-      </div>
-
+      <button class="bk-action-btn" onclick="exportBackup()">
+        ⬇ 방법 1: 파일 다운로드
+      </button>
+      <button class="bk-action-btn" style="margin-top:8px; background:#6b7a8f;" onclick="copyBackupToClipboard()">
+        📋 방법 2: 클립보드에 복사
+      </button>
       <div id="bk-fallback-area" style="display:none; margin-top:12px;">
         <div style="font-size:11px; color:var(--t2); margin-bottom:6px; line-height:1.5;">
-          👇 <b>복사가 안 되면</b> 아래 내용을 전체 선택 → 복사 후 메모장에 붙여넣고
-          <code>백업.json</code> 파일로 저장하세요.
+          👇 <b>복사가 안 되면</b> 아래 내용을 전체 선택(Ctrl+A) → 복사(Ctrl+C) 후<br>
+          메모장에 붙여넣고 <code>백업.json</code> 파일로 저장하세요.
         </div>
         <textarea id="bk-textarea" readonly
           style="width:100%; min-height:100px; max-height:200px; padding:8px;
                  background:#111827; border:1px solid var(--border); border-radius:8px;
-                 color:var(--t2); font-size:10px; font-family:monospace; resize:vertical;"></textarea>
+                 color:var(--t2); font-size:10px; font-family:monospace;
+                 resize:vertical;"></textarea>
       </div>
+    </div>
+
+    <!-- 가져오기 카드 -->
+    <div class="bk-card import">
+      <div class="bk-card-top">
+        <span class="bk-card-icon">📥</span>
+        <span class="bk-card-title">가져오기</span>
+      </div>
+      <div class="bk-card-desc">
+        다른 기기에서 만든 백업 파일을 불러와요.<br>
+        전체 교체와 합치기 중 선택할 수 있어요.
+      </div>
+      <button class="bk-action-btn green" onclick="document.getElementById('backup-input').click()">
+        📁 백업 파일 선택하기
+      </button>
+    </div>
+
+    <!-- 사진 재압축 카드 -->
+    <div class="bk-card" style="border-color: rgba(245,165,0,.3);">
+      <div class="bk-card-top">
+        <span class="bk-card-icon">🗜️</span>
+        <span class="bk-card-title">사진 한번에 재압축</span>
+      </div>
+      <div class="bk-card-desc">
+        평소엔 쓸 일이 없어요. 기기 저장공간이 정말 부족할 때만 사용하세요.<br>
+        실행하면 화질이 다소 낮아지며, 원래 화질로 되돌릴 수 없어요.
+      </div>
+      <button class="bk-action-btn" style="background:var(--orange);" onclick="recompressAllPhotos()">
+        🗜️ 모든 사진 재압축
+      </button>
+    </div>
+
+    <!-- 데이터 삭제 카드 -->
+    <div class="bk-card" style="border-color: rgba(224,85,85,.35);">
+      <div class="bk-card-top">
+        <span class="bk-card-icon">🗑️</span>
+        <span class="bk-card-title" style="color:var(--red);">전체 데이터 삭제</span>
+      </div>
+      <div class="bk-card-desc">
+        저장된 제품 정보를 전부 지우고 깨끗하게 새로 시작해요.<br>
+        <b>되돌릴 수 없으니, 먼저 위에서 내보내기로 백업해두세요.</b>
+      </div>
+      <button class="bk-action-btn" style="background:var(--red);" onclick="resetAllData()">
+        🗑️ 모든 제품 데이터 삭제
+      </button>
+    </div>
+
+    <div class="info-box" style="font-size:11px;">
+      💡 <b>박람회 팁:</b> 매일 저녁 내보내기 한 파일을 본인한테 카톡으로 보내두면,
+      혹시 폰에 문제가 생겨도 PC에서 가져오기로 바로 복구 가능해요.
     </div>
   </div>
 </div>
@@ -1340,43 +1032,6 @@ function idbSet(key, value) {
   });
 }
 
-// 여러 키를 한 트랜잭션으로 읽는다 (사진 수백 장을 낱개로 읽을 때 필수)
-function idbGetMany(keys) {
-  if (!keys.length) return Promise.resolve({});
-  return openDB().then(function(db) {
-    return new Promise(function(resolve, reject) {
-      var tx = db.transaction(DB_STORE, 'readonly');
-      var store = tx.objectStore(DB_STORE);
-      var out = {};
-      keys.forEach(function(k) {
-        var r = store.get(k);
-        r.onsuccess = function() { out[k] = r.result; };
-      });
-      tx.oncomplete = function() { resolve(out); };
-      tx.onerror = function(e) { reject(e.target.error); };
-      tx.onabort = function() { reject(tx.error); };
-    });
-  });
-}
-
-// 여러 키를 한 트랜잭션으로 쓰고/지운다
-function idbBulk(puts, deletes) {
-  var pk = Object.keys(puts || {});
-  var dk = deletes || [];
-  if (!pk.length && !dk.length) return Promise.resolve(true);
-  return openDB().then(function(db) {
-    return new Promise(function(resolve, reject) {
-      var tx = db.transaction(DB_STORE, 'readwrite');
-      var store = tx.objectStore(DB_STORE);
-      pk.forEach(function(k) { store.put(puts[k], k); });
-      dk.forEach(function(k) { store.delete(k); });
-      tx.oncomplete = function() { resolve(true); };
-      tx.onerror = function(e) { reject(e.target.error); };
-      tx.onabort = function() { reject(tx.error); };
-    });
-  });
-}
-
 function idbGet(key) {
   return openDB().then(function(db) {
     return new Promise(function(resolve, reject) {
@@ -1399,154 +1054,15 @@ function idbDel(key) {
   });
 }
 
-// 저장소 읽기 실패 여부. true이면 모든 쓰기를 막아 기존 데이터를 보호한다.
-var dataLoadFailed = false;
-
-/* ══════════════════════════════════════════════════════
-   사진 분리 저장
-   ──────────────────────────────────────────────────────
-   예전에는 제품 목록 전체(사진 포함)를 통째로 한 번에 저장했다.
-   사진이 쌓이면 제품 하나만 고쳐도 수백 MB를 다시 쓰게 되어
-   3일차쯤부터 저장할 때마다 몇 초씩 멈췄다.
-
-   이제는 사진을 낱개 키(photo:xxx)로 따로 저장하고,
-   제품 목록에는 사진 번호만 남긴다.
-   → 저장할 때 "새로 찍은 사진"만 쓰므로 데이터가 아무리 쌓여도 빠르다.
-
-   화면·PPT·PDF·엑셀 코드는 예전 그대로 동작한다.
-   (메모리 안의 products는 계속 사진 원본을 들고 있음)
-   ══════════════════════════════════════════════════════ */
-var PHOTO_PREFIX = 'photo:';
-var MISSING_MARK = '__missing__:';   // 사진 파일을 못 찾았을 때의 표시
-var photoIdMap = new Map();          // 사진 "지문" → 사진 번호
-
-// 사진 원본(수십만 자)을 통째로 비교하면 저장할 때마다 느려진다.
-// 길이 + 앞뒤 일부만 뽑아 "지문"을 만들어 비교한다 (사실상 충돌 없음).
-function photoFingerprint(src) {
-  var n = src.length;
-  return n + '|' + src.substr(23, 40) + '|' + src.substring(n - 32);
-}
-var storedPhotoIds = new Set();      // 저장소에 이미 들어있는 사진 번호
-var photoSeq = 0;
-
-function newPhotoId() {
-  photoSeq++;
-  return Date.now().toString(36) + '_' + photoSeq.toString(36);
-}
-
-// 사진 문자열에 대응하는 번호를 돌려준다. 처음 보는 사진이면 번호를 새로 만든다.
-function photoIdFor(src, pendingPuts) {
-  if (typeof src !== 'string' || !src) return null;
-
-  // 못 찾은 사진 → 원래 번호를 그대로 유지해 참조를 잃지 않게 한다
-  if (src.indexOf(MISSING_MARK) === 0) return src.slice(MISSING_MARK.length);
-
-  var fp = photoFingerprint(src);
-  var id = photoIdMap.get(fp);
-  if (!id) {
-    id = newPhotoId();
-    photoIdMap.set(fp, id);
-  }
-  if (!storedPhotoIds.has(id) && pendingPuts) {
-    pendingPuts[PHOTO_PREFIX + id] = src;   // 아직 저장 안 된 새 사진만 쓴다
-  }
-  return id;
-}
-
-// 메모리의 products → 저장용 형태(사진은 번호만)로 변환
-function buildMetaAndPuts() {
-  var puts = {};
-  var used = new Set();
-  var meta = products.map(function(p) {
-    var ph = (p.photos || []).map(function(s) { return photoIdFor(s, puts); }).filter(Boolean);
-    var bc = (p.bizCards || []).map(function(s) { return photoIdFor(s, puts); }).filter(Boolean);
-    ph.forEach(function(id) { used.add(id); });
-    bc.forEach(function(id) { used.add(id); });
-    var copy = Object.assign({}, p);
-    copy.photos = ph;
-    copy.bizCards = bc;
-    return copy;
-  });
-  return { meta: meta, puts: puts, used: used };
-}
-
-// 저장소 형태(사진 번호) → 메모리 형태(사진 원본)로 복원
-function hydrateMeta(meta, blobs) {
-  var missing = 0;
-  products = meta.map(function(p) {
-    function pull(ids) {
-      return (ids || []).map(function(id) {
-        if (typeof id === 'string' && id.indexOf('data:') === 0) return id; // 예전 형식
-        var v = blobs[PHOTO_PREFIX + id];
-        if (typeof v === 'string' && v) {
-          photoIdMap.set(photoFingerprint(v), id);
-          storedPhotoIds.add(id);
-          return v;
-        }
-        missing++;
-        return MISSING_MARK + id;
-      });
-    }
-    p.photos = pull(p.photos);
-    p.bizCards = pull(p.bizCards);
-    if (!Array.isArray(p.bizCards)) p.bizCards = [];
-    return p;
-  });
-  return missing;
-}
-
-// 예전 형식(사진이 제품 안에 통째로 들어있는 형태) 판별
-function isLegacyFormat(list) {
-  for (var i = 0; i < list.length; i++) {
-    var arr = (list[i].photos || []).concat(list[i].bizCards || []);
-    for (var j = 0; j < arr.length; j++) {
-      if (typeof arr[j] === 'string' && arr[j].indexOf('data:') === 0) return true;
-    }
-  }
-  return false;
-}
-
-function showDataErrorBanner() {
-  var b = document.getElementById('data-error-banner');
-  if (b) b.classList.add('show');
-}
-
 // 앱 시작 시 IndexedDB에서 제품 데이터 불러오기
 function loadProducts() {
   return idbGet('products').then(function(saved) {
-    var meta = Array.isArray(saved) ? saved : [];
-    if (!meta.length) { products = []; return products; }
-
-    // 예전 형식이면 그대로 쓰고, 첫 저장 때 자동으로 새 형식으로 나뉜다
-    if (isLegacyFormat(meta)) {
-      products = meta;
-      products.forEach(function(p) { if (!Array.isArray(p.bizCards)) p.bizCards = []; });
-      console.log('[load] 예전 형식 감지 — 다음 저장 시 사진이 분리 저장됩니다');
-      return products;
-    }
-
-    // 필요한 사진 번호를 모아 한 번에 읽는다
-    var keys = [];
-    meta.forEach(function(p) {
-      (p.photos || []).forEach(function(id) { keys.push(PHOTO_PREFIX + id); });
-      (p.bizCards || []).forEach(function(id) { keys.push(PHOTO_PREFIX + id); });
-    });
-
-    return idbGetMany(keys).then(function(blobs) {
-      var missing = hydrateMeta(meta, blobs);
-      if (missing > 0) console.warn('[load] 사진 ' + missing + '장을 찾지 못했습니다');
-      return products;
-    });
-  }).then(function(list) {
-    dataLoadFailed = false;
-    return list;
+    products = Array.isArray(saved) ? saved : [];
+    products.forEach(function(p) { if (!Array.isArray(p.bizCards)) p.bizCards = []; });
+    return products;
   }).catch(function(err) {
     console.error('[loadProducts] 불러오기 실패:', err);
-    // 읽기에 실패했는데 빈 목록으로 시작하면, 이후 자동저장이 원본을 덮어써 데이터가 전부 사라진다.
-    // 따라서 "저장 잠금" 상태로 두고 사용자에게 알린다.
     products = [];
-    dataLoadFailed = true;
-    setTimeout(showDataErrorBanner, 300);
     return products;
   });
 }
@@ -1581,10 +1097,7 @@ function resumeDraftIfAny() {
   var id = Number(savedId);
   var exists = products.some(function(p){ return p.id === id; });
   if (exists) {
-    // 이름·사진·정보를 그대로 불러와 이어서 입력할 수 있게 복원.
-    // 단 이건 "새로 쓰다 만 것"이므로 수정 중 배너는 띄우지 않는다.
-    editProduct(id, true);
-    renderList();   // 작성 중 항목을 목록에서 감추기 위해 다시 그린다
+    editProduct(id); // 이름·사진·정보를 그대로 불러와 이어서 입력할 수 있게 복원
   } else {
     clearDraftId(); // 대상이 없으면(삭제됨 등) 기록만 정리
   }
@@ -1607,12 +1120,23 @@ function resumeDraftIfAny() {
     return '<button class="cat-btn" onclick="selectCat(this,\'' + c + '\')">' + c + '</button>';
   }).join('');
 
-  // 기능 칩 이벤트 (짧게 / 꾹 누르기)
-  setupFnChips();
-  bindPhotoEntryPoints();   // 사진 추가: 탭 = 촬영
-  setupPhotoSwipe();        // 사진 영역 왼쪽 스와이프 → 앨범 버튼
-  renderFnChips();
-  renderTodos();
+  // CB button events
+  const cbBtn = document.getElementById('qa-cb');
+  cbBtn.addEventListener('touchstart', cbStart, {passive:false});
+  cbBtn.addEventListener('touchend', cbEnd, {passive:false});
+  cbBtn.addEventListener('touchcancel', cbCancel, {passive:false});
+  cbBtn.addEventListener('mousedown', cbStart);
+  cbBtn.addEventListener('mouseup', cbEnd);
+  cbBtn.addEventListener('mouseleave', cbCancel);
+
+  // 샘플신청 버튼 이벤트 (CB와 동일한 탭/롱프레스 방식)
+  const sampleBtnEl = document.getElementById('qa-sample');
+  sampleBtnEl.addEventListener('touchstart', sampleStart, {passive:false});
+  sampleBtnEl.addEventListener('touchend', sampleEnd, {passive:false});
+  sampleBtnEl.addEventListener('touchcancel', sampleCancel, {passive:false});
+  sampleBtnEl.addEventListener('mousedown', sampleStart);
+  sampleBtnEl.addEventListener('mouseup', sampleEnd);
+  sampleBtnEl.addEventListener('mouseleave', sampleCancel);
 
   // 드래그&드롭 업로드 영역 설정
   setupDropZone(document.getElementById('dropzone-photos'), 'photos');
@@ -1628,14 +1152,6 @@ function resumeDraftIfAny() {
     navigator.storage.persist().catch(function(){});
   }
 
-  // 오프라인 동작 — 앱 파일을 기기에 저장해두어 인터넷 없이도 열리게 한다.
-  // (박람회장·기내 등에서 인터넷이 끊겨도 앱이 정상적으로 열려야 함)
-  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
-    navigator.serviceWorker.register('sw.js').catch(function(e) {
-      console.warn('[sw] 등록 실패(오프라인 사용 불가):', e);
-    });
-  }
-
   // IndexedDB에서 데이터를 불러온 뒤 목록 렌더링
   loadProducts().then(function() {
     renderList();
@@ -1643,15 +1159,52 @@ function resumeDraftIfAny() {
     checkBackupReminder();
     updateStorageBar();
     resumeDraftIfAny(); // 이전에 저장/취소하지 않고 중단된 작성 중 항목이 있으면 이어서 열기
-
-    // 하루 한 번, 사진을 뺀 상태를 폰 안에 조용히 저장 (실수 삭제·손상 대비)
-    setTimeout(function() {
-      saveDailySnapshot().then(function(saved) {
-        if (saved) console.log('[snapshot] 오늘 스냅샷 저장됨');
-      });
-    }, 2500);
   });
 })();
+
+// ── 4개 버튼(qa-grid)을 ▲▼ 버튼으로 위/중간/아래 3개 위치로 이동 ──
+// 문서 흐름 안에서 위치만 바뀌므로 입력 영역이 가려지지 않고,
+// '아래'로 가도 하단 고정 탭(제품목록/샘플관리/사진) 위에 머문다.
+var QA_GRID_POS_KEY = 'gz_qa_grid_zone'; // 'top' | 'mid' | 'bot'
+var QA_ZONES = ['top', 'mid', 'bot'];
+
+function getQaZone() {
+  var zone = 'mid';
+  try { var raw = localStorage.getItem(QA_GRID_POS_KEY); if (QA_ZONES.indexOf(raw) >= 0) zone = raw; } catch (e) {}
+  return zone;
+}
+
+// 저장된 위치(zone)의 앵커 바로 뒤로 qa-grid 이동 + 버튼 활성/비활성 갱신
+function applyQaGridPos() {
+  var el = document.getElementById('qa-grid');
+  if (!el) return;
+  var zone = getQaZone();
+  var anchor = document.getElementById('qa-anchor-' + zone);
+  if (anchor && anchor.parentNode) {
+    anchor.parentNode.insertBefore(el, anchor.nextSibling);
+  }
+  // 맨 아래 위치일 때만 하단 탭에 안 가리도록 여백 클래스 추가
+  el.classList.toggle('at-bot', zone === 'bot');
+  // 위/아래 버튼 비활성 처리 (맨 위에선 ▲ 비활성, 맨 아래선 ▼ 비활성)
+  var idx = QA_ZONES.indexOf(zone);
+  var up = document.getElementById('qa-move-up');
+  var down = document.getElementById('qa-move-down');
+  if (up) up.disabled = (idx <= 0);
+  if (down) down.disabled = (idx >= QA_ZONES.length - 1);
+}
+
+// ▲(-1) / ▼(+1) 로 한 칸씩 이동
+function moveQaGrid(dir) {
+  var idx = QA_ZONES.indexOf(getQaZone());
+  var next = Math.max(0, Math.min(QA_ZONES.length - 1, idx + dir));
+  if (next === idx) return;
+  try { localStorage.setItem(QA_GRID_POS_KEY, QA_ZONES[next]); } catch (e) {}
+  applyQaGridPos();
+  var label = { top: '맨 위', mid: '가운데', bot: '맨 아래' }[QA_ZONES[next]];
+  showToast('버튼을 ' + label + '로 옮겼어요');
+}
+
+applyQaGridPos(); // 저장된 위치 복원
 
 // ── 자동 업데이트 확인 (새 버전 배포 시 재설치 없이 자동 반영) ──
 // 서버의 index.html을 캐시 없이 새로 받아와 내용이 달라지면 자동으로 새로고침한다.
@@ -1682,78 +1235,13 @@ document.addEventListener('visibilitychange', function() {
 });
 
 // ── NAME INPUT ─────────────────────────────────────────
-function autoGrow(el) {
-  el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
-}
-
 function onNameInput() {
   const el = document.getElementById('name-ta');
-  cur.name = el.value.replace(/\n/g, ' ').trim();
-  autoGrow(el);
+  cur.name = el.value.trim();
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
   updateSaveBtn();
   renderChips();
-  scheduleAutoSave();
-}
-
-function onMemoInput() {
-  const el = document.getElementById('memo-ta');
-  cur.memo = el.value;
-  autoGrow(el);
-  updateSaveBtn();
-  scheduleAutoSave();
-}
-
-/* ── 확인할 것 (모든 제품 공통 체크리스트) ──────────────
-   예전에는 샘플신청 창 안에 숨어 있어 잘 보지 않게 됐다.
-   이제 메모 바로 아래에 두고, 목록 카드에도 그대로 보여준다. */
-function renderTodos() {
-  var box = document.getElementById('td-list');
-  if (!box) return;
-  var list = cur.todos || [];
-  box.innerHTML = list.map(function(t) {
-    return '<div class="td-item' + (t.done ? ' done' : '') + '">' +
-      '<button class="td-box' + (t.done ? ' done' : '') + '" type="button" onclick="toggleTodo(\'' + t.id + '\')">' + (t.done ? '✓' : '') + '</button>' +
-      '<span class="td-text" onclick="toggleTodo(\'' + t.id + '\')">' + escapeHtmlLite(t.text) + '</span>' +
-      '<button class="td-del" type="button" onclick="removeTodo(\'' + t.id + '\')">✕</button>' +
-      '</div>';
-  }).join('');
-}
-
-function escapeHtmlLite(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function addTodo(text) {
-  text = (text || '').trim();
-  if (!text) return;
-  if (!Array.isArray(cur.todos)) cur.todos = [];
-  cur.todos.push({ id: 't' + Date.now() + Math.floor(Math.random() * 1000), text: text, done: false });
-  renderTodos();
-  updateSaveBtn();
-  scheduleAutoSave();
-}
-
-function addTodoFromInput() {
-  var el = document.getElementById('td-input');
-  addTodo(el.value);
-  el.value = '';
-  el.focus();
-}
-
-function toggleTodo(id) {
-  var t = (cur.todos || []).find(function(x) { return x.id === id; });
-  if (!t) return;
-  t.done = !t.done;
-  renderTodos();
-  scheduleAutoSave();
-}
-
-function removeTodo(id) {
-  cur.todos = (cur.todos || []).filter(function(x) { return x.id !== id; });
-  renderTodos();
-  updateSaveBtn();
   scheduleAutoSave();
 }
 
@@ -1761,30 +1249,8 @@ function removeTodo(id) {
 function selectCat(el, cat) {
   cur.category = (cur.category === cat) ? null : cat;
   renderCatUI();
-  renderFnChips();
   updateSaveBtn();
   scheduleAutoSave();
-}
-
-// 카테고리 칩 → 선택 시트 열기 (언제든 바꿀 수 있다)
-function openCatPicker() {
-  var row = document.getElementById('cat-pick-row');
-  row.innerHTML = CATS.map(function(c) {
-    var on = (cur.category === c);
-    return '<button class="fn-chip' + (on ? ' on-orange' : '') + '" type="button" ' +
-           'style="min-height:36px;font-size:13px;" ' +
-           'onclick="pickCategory(\'' + c + '\')">' + c + '</button>';
-  }).join('');
-  openOverlay('cat');
-}
-
-function pickCategory(cat) {
-  cur.category = cat;
-  renderCatUI();
-  renderFnChips();
-  updateSaveBtn();
-  scheduleAutoSave();
-  closeOverlay('cat');
 }
 
 function clearCategory() {
@@ -1798,160 +1264,21 @@ function clearCategory() {
 function renderCatUI() {
   var pill = document.getElementById('cat-tag-pill');
   var row = document.getElementById('cat-row');
-  // 카테고리는 칩으로만 표시한다 (제품명 옆 태그·선택 줄은 사용하지 않음)
-  if (row) row.style.display = 'none';
-  if (pill) pill.style.display = 'none';
+  if (cur.category) {
+    pill.textContent = '🏷 ' + cur.category;
+    pill.style.display = 'inline-flex';
+    row.style.display = 'none';
+  } else {
+    pill.style.display = 'none';
+    row.style.display = 'flex';
+    document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('active'); });
+  }
 }
 
 // ── SAVE BTN ──────────────────────────────────────────
 function updateSaveBtn() {
-  const has = cur.name || cur.memo || (cur.todos && cur.todos.length) || cur.photos.length || cur.bizCards.length || cur.category || cur.moq || cur.cb || cur.sample;
+  const has = cur.name || cur.photos.length || cur.bizCards.length || cur.category || cur.moq || cur.cb || cur.sample;
   document.getElementById('save-btn').disabled = !has;
-}
-
-/* ══════════════════════════════════════════════════════
-   기능 칩 (단가 / MOQ / CB / 샘플 / 명함)
-   ──────────────────────────────────────────────────────
-   짧게 = 빠른 동작, 꾹 = 상세 입력.
-   CB·샘플만 꾹 누르기를 쓰고, 단가·MOQ·명함은 바로 실행된다.
-   ══════════════════════════════════════════════════════ */
-function fnSet(id, txtId, text, cls, sub) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  el.className = 'fn-chip' + (cls ? ' ' + cls : '');
-  var t = document.getElementById(txtId);
-  if (t) t.textContent = text;
-  var old = el.querySelector('.fn-chip-sub');
-  if (old) old.remove();
-  if (sub) {
-    var s = document.createElement('span');
-    s.className = 'fn-chip-sub';
-    s.textContent = sub;
-    el.appendChild(s);
-  }
-}
-
-function fmtNum(v) {
-  var n = String(v == null ? '' : v).replace(/[^0-9.]/g, '');
-  if (!n) return '';
-  var parts = n.split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return parts.join('.');
-}
-
-function renderFnChips() {
-  // 단가
-  var price = (cur.moq && cur.moq.price && cur.moq.price !== '-') ? cur.moq.price : '';
-  if (price) fnSet('fn-price', 'fn-price-t', fmtNum(price), 'on-orange');
-  else fnSet('fn-price', 'fn-price-t', '단가', '');
-
-  // MOQ
-  var qty = (cur.moq && cur.moq.qty && cur.moq.qty !== '-') ? cur.moq.qty : '';
-  if (qty) fnSet('fn-moq', 'fn-moq-t', 'MOQ ' + fmtNum(qty), 'on-orange');
-  else fnSet('fn-moq', 'fn-moq-t', 'MOQ', '');
-
-  // CB
-  if (!cur.cb) fnSet('fn-cb', 'fn-cb-t', 'CB 미입력', '');
-  else if (cur.cb.owned) fnSet('fn-cb', 'fn-cb-t', 'CB 보유', 'on-green');
-  else if (cur.cb.date) fnSet('fn-cb', 'fn-cb-t', 'CB 진행중', 'on-amber', pptFmtDate(cur.cb.date));
-  else fnSet('fn-cb', 'fn-cb-t', 'CB 없음', 'on-red');
-
-  // 샘플
-  if (!cur.sample) {
-    fnSet('fn-sample', 'fn-sample-t', '샘플 신청', '');
-  } else {
-    var sub = '';
-    if (cur.sample.expected) {
-      var d = dLeftFromDate(cur.sample.expected);
-      sub = (d === null) ? '' : (d < 0 ? '지연 ' + (-d) + '일' : 'D-' + d);
-    } else if (cur.sample.days) {
-      sub = cur.sample.days + '일';
-    }
-    fnSet('fn-sample', 'fn-sample-t', '샘플 신청', 'on-green', sub);
-  }
-
-  // 명함
-  var nc = (cur.bizCards || []).length;
-  if (nc) fnSet('fn-card', 'fn-card-t', '명함 ' + nc, 'on-orange');
-  else fnSet('fn-card', 'fn-card-t', '명함', '');
-
-  // 카테고리
-  if (cur.category) fnSet('fn-cat', 'fn-cat-t', cur.category, 'on-orange');
-  else fnSet('fn-cat', 'fn-cat-t', '카테고리', '');
-}
-
-// 예정일 기준 남은 일수 (오늘 기준)
-function dLeftFromDate(ds) {
-  if (!ds) return null;
-  var t = new Date(ds + 'T00:00:00');
-  if (isNaN(t.getTime())) return null;
-  var now = new Date(); now.setHours(0, 0, 0, 0);
-  return Math.round((t - now) / 86400000);
-}
-
-/* 칩에 "짧게 / 꾹" 동작을 붙인다.
-   onTap = 짧게 눌렀을 때, onHold = 0.5초 이상 눌렀을 때(없으면 짧게와 동일) */
-function bindChip(id, onTap, onHold) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  var timer = null, isLong = false;
-
-  function start(e) {
-    if (e.type === 'touchstart') e.preventDefault();
-    isLong = false;
-    el.classList.add('holding');
-    if (onHold) {
-      timer = setTimeout(function() {
-        isLong = true;
-        el.classList.remove('holding');
-        if (navigator.vibrate) { try { navigator.vibrate(15); } catch (err) {} }
-        onHold();
-      }, 500);
-    }
-  }
-  function end(e) {
-    if (e.type === 'touchend') e.preventDefault();
-    clearTimeout(timer);
-    el.classList.remove('holding');
-    if (!isLong) onTap();
-    isLong = false;
-  }
-  function cancel() {
-    clearTimeout(timer);
-    el.classList.remove('holding');
-    isLong = false;
-  }
-
-  el.addEventListener('touchstart', start, { passive: false });
-  el.addEventListener('touchend', end, { passive: false });
-  el.addEventListener('touchcancel', cancel, { passive: false });
-  el.addEventListener('mousedown', start);
-  el.addEventListener('mouseup', end);
-  el.addEventListener('mouseleave', cancel);
-}
-
-function setupFnChips() {
-  // 단가 / MOQ — 같은 입력창을 열되 누른 쪽에 커서를 둔다
-  bindChip('fn-price', function() { openMoqSheet('price'); });
-  bindChip('fn-moq',   function() { openMoqSheet('qty'); });
-
-  // CB — 짧게: 보유 토글 / 꾹: 상세(완성 예정일)
-  bindChip('fn-cb', function() { quickToggleCb(); }, function() { openOverlay('cb'); });
-
-  // 샘플 — 짧게: 신청 표시 / 꾹: 상세(소요일·메모)
-  bindChip('fn-sample', function() { quickToggleSample(); }, function() { openOverlay('sample'); });
-
-  // 명함 — 탭하면 바로 촬영
-  bindChip('fn-card', openBizCamera);
-}
-
-// 단가·MOQ 입력창을 열고 지정한 칸에 커서를 놓는다
-function openMoqSheet(focusField) {
-  openOverlay('moq');
-  setTimeout(function() {
-    var el = document.getElementById(focusField === 'qty' ? 'moq-qty' : 'moq-price');
-    if (el) { el.focus(); try { el.select(); } catch (e) {} }
-  }, 320);
 }
 
 // ── CHIPS ─────────────────────────────────────────────
@@ -1962,12 +1289,10 @@ function renderChips() {
 // ── PHOTOS ────────────────────────────────────────────
 
 // 이미지 압축: 긴 변 기준 최대 1400px, JPEG quality 0.82
-// forceJpeg=true 이면 원본보다 커지더라도 반드시 JPEG 변환 결과를 사용한다.
-// (HEIC 등은 PowerPoint·PDF에서 표시되지 않으므로 원본을 그대로 두면 안 된다)
-function compressImage(dataUrl, maxDim, quality, forceJpeg) {
+function compressImage(dataUrl, maxDim, quality) {
   maxDim = maxDim || 1400;
   quality = quality || 0.82;
-  return new Promise(function(resolve, reject) {
+  return new Promise(function(resolve) {
     var img = new Image();
     img.onload = function() {
       var w = img.naturalWidth || img.width;
@@ -1985,17 +1310,12 @@ function compressImage(dataUrl, maxDim, quality, forceJpeg) {
         ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
         var out = canvas.toDataURL('image/jpeg', quality);
-        if (forceJpeg) { resolve(out); return; }
         resolve(out.length < dataUrl.length ? out : dataUrl);
       } catch(err) {
-        if (forceJpeg) { reject(new Error('convert_failed')); return; }
         resolve(dataUrl);
       }
     };
-    img.onerror = function() {
-      if (forceJpeg) { reject(new Error('decode_failed')); return; }
-      resolve(dataUrl);
-    };
+    img.onerror = function() { resolve(dataUrl); };
     img.src = dataUrl;
   });
 }
@@ -2012,15 +1332,9 @@ function processImageFiles(files, target) {
   if (remaining > 1) showToast('사진 ' + remaining + '장 압축 중...');
 
   files.forEach(function(file) {
-    // 아이폰 HEIC/HEIF는 PowerPoint·PDF에서 표시되지 않으므로 반드시 JPEG로 변환한다.
-    var ftype = (file.type || '').toLowerCase();
-    var fname = (file.name || '').toLowerCase();
-    var needsConvert = !(ftype === 'image/jpeg' || ftype === 'image/jpg' || ftype === 'image/png')
-                       || /\.(heic|heif)$/.test(fname);
-
     var reader = new FileReader();
     reader.onload = function(ev) {
-      compressImage(ev.target.result, 1800, 0.88, needsConvert).then(function(compressed) {
+      compressImage(ev.target.result, 1800, 0.88).then(function(compressed) {
         cur[target].push(compressed);
         if (target === 'bizCards') renderBizCards(); else renderPhotos();
         updateSaveBtn();
@@ -2030,10 +1344,6 @@ function processImageFiles(files, target) {
         if (remaining === 0 && files.length > 1) {
           showToast('✓ ' + files.length + '장 추가 완료');
         }
-      }).catch(function() {
-        // HEIC 등 이 기기에서 변환할 수 없는 형식
-        remaining--;
-        showToast('\u26A0\uFE0F 이 사진 형식은 사용할 수 없어요 (카메라 설정 → 높은 호환성)');
       });
     };
     reader.onerror = function() {
@@ -2054,133 +1364,6 @@ function handleBizPhoto(e) {
   e.target.value = '';
 }
 
-/* ══════════════════════════════════════════════════════
-   사진 추가 — 짧게 탭 = 촬영 / 길게 누르기 = 앨범에서 불러오기
-   박람회 전에 미리 받은 제안 제품 사진을 정리할 때 앨범을 쓴다.
-   ══════════════════════════════════════════════════════ */
-function openCamera()      { document.getElementById('product-input').click(); }
-function openAlbum()       { document.getElementById('album-input').click(); closePhotoSwipe(); }
-function openBizCamera()   { document.getElementById('biz-input').click(); }
-function openBizAlbum()    { document.getElementById('album-biz-input').click(); }
-
-/* 사진 추가 자리는 "탭 = 촬영"으로 단순하게 둔다.
-   앨범은 사진 영역을 왼쪽으로 밀어서 나오는 버튼으로 연다.
-
-   ⚠️ 아이폰 Safari는 파일 선택창을 사용자가 직접 누른 순간에만 열어준다.
-   타이머(길게 누르기) 안에서는 조용히 무시되므로 쓰지 않는다. */
-function bindPhotoEntryPoints() {
-  ['fab-add', 'add-photo-btn-el', 'dropzone-empty-el'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (!el || el.__camBound) return;
-    el.__camBound = true;
-    el.addEventListener('click', function(e) {
-      e.preventDefault(); e.stopPropagation();
-
-      // 방금 스와이프한 동작이면 카메라를 열지 않는다
-      if (photoSwipeGuard) return;
-
-      // 앨범 버튼이 열려 있으면 첫 탭은 닫기만 (실수로 카메라가 켜지지 않게)
-      var row = document.getElementById('ph-swipe');
-      if (id !== 'fab-add' && row && row.classList.contains('open')) {
-        closePhotoSwipe();
-        return;
-      }
-      openCamera();
-    });
-  });
-}
-
-/* 사진 영역 왼쪽 스와이프 → 앨범 버튼 노출.
-
-   주의점 두 가지
-   1) 스와이프가 끝나면 브라우저가 click을 만들어 "탭 = 촬영"이 실행돼 버린다.
-      → 가로로 움직였으면 다음 click을 한 번 막는다.
-   2) 사진이 있을 때는 순서 변경(SortableJS)이 터치를 먼저 가져간다.
-      → 래퍼에 캡처 단계로 붙여 우리가 먼저 판정한다. */
-var photoSwipeGuard = false;   // true면 다음 click을 무시한다
-
-function setupPhotoSwipe() {
-  var row = document.getElementById('ph-swipe');
-  if (!row || row.__swipeBound) return;
-  row.__swipeBound = true;
-  var body = row.querySelector('.ph-swipe-body');
-  var THRESHOLD = 34, MAX = 86;
-  var x0 = 0, y0 = 0, dx = 0, decided = null, active = false;
-
-  function start(e) {
-    if (e.target.closest && e.target.closest('.ph-swipe-album')) return;
-    var t = e.touches ? e.touches[0] : e;
-    x0 = t.clientX; y0 = t.clientY; dx = 0; decided = null; active = true;
-  }
-
-  function move(e) {
-    if (!active) return;
-    var t = e.touches ? e.touches[0] : e;
-    var mx = t.clientX - x0, my = t.clientY - y0;
-
-    if (decided === null) {
-      if (Math.abs(mx) < 6 && Math.abs(my) < 6) return;
-      decided = Math.abs(mx) > Math.abs(my) ? 'x' : 'y';
-      if (decided === 'x') {
-        row.classList.add('dragging');
-        photoSwipeGuard = true;   // 이 동작은 스와이프 → 클릭 막기
-      }
-    }
-    if (decided !== 'x') return;
-
-    // 순서 변경(Sortable)이 끼어들지 못하게 여기서 끊는다
-    e.stopPropagation();
-    if (e.cancelable) e.preventDefault();
-
-    var base = row.classList.contains('open') ? -MAX : 0;
-    dx = Math.max(-MAX, Math.min(0, base + mx));
-    body.style.transform = 'translateX(' + dx + 'px)';
-  }
-
-  function end(e) {
-    if (!active) return;
-    active = false;
-    row.classList.remove('dragging');
-    body.style.transform = '';
-    if (decided !== 'x') { photoSwipeGuard = false; return; }
-
-    e.stopPropagation();
-    if (dx <= -THRESHOLD) row.classList.add('open');
-    else row.classList.remove('open');
-
-    // 뒤따라 오는 click 한 번만 막고 해제
-    setTimeout(function() { photoSwipeGuard = false; }, 400);
-  }
-
-  function cancel() {
-    if (!active) return;
-    active = false;
-    row.classList.remove('dragging');
-    body.style.transform = '';
-    photoSwipeGuard = false;
-  }
-
-  // 캡처 단계(true) — 내부 요소의 핸들러보다 먼저 받는다
-  row.addEventListener('touchstart', start, { passive: true, capture: true });
-  row.addEventListener('touchmove', move, { passive: false, capture: true });
-  row.addEventListener('touchend', end, { capture: true });
-  row.addEventListener('touchcancel', cancel, { capture: true });
-  row.addEventListener('mousedown', function(e) {
-    start(e);
-    document.addEventListener('mousemove', move, true);
-    document.addEventListener('mouseup', function up(ev) {
-      end(ev);
-      document.removeEventListener('mousemove', move, true);
-      document.removeEventListener('mouseup', up, true);
-    }, true);
-  }, true);
-}
-
-function closePhotoSwipe() {
-  var row = document.getElementById('ph-swipe');
-  if (row) row.classList.remove('open');
-}
-
 function renderPhotos() {
   var scroll = document.getElementById('photo-scroll');
   var hint = document.getElementById('photo-hint');
@@ -2191,13 +1374,11 @@ function renderPhotos() {
   if (cur.photos.length === 0) {
     // 빈 상태 — 한 줄로 컴팩트
     scroll.innerHTML =
-      '<div class="dropzone-empty" id="dropzone-empty-el">' +
-      '<span class="dropzone-empty-icon">＋</span>' +
-      '<span class="dropzone-empty-text">사진</span>' +
+      '<div class="dropzone-empty" onclick="document.getElementById(\'product-input\').click()">' +
+      '<span class="dropzone-empty-icon">📸</span>' +
+      '<span class="dropzone-empty-text"><b>드래그</b>하거나 탭해서 <b>추가</b></span>' +
       '</div>';
     hint.textContent = '';
-    bindPhotoEntryPoints();
-    setupPhotoSwipe();
     if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
     return;
   }
@@ -2210,13 +1391,9 @@ function renderPhotos() {
       imgHtml +
       '<button class="photo-del" onclick="event.stopPropagation(); delPhoto(' + i + ')">×</button>' +
       '</div>';
-  }).join('') + '<button class="add-photo-btn" id="add-photo-btn-el">+</button>';
+  }).join('') + '<button class="add-photo-btn" onclick="document.getElementById(\'product-input\').click()">+</button>';
   scroll.innerHTML = html;
-  hint.textContent = cur.photos.length > 1
-    ? '사진을 길게 눌러 순서 변경 · 맨 위가 PPT 대표 이미지'
-    : '';
-  bindPhotoEntryPoints();
-  setupPhotoSwipe();
+  hint.textContent = cur.photos.length > 1 ? '📌 길게 눌러 순서 변경 · 맨 위가 PPT 대표 이미지' : '';
   scroll.scrollTop = scroll.scrollHeight;
   initPhotoSortable();
 }
@@ -2502,7 +1679,21 @@ function delBizCard(i) {
 }
 
 function updateCardBtn() {
-  renderFnChips();
+  var btn = document.getElementById('qa-card');
+  var icon = document.getElementById('card-icon');
+  if (cur.bizCards.length > 0) {
+    btn.className = 'qa-btn on-blue';
+    icon.className = 'qa-icon';
+    icon.innerHTML = '<img class="qa-icon-photo" src="' + cur.bizCards[0] + '">';
+    document.getElementById('card-top').textContent = cur.bizCards.length > 1 ? cur.bizCards.length + '장' : '';
+    document.getElementById('card-bot').textContent = '';
+  } else {
+    btn.className = 'qa-btn';
+    icon.className = 'qa-icon c-orange';
+    icon.innerHTML = '📇';
+    document.getElementById('card-top').textContent = '명함사진';
+    document.getElementById('card-bot').textContent = '';
+  }
 }
 
 // ── DRAG & DROP (PC에서 사진 파일 끌어다 놓기) ─────────
@@ -2550,23 +1741,45 @@ function blockGlobalDrop() {
 }
 
 // ── CB PRESS ──────────────────────────────────────────
-
-
-
+function cbStart(e) {
+  e.preventDefault();
+  cbIsLong = false;
+  cbPressTimer = setTimeout(function() {
+    cbIsLong = true;
+    openOverlay('cb');
+  }, 500);
+}
+function cbEnd(e) {
+  e.preventDefault();
+  clearTimeout(cbPressTimer);
+  if (!cbIsLong) toggleCb();
+  cbIsLong = false;
+}
+function cbCancel(e) {
+  clearTimeout(cbPressTimer);
+  cbIsLong = false;
+}
 
 function toggleCb() {
   if (cur.cb && cur.cb.owned) {
     cur.cb = null;
+    document.getElementById('qa-cb').className = 'qa-btn';
+    document.getElementById('cb-icon').style.display = '';
+    document.getElementById('cb-icon').className = 'qa-icon c-orange';
+    document.getElementById('cb-icon').textContent = '📋';
+    document.getElementById('cb-top').textContent = 'CB 없음';
+    document.getElementById('cb-bot').textContent = '';
   } else {
     cur.cb = { owned: true, date: null };
+    document.getElementById('qa-cb').className = 'qa-btn on-green';
+    document.getElementById('cb-icon').style.display = 'none';
+    document.getElementById('cb-top').innerHTML = '<span class="val-big green">CB 보유</span>';
+    document.getElementById('cb-bot').textContent = '';
     showToast('CB 보유 확인');
   }
-  renderFnChips();
   renderChips();
   updateSaveBtn();
-  scheduleAutoSave();
 }
-function quickToggleCb() { toggleCb(); }
 
 // ── 음성입력 (Web Speech API) ──────────────────────────
 var voiceRecognition = null;
@@ -2617,23 +1830,45 @@ function toggleVoice(targetId, btnId) {
 }
 
 
-
-
-
+function sampleStart(e) {
+  e.preventDefault();
+  sampleIsLong = false;
+  samplePressTimer = setTimeout(function() {
+    sampleIsLong = true;
+    openOverlay('sample');
+  }, 500);
+}
+function sampleEnd(e) {
+  e.preventDefault();
+  clearTimeout(samplePressTimer);
+  if (!sampleIsLong) toggleSampleQuick();
+  sampleIsLong = false;
+}
+function sampleCancel(e) {
+  clearTimeout(samplePressTimer);
+  sampleIsLong = false;
+}
 
 function toggleSampleQuick() {
   if (cur.sample) {
     cur.sample = null;
+    document.getElementById('qa-sample').className = 'qa-btn';
+    document.getElementById('sample-icon').style.display = '';
+    document.getElementById('sample-icon').className = 'qa-icon c-orange';
+    document.getElementById('sample-icon').textContent = '📅';
+    document.getElementById('sample-top').textContent = '샘플 신청';
+    document.getElementById('sample-bot').textContent = '';
   } else {
-    cur.sample = { days: null, expected: null, memo: '' };
-    showToast('샘플 신청 표시');
+    cur.sample = { days: null, expected: null, memo: '', checklist: defaultChecklist() };
+    document.getElementById('qa-sample').className = 'qa-btn on-green';
+    document.getElementById('sample-icon').style.display = 'none';
+    document.getElementById('sample-top').innerHTML = '<span class="val-big green">샘플 신청</span>';
+    document.getElementById('sample-bot').textContent = '';
+    showToast('샘플 신청 완료');
   }
-  renderFnChips();
   renderChips();
   updateSaveBtn();
-  scheduleAutoSave();
 }
-function quickToggleSample() { toggleSampleQuick(); }
 
 // ── 샘플 진행 체크리스트 ────────────────────────────────
 function defaultChecklist() {
@@ -2644,7 +1879,19 @@ function defaultChecklist() {
     { id: 'c4', text: '수령 완료', done: false }
   ];
 }
-function renderChecklist() { /* 확인할 것으로 이동됨 */ }
+function renderChecklist() {
+  var wrap = document.getElementById('sample-checklist');
+  if (!cur.sample) { wrap.innerHTML = ''; return; }
+  if (!cur.sample.checklist) cur.sample.checklist = defaultChecklist();
+  var list = cur.sample.checklist;
+  wrap.innerHTML = list.map(function(it) {
+    return '<div class="cl-item">' +
+      '<button class="cl-check' + (it.done ? ' done' : '') + '" onclick="toggleChecklistItem(\'' + it.id + '\')">' + (it.done ? '✓' : '') + '</button>' +
+      '<span class="cl-text' + (it.done ? ' done' : '') + '">' + it.text + '</span>' +
+      '<span class="cl-del" onclick="delChecklistItem(\'' + it.id + '\')">✕</span>' +
+      '</div>';
+  }).join('');
+}
 function toggleChecklistItem(id) {
   if (!cur.sample || !cur.sample.checklist) return;
   var it = cur.sample.checklist.find(function(x){ return x.id === id; });
@@ -2686,12 +1933,12 @@ function openOverlay(name) {
     document.getElementById('cnt-sample').textContent = products.filter(function(p){ return p.sample; }).length;
   }
   if (name === 'backup') {
-    // 예상 파일 크기 — 사진이 많을 때 JSON.stringify로 재면 화면이 멈추므로 길이 합으로 계산
-    var mb = getStorageUsageMB();
+    // 예상 파일 크기 계산
+    var jsonSize = 0;
+    try { jsonSize = JSON.stringify(products).length; } catch(e) {}
+    var mb = (jsonSize * 2) / (1024 * 1024); // UTF-16 기준
     document.getElementById('bk-export-info').innerHTML =
-      '현재 제품: <b>' + products.length + '개</b> · 예상 파일 크기 <b>' + mb.toFixed(0) + ' MB</b>' +
-      (mb > 90 ? ' <span style="color:#f5a500;">— 날짜별 백업을 권합니다</span>' : '');
-    refreshBackupSheet();
+      '현재 제품: <b>' + products.length + '개</b> · 예상 파일 크기 <b>' + mb.toFixed(1) + ' MB</b>';
     // 텍스트 영역 초기화 (이전 내용 숨김)
     var area = document.getElementById('bk-fallback-area');
     if (area) area.style.display = 'none';
@@ -2713,6 +1960,10 @@ function saveMoq() {
   var qty = document.getElementById('moq-qty').value;
   if (!price && !qty) { showToast('가격 또는 수량을 입력해주세요'); return; }
   cur.moq = { price: price || '-', qty: qty || '-', memo: document.getElementById('moq-memo').value };
+  document.getElementById('qa-moq').className = 'qa-btn on-orange';
+  document.getElementById('moq-icon').style.display = 'none';
+  document.getElementById('moq-top').innerHTML = '<span class="price-big">$' + price + '</span>';
+  document.getElementById('moq-bot').textContent = qty ? 'MOQ ' + qty : '';
   closeOverlay('moq');
   renderChips(); updateSaveBtn();
   showToast('가격 · MOQ 저장됨');
@@ -2722,6 +1973,12 @@ function clearMoq() {
   document.getElementById('moq-price').value = '';
   document.getElementById('moq-qty').value = '';
   document.getElementById('moq-memo').value = '';
+  document.getElementById('qa-moq').className = 'qa-btn';
+  document.getElementById('moq-icon').style.display = '';
+  document.getElementById('moq-icon').className = 'qa-icon c-orange';
+  document.getElementById('moq-icon').textContent = '$';
+  document.getElementById('moq-top').textContent = 'MOQ';
+  document.getElementById('moq-bot').textContent = '';
   closeOverlay('moq');
   renderChips(); updateSaveBtn();
 }
@@ -2731,12 +1988,22 @@ function saveCbDate() {
   var date = document.getElementById('cb-date').value;
   if (!date) { showToast('날짜를 선택해주세요'); return; }
   cur.cb = { owned: false, date: date };
+  document.getElementById('qa-cb').className = 'qa-btn on-amber';
+  document.getElementById('cb-icon').style.display = 'none';
+  document.getElementById('cb-top').innerHTML = '<span class="val-big amber">' + fmtDate(date) + '</span>';
+  document.getElementById('cb-bot').textContent = '진행중';
   closeOverlay('cb');
   renderChips(); updateSaveBtn();
   showToast('CB 예정일 저장됨');
 }
 function clearCb() {
   cur.cb = null;
+  document.getElementById('qa-cb').className = 'qa-btn';
+  document.getElementById('cb-icon').style.display = '';
+  document.getElementById('cb-icon').className = 'qa-icon c-orange';
+  document.getElementById('cb-icon').textContent = '📋';
+  document.getElementById('cb-top').textContent = 'CB 없음';
+  document.getElementById('cb-bot').textContent = '';
   closeOverlay('cb');
   renderChips(); updateSaveBtn();
 }
@@ -2761,6 +2028,10 @@ function saveSample() {
   var expected = d.toISOString().split('T')[0];
   var checklist = (cur.sample && cur.sample.checklist) ? cur.sample.checklist : defaultChecklist();
   cur.sample = { days: days, expected: expected, memo: document.getElementById('sample-memo').value, checklist: checklist };
+  document.getElementById('qa-sample').className = 'qa-btn on-green';
+  document.getElementById('sample-icon').style.display = 'none';
+  document.getElementById('sample-top').innerHTML = '<span class="val-big green">' + fmtDate(expected) + '</span>';
+  document.getElementById('sample-bot').textContent = '샘플 예정일';
   closeOverlay('sample');
   renderChips(); updateSaveBtn();
   showToast('샘플 신청 완료!');
@@ -2770,7 +2041,14 @@ function clearSample() {
   document.getElementById('sample-days').value = '';
   document.getElementById('sample-memo').value = '';
   document.getElementById('cl-new-item').value = '';
+  document.getElementById('sample-checklist').innerHTML = '';
   document.getElementById('edd').style.display = 'none';
+  document.getElementById('qa-sample').className = 'qa-btn';
+  document.getElementById('sample-icon').style.display = '';
+  document.getElementById('sample-icon').className = 'qa-icon c-orange';
+  document.getElementById('sample-icon').textContent = '📅';
+  document.getElementById('sample-top').textContent = '샘플 신청';
+  document.getElementById('sample-bot').textContent = '';
   closeOverlay('sample');
   renderChips(); updateSaveBtn();
 }
@@ -2783,11 +2061,12 @@ function scheduleAutoSave() {
   autoSaveTimer = setTimeout(performAutoSave, 800);
 }
 function performAutoSave() {
-  var hasData = cur.name || cur.memo || (cur.todos && cur.todos.length) || cur.photos.length || cur.bizCards.length || cur.category || cur.moq || cur.cb || cur.sample;
+  var hasData = cur.name || cur.photos.length || cur.bizCards.length || cur.category || cur.moq || cur.cb || cur.sample;
   if (!hasData) return;
 
-  var name = document.getElementById('name-ta').value.replace(/\s*\n\s*/g, ' ').trim() || '(이름 없음)';
-  var memo = document.getElementById('memo-ta').value.trim();
+  var lines = document.getElementById('name-ta').value.split('\n');
+  var name = lines[0].trim() || '(이름 없음)';
+  var memo = lines.slice(1).join('\n').trim();
 
   if (editingId) {
     var idx = products.findIndex(function(x){ return x.id === editingId; });
@@ -2800,7 +2079,6 @@ function performAutoSave() {
       photos: cur.photos.slice(),
       bizCards: cur.bizCards.slice(),
       category: cur.category,
-      todos: (cur.todos || []).map(function(t){ return Object.assign({}, t); }),
       moq: cur.moq ? Object.assign({}, cur.moq) : null,
       cb: cur.cb ? Object.assign({}, cur.cb) : null,
       sample: cloneSample(cur.sample)
@@ -2814,20 +2092,13 @@ function performAutoSave() {
       photos: cur.photos.slice(),
       bizCards: cur.bizCards.slice(),
       category: cur.category,
-      todos: (cur.todos || []).map(function(t){ return Object.assign({}, t); }),
       moq: cur.moq ? Object.assign({}, cur.moq) : null,
       cb: cur.cb ? Object.assign({}, cur.cb) : null,
       sample: cloneSample(cur.sample)
     };
     products.unshift(p);
-    editingId = p.id;          // 이후 입력은 같은 항목에 계속 자동 저장됨
-    isEditingExisting = false; // 새로 만드는 중 → "수정 중" 배너는 띄우지 않는다
-    draftingId = p.id;         // 저장 전까지 목록에서 숨김
-    saveDraftId(editingId);
-    /* 제품명 없이 사진·버튼만으로 새 제품이 생기는 경우가 있다.
-       (예: 저장 직후 화면에서 사진을 더 넣을 때)
-       배너는 띄우지 않되, 알림으로 바로 알아챌 수 있게 한다. */
-    if (!cur.name) showToast('✏️ 새 제품 기록을 시작했어요');
+    editingId = p.id; // 이후 입력은 같은 항목에 계속 자동 저장됨
+    saveDraftId(editingId); // 새로고침되어도 같은 항목에 계속 이어붙도록 기록
   }
   persist();
   renderList();
@@ -2835,8 +2106,9 @@ function performAutoSave() {
 }
 
 function saveProduct() {
-  var name = document.getElementById('name-ta').value.replace(/\s*\n\s*/g, ' ').trim() || '(이름 없음)';
-  var memo = document.getElementById('memo-ta').value.trim();
+  var lines = document.getElementById('name-ta').value.split('\n');
+  var name = lines[0].trim() || '(이름 없음)';
+  var memo = lines.slice(1).join('\n').trim();
 
   if (editingId) {
     // 수정 모드 — 기존 제품 업데이트
@@ -2851,29 +2123,16 @@ function saveProduct() {
         photos: cur.photos.slice(),
         bizCards: cur.bizCards.slice(),
         category: cur.category,
-        todos: (cur.todos || []).map(function(t){ return Object.assign({}, t); }),
         moq: cur.moq ? Object.assign({}, cur.moq) : null,
         cb: cur.cb ? Object.assign({}, cur.cb) : null,
         sample: cloneSample(cur.sample)
       };
-      persistSafe().then(function(ok) {
-        if (!ok) {
-          // 저장 실패 → 되돌리기 (여기서 되돌리지 않으면 화면과 실제 저장 내용이 어긋난다)
-          products[idx] = backup;
-          renderList();
-          showToast('🚨 수정 실패 - 저장공간이 부족해요. 사진을 줄여주세요');
-          return;
-        }
-        /* 수정 저장 → 편집 종료 (수정 중 배너도 사라진다).
-           입력창을 비우고 목록으로 초점을 옮겨, 이어서 잘못 입력하는 일을 막는다. */
-        draftingId = null;
-        resetCur();
-        renderList();
-        updateStorageBar();
-        scrollToList();
-        showToast('✓ 수정되었어요!');
-      });
-      return;
+      if (!persist()) {
+        // 저장 실패 → 롤백
+        products[idx] = backup;
+        showToast('🚨 수정 실패 - 용량이 부족해요. 사진을 줄여주세요');
+        return;
+      }
     } else {
       persist();
     }
@@ -2891,61 +2150,32 @@ function saveProduct() {
       photos: cur.photos.slice(),
       bizCards: cur.bizCards.slice(),
       category: cur.category,
-      todos: (cur.todos || []).map(function(t){ return Object.assign({}, t); }),
       moq: cur.moq ? Object.assign({}, cur.moq) : null,
       cb: cur.cb ? Object.assign({}, cur.cb) : null,
       sample: cloneSample(cur.sample)
     };
     products.unshift(p);
-    persistSafe().then(function(ok) {
-      if (!ok) {
-        // 저장 실패 → 되돌리기
-        products.shift();
-        renderList();
-        showToast('🚨 저장 실패 - 저장공간이 부족해요. 사진을 줄여주세요');
-        return;
-      }
-      draftingId = null;
-      resetCur();
-      renderList();
-      updateStorageBar();
-      showToast('✓ 제품이 저장되었어요!');
-    });
+    if (!persist()) {
+      // 저장 실패 → 롤백
+      products.shift();
+      showToast('🚨 저장 실패 - 용량이 부족해요. 사진을 줄여주세요');
+      return;
+    }
+    resetCur();
+    renderList();
+    updateStorageBar();
+    showToast('✓ 제품이 저장되었어요!');
   }
 }
 
 // ── EDIT / DELETE ─────────────────────────────────────
-/* 예전 버전에서 샘플신청 안에 있던 체크리스트를 "확인할 것"으로 옮긴다.
-   이미 todos가 있으면 그대로 쓴다. */
-function migrateTodos(p) {
-  if (Array.isArray(p.todos)) return p.todos.map(function(t){ return Object.assign({}, t); });
-  var old = (p.sample && Array.isArray(p.sample.checklist)) ? p.sample.checklist : [];
-  return old.map(function(t) {
-    return { id: t.id || ('t' + Math.random().toString(36).slice(2)), text: t.text, done: !!t.done };
-  });
-}
-
-/* 목록에서 눌러 "기존 제품을 고치는 중"일 때만 true. */
-var isEditingExisting = false;
-
-/* 아직 저장 버튼을 누르지 않은 "작성 중" 항목의 id.
-   자동저장으로 이미 만들어져 있지만, 위 입력창과 아래 목록에
-   같은 내용이 두 번 보이면 헷갈리므로 목록에서는 숨긴다.
-   (저장을 누르면 목록에 나타난다. 앱을 꺼도 다음에 이어서 열린다.) */
-var draftingId = null;
-
-// asDraft=true 이면 "작성 중이던 것 이어쓰기"로 보고 수정 중 배너를 띄우지 않는다.
-function editProduct(id, asDraft) {
+function editProduct(id) {
   var p = products.find(function(x){ return x.id === id; });
   if (!p) return;
 
   editingId = id;
-  isEditingExisting = !asDraft;
-  draftingId = asDraft ? id : null;
   saveDraftId(editingId);
   cur.name = p.name || '';
-  cur.memo = p.memo || '';
-  cur.todos = migrateTodos(p);
   cur.photos = (p.photos || []).slice();
   cur.bizCards = (p.bizCards || []).slice();
   cur.category = p.category || null;
@@ -2953,29 +2183,16 @@ function editProduct(id, asDraft) {
   cur.cb = p.cb ? Object.assign({}, p.cb) : null;
   cur.sample = cloneSample(p.sample);
 
+  // 이름+메모 textarea 세팅
   var ta = document.getElementById('name-ta');
-  ta.value = cur.name;
-  autoGrow(ta);
-
-  var ma = document.getElementById('memo-ta');
-  ma.value = cur.memo;
-  autoGrow(ma);
-
-  renderTodos();
+  ta.value = p.name + (p.memo ? '\n' + p.memo : '');
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
 
   syncUIFromCur();
 
-  var area = document.querySelector('.cur-area');
-  var ex = document.getElementById('edit-x');
-  if (isEditingExisting) {
-    document.getElementById('save-btn').textContent = '수정 저장';
-    if (area) area.classList.add('editing');
-    if (ex) ex.style.display = 'flex';
-  } else {
-    document.getElementById('save-btn').textContent = '저장';
-    if (area) area.classList.remove('editing');
-    if (ex) ex.style.display = 'none';
-  }
+  document.getElementById('edit-banner').classList.add('show');
+  document.getElementById('save-btn').textContent = '수정 저장';
 
   // 상단으로 스크롤
   document.querySelector('.app').scrollTop = 0;
@@ -2983,16 +2200,8 @@ function editProduct(id, asDraft) {
 }
 
 function cancelEdit() {
-  var wasEditing = isEditingExisting;
   resetCur();
-  showToast(wasEditing ? '수정을 취소했어요' : '작성을 취소했어요');
-}
-
-// 저장 후 목록이 보이도록 스크롤
-function scrollToList() {
-  var el = document.getElementById('p-list');
-  if (!el) return;
-  setTimeout(function(){ try { el.scrollIntoView({behavior:'smooth', block:'start'}); } catch(e){} }, 120);
+  showToast('수정 취소');
 }
 
 function deleteCurrentProduct() {
@@ -3000,32 +2209,76 @@ function deleteCurrentProduct() {
   var p = products.find(function(x){ return x.id === editingId; });
   var name = p ? p.name : '이 제품';
   if (!confirm('"' + name + '"을(를) 삭제할까요?\n이 동작은 되돌릴 수 없습니다.')) return;
-  var backup = products.slice();
   products = products.filter(function(p){ return p.id !== editingId; });
+  persist(); // 삭제는 용량이 줄어드므로 실패할 일 거의 없음
   resetCur();
   renderList();
-
-  persistSafe().then(function(ok) {
-    if (!ok) {
-      products = backup;
-      renderList();
-      showToast('\U0001F6A8 삭제 실패 — 다시 시도해주세요');
-      return;
-    }
-    cleanupOrphanPhotos().then(function(n){ if (n) updateStorageBar(); });
-    updateStorageBar();
-    checkAndShowRecoveryBanner();
-    renderDayBackupList();
-    showToast('삭제되었습니다');
-  });
+  updateStorageBar();
+  checkAndShowRecoveryBanner(); // 삭제 후 손상 데이터 다시 집계
+  showToast('삭제되었습니다');
 }
 
 // cur 상태를 모든 UI 컴포넌트에 동기화
 function syncUIFromCur() {
   // 카테고리
   renderCatUI();
-  renderFnChips();
-  renderTodos();
+
+  // MOQ
+  var moqBtn = document.getElementById('qa-moq');
+  var moqIcon = document.getElementById('moq-icon');
+  if (cur.moq) {
+    moqBtn.className = 'qa-btn on-orange';
+    moqIcon.style.display = 'none';
+    document.getElementById('moq-top').innerHTML = '<span class="price-big">$' + cur.moq.price + '</span>';
+    document.getElementById('moq-bot').textContent = cur.moq.qty ? 'MOQ ' + cur.moq.qty : '';
+  } else {
+    moqBtn.className = 'qa-btn';
+    moqIcon.style.display = '';
+    document.getElementById('moq-top').textContent = 'MOQ';
+    document.getElementById('moq-bot').textContent = '';
+  }
+
+  // CB
+  var cbBtn = document.getElementById('qa-cb');
+  var cbIcon = document.getElementById('cb-icon');
+  if (cur.cb && cur.cb.owned) {
+    cbBtn.className = 'qa-btn on-green';
+    cbIcon.style.display = 'none';
+    document.getElementById('cb-top').innerHTML = '<span class="val-big green">CB 보유</span>';
+    document.getElementById('cb-bot').textContent = '';
+  } else if (cur.cb && cur.cb.date) {
+    cbBtn.className = 'qa-btn on-amber';
+    cbIcon.style.display = 'none';
+    document.getElementById('cb-top').innerHTML = '<span class="val-big amber">' + fmtDate(cur.cb.date) + '</span>';
+    document.getElementById('cb-bot').textContent = '진행중';
+  } else {
+    cbBtn.className = 'qa-btn';
+    cbIcon.style.display = '';
+    cbIcon.className = 'qa-icon c-orange';
+    cbIcon.textContent = '📋';
+    document.getElementById('cb-top').textContent = 'CB 없음';
+    document.getElementById('cb-bot').textContent = '';
+  }
+
+  // Sample
+  var sampleBtn = document.getElementById('qa-sample');
+  var sampleIcon = document.getElementById('sample-icon');
+  if (cur.sample && cur.sample.days) {
+    sampleBtn.className = 'qa-btn on-green';
+    sampleIcon.style.display = 'none';
+    document.getElementById('sample-top').innerHTML = '<span class="val-big green">' + fmtDate(cur.sample.expected) + '</span>';
+    document.getElementById('sample-bot').textContent = '샘플 예정일';
+  } else if (cur.sample) {
+    sampleBtn.className = 'qa-btn on-green';
+    sampleIcon.style.display = 'none';
+    document.getElementById('sample-top').innerHTML = '<span class="val-big green">샘플 신청</span>';
+    document.getElementById('sample-bot').textContent = '';
+  } else {
+    sampleBtn.className = 'qa-btn';
+    sampleIcon.style.display = '';
+    document.getElementById('sample-top').textContent = '샘플 신청';
+    document.getElementById('sample-bot').textContent = '';
+  }
 
   renderPhotos();
   renderBizCards();
@@ -3036,29 +2289,17 @@ function syncUIFromCur() {
 
 function resetCur() {
   clearTimeout(autoSaveTimer);
-  cur.name = ''; cur.memo = ''; cur.todos = [];
-  cur.photos = []; cur.bizCards = []; cur.category = null;
+  cur.name = ''; cur.photos = []; cur.bizCards = []; cur.category = null;
   cur.moq = null; cur.cb = null; cur.sample = null;
 
   // edit mode 해제 (저장/취소/삭제로 명시적으로 끝냈을 때만 여기로 옴)
   editingId = null;
-  isEditingExisting = false;
-  draftingId = null;
-  var _area = document.querySelector('.cur-area');
-  if (_area) _area.classList.remove('editing');
-  var _ex = document.getElementById('edit-x');
-  if (_ex) _ex.style.display = 'none';
   clearDraftId();
   document.getElementById('edit-banner').classList.remove('show');
   document.getElementById('save-btn').textContent = '저장';
 
   document.getElementById('name-ta').value = '';
   document.getElementById('name-ta').style.height = '';
-  document.getElementById('memo-ta').value = '';
-  document.getElementById('memo-ta').style.height = '';
-  var tdi = document.getElementById('td-input');
-  if (tdi) tdi.value = '';
-  renderTodos();
   document.getElementById('save-btn').disabled = true;
 
   // 사진 섹션들은 빈 상태로 리렌더 (드롭존 힌트 다시 표시)
@@ -3067,12 +2308,30 @@ function resetCur() {
 
   // Reset cat buttons
   document.getElementById('cat-tag-pill').style.display = 'none';
-  // 카테고리 줄은 화면에서 제거됨 (표시하지 않음)
+  document.getElementById('cat-row').style.display = 'flex';
   document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('active'); });
 
   // Reset QA buttons
+  document.getElementById('qa-moq').className = 'qa-btn';
+  document.getElementById('moq-icon').style.display = '';
+  document.getElementById('moq-icon').className = 'qa-icon c-orange';
+  document.getElementById('moq-icon').textContent = '$';
+  document.getElementById('moq-top').textContent = 'MOQ';
+  document.getElementById('moq-bot').textContent = '';
 
+  document.getElementById('qa-cb').className = 'qa-btn';
+  document.getElementById('cb-icon').style.display = '';
+  document.getElementById('cb-icon').className = 'qa-icon c-orange';
+  document.getElementById('cb-icon').textContent = '📋';
+  document.getElementById('cb-top').textContent = 'CB 없음';
+  document.getElementById('cb-bot').textContent = '';
 
+  document.getElementById('qa-sample').className = 'qa-btn';
+  document.getElementById('sample-icon').style.display = '';
+  document.getElementById('sample-icon').className = 'qa-icon c-orange';
+  document.getElementById('sample-icon').textContent = '📅';
+  document.getElementById('sample-top').textContent = '샘플 신청';
+  document.getElementById('sample-bot').textContent = '';
 
   updateCardBtn();
 }
@@ -3093,15 +2352,9 @@ function filterCat(el, cat) {
   renderList();
 }
 
-function visibleProducts() {
-  // 아직 저장하지 않은 "작성 중" 항목은 목록에 보이지 않게 한다
-  return products.filter(function(p) { return p.id !== draftingId; });
-}
-
 function renderList() {
-  var vis = visibleProducts();   // 작성 중인 항목은 목록에서 제외
-  var base = curTab === 'all' ? vis :
-    vis.filter(function(p){ return curTab === 'sample' ? p.sample : !p.sample; });
+  var base = curTab === 'all' ? products :
+    products.filter(function(p){ return curTab === 'sample' ? p.sample : !p.sample; });
   var filtered = curCat === 'all' ? base :
     base.filter(function(p){ return p.category === curCat; });
 
@@ -3111,7 +2364,6 @@ function renderList() {
   if (filtered.length === 0) {
     empty.style.display = 'flex';
     list.style.display = 'none';
-    list.innerHTML = '';   // 남아있던 카드를 확실히 지운다
     return;
   }
   empty.style.display = 'none';
@@ -3125,12 +2377,9 @@ function renderList() {
       if (p.cb.owned) badges.push('<span class="badge green">CB보유</span>');
       else if (p.cb.date) badges.push('<span class="badge amber">CB예정 ' + fmtDate(p.cb.date) + '</span>');
     }
-    if (p.sample) {
-      var dl = dLeftFromDate(p.sample.expected);
-      if (dl === null) badges.push('<span class="badge green">샘플 신청</span>');
-      else if (dl < 0) badges.push('<span class="badge" style="background:rgba(224,85,85,.18);color:#f3a9a4;">샘플 지연 ' + (-dl) + '일</span>');
-      else badges.push('<span class="badge green">샘플 D-' + dl + ' · ' + fmtDate(p.sample.expected) + '</span>');
-    }
+    if (p.sample) badges.push(p.sample.days
+      ? '<span class="badge green">샘플 D+' + p.sample.days + ' · ' + fmtDate(p.sample.expected) + '</span>'
+      : '<span class="badge green">샘플 신청</span>');
     if (p.bizCards && p.bizCards.length > 0) badges.push('<span class="badge" style="background:rgba(74,158,255,.15);color:var(--blue);">📇 명함 ' + p.bizCards.length + '장</span>');
     if (!p.moq && !p.cb && !p.sample) badges.push('<span class="badge grey">정보 없음</span>');
 
@@ -3143,148 +2392,15 @@ function renderList() {
           : '<div class="p-photo" style="display:flex;align-items:center;justify-content:center;background:rgba(224,85,85,.1);color:var(--red);font-size:14px;">⚠️</div>';
       }).join('') + '</div>' : '';
 
-    // 확인할 것 — 아직 체크 안 한 항목을 카드에 그대로 보여준다
-    var todos = Array.isArray(p.todos) ? p.todos : migrateTodos(p);
-    var undone = todos.filter(function(t){ return !t.done; });
-    var todoHtml = '';
-    if (undone.length) {
-      todoHtml = '<div class="p-todo">' +
-        undone.slice(0, 3).map(function(t) {
-          return '<div class="p-todo-item">☐ ' + escapeHtmlLite(t.text) + '</div>';
-        }).join('') +
-        (undone.length > 3 ? '<div class="p-todo-more">외 ' + (undone.length - 3) + '건</div>' : '') +
-        '</div>';
-    }
-
-    html += '<div class="p-row" data-id="' + p.id + '">' +
-      '<button class="p-row-del" type="button" onclick="event.stopPropagation(); confirmDeleteProduct(' + p.id + ')">' +
-        '<span>🗑️</span>삭제</button>' +
-      '<div class="p-card" onclick="onCardTap(event, ' + p.id + ')">' +
-      '<div class="p-head"><div class="p-name">' + escapeHtmlLite(p.name) + '</div><div class="p-date">' + p.date + '</div></div>' +
+    html += '<div class="p-card" onclick="editProduct(' + p.id + ')">' +
+      '<div class="p-head"><div class="p-name">' + p.name + '</div><div class="p-date">' + p.date + '</div></div>' +
       (catBadge ? '<div class="p-cat-row">' + catBadge + '</div>' : '') +
-      (p.memo ? '<div class="p-memo">' + escapeHtmlLite(p.memo) + '</div>' : '') +
-      todoHtml +
+      (p.memo ? '<div class="p-memo">' + p.memo + '</div>' : '') +
       photos +
       '<div class="p-badges">' + badges.join('') + '</div>' +
-      '</div></div>';
+      '</div>';
   });
   list.innerHTML = html;
-  setupSwipeDelete();
-}
-
-/* ══════════════════════════════════════════════════════
-   목록 카드 왼쪽 스와이프 → 삭제 버튼
-   ──────────────────────────────────────────────────────
-   가로로 충분히 밀었을 때만 반응한다.
-   세로 스크롤 중이면 무시하므로 목록을 내리다 잘못 열리지 않는다.
-   ══════════════════════════════════════════════════════ */
-var openSwipeRow = null;
-
-function closeSwipeRow() {
-  if (openSwipeRow) { openSwipeRow.classList.remove('open'); openSwipeRow = null; }
-}
-
-// 스와이프가 열려 있을 때의 첫 탭은 "닫기"로 쓴다 (실수로 편집 열리는 것 방지)
-function onCardTap(e, id) {
-  if (openSwipeRow) { closeSwipeRow(); return; }
-  editProduct(id);
-}
-
-function setupSwipeDelete() {
-  var THRESHOLD = 42;   // 이만큼 밀어야 열림
-  var MAX = 84;
-
-  document.querySelectorAll('.p-row').forEach(function(row) {
-    var card = row.querySelector('.p-card');
-    if (!card) return;
-    var x0 = 0, y0 = 0, dx = 0, decided = null, active = false;
-
-    function start(e) {
-      var t = e.touches ? e.touches[0] : e;
-      x0 = t.clientX; y0 = t.clientY; dx = 0; decided = null; active = true;
-      if (openSwipeRow && openSwipeRow !== row) closeSwipeRow();
-    }
-
-    function move(e) {
-      if (!active) return;
-      var t = e.touches ? e.touches[0] : e;
-      var mx = t.clientX - x0, my = t.clientY - y0;
-
-      if (decided === null) {
-        if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
-        decided = Math.abs(mx) > Math.abs(my) * 1.4 ? 'x' : 'y';
-        if (decided === 'x') row.classList.add('dragging');
-      }
-      if (decided !== 'x') return;
-
-      if (e.cancelable) e.preventDefault();
-      var base = row.classList.contains('open') ? -MAX : 0;
-      dx = Math.max(-MAX, Math.min(0, base + mx));
-      card.style.transform = 'translateX(' + dx + 'px)';
-    }
-
-    function end() {
-      if (!active) return;
-      active = false;
-      row.classList.remove('dragging');
-      card.style.transform = '';
-      if (decided !== 'x') return;
-
-      if (dx <= -THRESHOLD) {
-        row.classList.add('open');
-        openSwipeRow = row;
-      } else {
-        row.classList.remove('open');
-        if (openSwipeRow === row) openSwipeRow = null;
-      }
-    }
-
-    card.addEventListener('touchstart', start, { passive: true });
-    card.addEventListener('touchmove', move, { passive: false });
-    card.addEventListener('touchend', end);
-    card.addEventListener('touchcancel', end);
-
-    // PC(마우스)에서는 카드 밖으로 나가도 끌리도록 document에 붙인다
-    card.addEventListener('mousedown', function(e) {
-      start(e);
-      document.addEventListener('mousemove', move);
-      document.addEventListener('mouseup', function up() {
-        end();
-        document.removeEventListener('mousemove', move);
-        document.removeEventListener('mouseup', up);
-      });
-    });
-  });
-}
-
-// 목록에서 바로 삭제 (한 번 더 확인)
-function confirmDeleteProduct(id) {
-  var p = products.find(function(x){ return x.id === id; });
-  if (!p) return;
-  if (!confirm('"' + (p.name || '이 제품') + '"을(를) 삭제할까요?\n되돌릴 수 없습니다.')) {
-    closeSwipeRow();
-    return;
-  }
-  var backup = products.slice();
-  products = products.filter(function(x){ return x.id !== id; });
-  if (editingId === id) resetCur();
-  closeSwipeRow();
-  renderList();
-
-  // 저장이 실제로 됐는지 확인한다. 실패하면 되돌려서 화면과 저장 내용이 어긋나지 않게 한다.
-  persistSafe().then(function(ok) {
-    if (!ok) {
-      products = backup;
-      renderList();
-      showToast('\U0001F6A8 삭제 실패 — 다시 시도해주세요');
-      return;
-    }
-    cleanupOrphanPhotos().then(function(n){ if (n) updateStorageBar(); });
-    updateStorageBar();
-    checkAndShowRecoveryBanner();
-    renderDayBackupList();   // 백업 날짜 목록도 즉시 갱신
-    showToast('삭제되었습니다');
-  });
 }
 
 // ── NAV ───────────────────────────────────────────────
@@ -3295,6 +2411,7 @@ function switchNav(el, page) {
   var sp = document.getElementById('sample-page');
   var pp = document.getElementById('photos-page');
   var curArea = document.querySelector('.cur-area');
+  var qaGrid = document.getElementById('qa-grid');
   main.style.display = 'none';
   sp.style.display = 'none';
   pp.style.display = 'none';
@@ -3302,14 +2419,17 @@ function switchNav(el, page) {
     sp.style.display = 'flex';
     sp.style.flexDirection = 'column';
     if (curArea) curArea.style.display = 'none';
+    if (qaGrid) qaGrid.style.display = 'none';
     renderSamplePage();
   } else if (page === 'photos') {
     pp.style.display = '';
     if (curArea) curArea.style.display = 'none';
+    if (qaGrid) qaGrid.style.display = 'none';
     renderPhotosPage();
   } else {
     main.style.display = '';
     if (curArea) curArea.style.display = '';
+    if (qaGrid) qaGrid.style.display = '';
   }
 }
 
@@ -3463,112 +2583,6 @@ function getImageNaturalSize(dataUrl) {
     };
     img.onerror = function() { resolve({ w: 1, h: 1 }); };
     img.src = dataUrl;
-  });
-}
-
-/* ══════════════════════════════════════════════════════
-   사진첩(갤러리)에 저장
-   ──────────────────────────────────────────────────────
-   웹앱은 사진첩에 자동으로 쓸 수 없다(기기가 막아둠).
-   대신 공유창을 열어 "이미지 저장"을 고르게 한다.
-   한 번에 너무 많이 넘기면 폰이 실패하므로 15장씩 나눠 보낸다.
-   ══════════════════════════════════════════════════════ */
-var ALBUM_CHUNK = 15;
-
-function dataUrlToFile(dataUrl, name) {
-  var m = /^data:(image\/[a-z+]+);base64,(.*)$/i.exec(dataUrl);
-  if (!m) return null;
-  var bin = atob(m[2]);
-  var buf = new Uint8Array(bin.length);
-  for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-  return new File([buf], name, { type: m[1] });
-}
-
-// 저장 대상 사진 모으기. scope: 'today' = 오늘 등록분, 'all' = 전체
-function collectPhotosForAlbum(scope) {
-  var today = new Date().toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
-  var out = [];
-  products.forEach(function(p) {
-    if (scope === 'today' && p.date !== today) return;
-    var safe = (p.name || '제품').replace(/[^가-힣A-Za-z0-9]/g, '_').slice(0, 20);
-    (p.photos || []).forEach(function(s, i) {
-      if (isValidPhoto(s)) out.push({ src: s, name: safe + '_' + (i + 1) + '.jpg' });
-    });
-    (p.bizCards || []).forEach(function(s, i) {
-      if (isValidPhoto(s)) out.push({ src: s, name: safe + '_명함' + (i + 1) + '.jpg' });
-    });
-  });
-  return out;
-}
-
-async function savePhotosToAlbum(scope) {
-  var list = collectPhotosForAlbum(scope);
-
-  // 오늘 찍은 게 없으면 전체로 자동 전환
-  if (!list.length && scope === 'today') {
-    list = collectPhotosForAlbum('all');
-    if (list.length) showToast('오늘 등록한 사진이 없어 전체로 저장합니다');
-  }
-  if (!list.length) { showToast('저장할 사진이 없어요'); return; }
-
-  var btn = document.getElementById('ph-save-btn');
-  var orig = btn ? btn.textContent : '';
-
-  var chunks = [];
-  for (var i = 0; i < list.length; i += ALBUM_CHUNK) chunks.push(list.slice(i, i + ALBUM_CHUNK));
-
-  if (chunks.length > 1) {
-    var go = window.confirm(
-      '사진 ' + list.length + '장을 사진첩에 저장합니다.\n\n' +
-      '한 번에 다 넘기면 폰이 멈출 수 있어 ' + ALBUM_CHUNK + '장씩 ' + chunks.length + '번에 나눠 보냅니다.\n' +
-      '공유창이 뜰 때마다 "이미지 저장"을 눌러주세요.\n\n계속할까요?');
-    if (!go) return;
-  }
-
-  try {
-    if (btn) { btn.disabled = true; }
-    for (var c = 0; c < chunks.length; c++) {
-      if (btn) btn.textContent = '⏳ ' + (c + 1) + '/' + chunks.length;
-
-      var files = chunks[c].map(function(o) { return dataUrlToFile(o.src, o.name); })
-                           .filter(Boolean);
-      if (!files.length) continue;
-
-      if (navigator.canShare && navigator.canShare({ files: files }) && navigator.share) {
-        try {
-          await navigator.share({ files: files });
-        } catch (e) {
-          // 사용자가 공유창을 닫음 → 중단
-          if (e && e.name === 'AbortError') {
-            showToast('저장을 멈췄어요 (' + c + '/' + chunks.length + '묶음 완료)');
-            return;
-          }
-          throw e;
-        }
-      } else {
-        // 공유 기능이 없는 기기(주로 안드로이드 일부) → 다운로드 폴더로 저장
-        downloadPhotoFiles(chunks[c]);
-        showToast('\u2139\uFE0F 이 기기는 다운로드 폴더에 저장됩니다');
-      }
-    }
-    showToast('✓ 사진 ' + list.length + '장 저장 완료');
-  } catch (err) {
-    console.error(err);
-    showToast('\U0001F6A8 사진첩 저장 실패: ' + (err.message || '오류'));
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = orig || '\U0001F4E5 사진첩 저장'; }
-  }
-}
-
-// 공유 기능이 없을 때의 대안 — 파일로 내려받기
-function downloadPhotoFiles(items) {
-  items.forEach(function(o, i) {
-    setTimeout(function() {
-      var a = document.createElement('a');
-      a.href = o.src; a.download = o.name;
-      document.body.appendChild(a); a.click();
-      setTimeout(function(){ try { document.body.removeChild(a); } catch(e){} }, 300);
-    }, i * 250);
   });
 }
 
@@ -3921,11 +2935,7 @@ function resetAllData() {
   var ok2 = window.confirm('정말 삭제하시겠어요? 되돌릴 수 없습니다.');
   if (!ok2) return;
   products = [];
-  var allPhotoKeys = [];
-  storedPhotoIds.forEach(function(id) { allPhotoKeys.push(PHOTO_PREFIX + id); });
-  photoIdMap.clear();
-  storedPhotoIds.clear();
-  idbBulk(null, allPhotoKeys.concat(['products'])).catch(function(e){ console.error(e); });
+  idbDel('products').catch(function(e){ console.error(e); });
   resetCur();
   renderList();
   updateStorageBar();
@@ -3966,67 +2976,14 @@ function recompressAllPhotos() {
 }
 
 // IndexedDB에 저장. 비동기지만 호출부 호환을 위해 즉시 true 반환하고 백그라운드로 기록.
-function markPersistFailed(e) {
-  console.error('[persist] IndexedDB 저장 실패:', e);
-  var icon = document.getElementById('storage-icon');
-  if (icon) icon.textContent = '🚨';
-  var bar = document.getElementById('storage-bar');
-  if (bar) { bar.classList.remove('hidden'); bar.classList.add('danger'); }
-}
-
-// 저장을 시도하고 "실제 성공 여부"를 Promise(true/false)로 돌려준다.
-// 저장소 읽기에 실패한 상태(dataLoadFailed)라면 아예 쓰지 않는다 — 원본 보호.
-function persistSafe() {
-  if (dataLoadFailed) {
-    showDataErrorBanner();
-    return Promise.resolve(false);
-  }
-  var built;
-  try {
-    built = buildMetaAndPuts();
-  } catch (e) {
-    markPersistFailed(e);
-    return Promise.resolve(false);
-  }
-
-  var puts = built.puts;
-  puts['products'] = built.meta;
-
-  return idbBulk(puts, null).then(function() {
-    // 새로 저장된 사진 번호를 기억해 두면 다음 저장 때 다시 쓰지 않는다
-    Object.keys(puts).forEach(function(k) {
-      if (k.indexOf(PHOTO_PREFIX) === 0) storedPhotoIds.add(k.slice(PHOTO_PREFIX.length));
-    });
-    lastUsedPhotoIds = built.used;
-    return true;
-  }).catch(function(e) {
-    markPersistFailed(e);
-    return false;
-  });
-}
-
-// 삭제된 제품이 쓰던 사진 파일 치우기 (저장 흐름을 막지 않도록 따로 실행)
-var lastUsedPhotoIds = new Set();
-function cleanupOrphanPhotos() {
-  if (dataLoadFailed) return Promise.resolve(0);
-  var used = buildMetaAndPuts().used;
-  var orphans = [];
-  storedPhotoIds.forEach(function(id) { if (!used.has(id)) orphans.push(PHOTO_PREFIX + id); });
-  if (!orphans.length) return Promise.resolve(0);
-  return idbBulk(null, orphans).then(function() {
-    orphans.forEach(function(k) { storedPhotoIds.delete(k.slice(PHOTO_PREFIX.length)); });
-    return orphans.length;
-  }).catch(function() { return 0; });
-}
-
-// 기존 호출부 호환용(자동저장 등). 실패하면 토스트로 알린다.
 function persist() {
-  if (dataLoadFailed) {
-    showDataErrorBanner();
-    return false;
-  }
-  persistSafe().then(function(ok) {
-    if (!ok) showToast('🚨 저장 실패! 기기 저장공간을 확인해주세요');
+  idbSet('products', products).catch(function(e) {
+    console.error('[persist] IndexedDB 저장 실패:', e);
+    showToast('🚨 저장 실패! 기기 저장공간을 확인해주세요');
+    var icon = document.getElementById('storage-icon');
+    if (icon) icon.textContent = '🚨';
+    var bar = document.getElementById('storage-bar');
+    if (bar) { bar.classList.remove('hidden'); bar.classList.add('danger'); }
   });
   return true;
 }
@@ -4169,281 +3126,6 @@ function showBackupFallback(json) {
 // 가져오기 — 파일 선택 후 파싱 → 확인창 표시
 var _pendingImportData = null; // 확인 단계에서 임시 저장
 
-/* ══════════════════════════════════════════════════════
-   날짜별 백업 · 가벼운 백업 · 자동 스냅샷
-   ══════════════════════════════════════════════════════ */
-var DAY_DONE_KEY = 'gz_day_backup_done';   // 날짜별 백업 완료 기록
-
-function getDayBackupDone() {
-  try { return JSON.parse(localStorage.getItem(DAY_DONE_KEY) || '{}'); }
-  catch (e) { return {}; }
-}
-function setDayBackupDone(day, count) {
-  try {
-    var m = getDayBackupDone();
-    m[day] = { at: Date.now(), count: count };
-    localStorage.setItem(DAY_DONE_KEY, JSON.stringify(m));
-  } catch (e) {}
-}
-
-// 등록일 기준으로 제품을 묶는다 (앱 화면에 보이는 날짜와 동일)
-function groupProductsByDay() {
-  var map = {};
-  products.forEach(function(p) {
-    var d = p.date || '날짜없음';
-    if (!map[d]) map[d] = [];
-    map[d].push(p);
-  });
-  // 날짜 문자열에서 월·일을 뽑는다. 앱이 만드는 형식은 "9. 15." (ko-KR)
-  function md(s) {
-    var n = String(s).match(/\d+/g);
-    if (!n || n.length < 2) return null;
-    return [parseInt(n[0], 10), parseInt(n[1], 10)];
-  }
-
-  return Object.keys(map).sort(function(a, b) {
-    var pa = md(a), pb = md(b);
-    if (!pa) return 1;
-    if (!pb) return -1;
-    // 12월 → 1월처럼 해가 바뀌는 경우까지 고려하지는 않지만,
-    // 월이 다르면 월 우선으로 정렬한다 (9월 말 ~ 10월 초 대응)
-    return (pa[0] - pb[0]) || (pa[1] - pb[1]);
-  }).map(function(d) {
-    var list = map[d];
-    var photos = list.reduce(function(a, p) {
-      return a + (p.photos || []).length + (p.bizCards || []).length;
-    }, 0);
-    var bytes = 0;
-    list.forEach(function(p) {
-      (p.photos || []).forEach(function(s){ bytes += (s || '').length; });
-      (p.bizCards || []).forEach(function(s){ bytes += (s || '').length; });
-    });
-    return { day: d, list: list, photos: photos, mb: bytes / 1048576 };
-  });
-}
-
-function renderDayBackupList() {
-  var box = document.getElementById('bk-day-list');
-  if (!box) return;
-  var groups = groupProductsByDay();
-  var done = getDayBackupDone();
-
-  if (!groups.length) {
-    box.innerHTML = '<div style="font-size:12px;color:var(--t2);padding:8px 0;">아직 등록한 제품이 없어요</div>';
-    return;
-  }
-
-  box.innerHTML = groups.map(function(g) {
-    var isDone = done[g.day] && done[g.day].count === g.list.length;
-    var isStale = done[g.day] && done[g.day].count !== g.list.length;
-
-    // 아직 안 한 날짜 = 주황 버튼(누르라는 뜻) / 완료 = 초록 / 내용 바뀜 = 노랑
-    var bg, bd, fg, label;
-    if (isDone)      { bg='rgba(46,125,91,.18)';  bd='rgba(46,125,91,.55)';  fg='#6ee7b7'; label='✓ 완료'; }
-    else if (isStale){ bg='rgba(245,165,0,.16)';  bd='rgba(245,165,0,.6)';   fg='#f5c97a'; label='다시 백업 →'; }
-    else             { bg='rgba(245,165,0,.22)';  bd='var(--orange)';        fg='#f5a500'; label='백업하기 →'; }
-
-    return '<button onclick="exportDayBackup(\'' + g.day.replace(/'/g, "") + '\')" ' +
-      'style="width:100%;display:flex;align-items:center;gap:10px;padding:13px 14px;margin-bottom:7px;' +
-      'background:' + bg + ';border:1.5px solid ' + bd + ';border-radius:12px;color:var(--t1);' +
-      'font-family:inherit;text-align:left;cursor:pointer;">' +
-      '<div style="flex:1;min-width:0;">' +
-        '<div style="font-size:15px;font-weight:800;">' + g.day + '</div>' +
-        '<div style="color:var(--t2);font-size:11px;margin-top:2px;">제품 ' + g.list.length + '개 · 사진 ' + g.photos + '장 · ' + g.mb.toFixed(0) + 'MB</div>' +
-      '</div>' +
-      '<span style="font-size:13px;font-weight:700;color:' + fg + ';white-space:nowrap;">' + label + '</span>' +
-      '</button>';
-  }).join('');
-}
-
-function downloadJson(obj, fname) {
-  var blob = new Blob([JSON.stringify(obj)], { type: 'application/json;charset=utf-8' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url; a.download = fname; a.rel = 'noopener'; a.style.display = 'none';
-  document.body.appendChild(a); a.click();
-  setTimeout(function() {
-    try { document.body.removeChild(a); } catch (e) {}
-    URL.revokeObjectURL(url);
-  }, 800);
-}
-
-// 하루치 백업 (사진 포함 — 짝이 어긋나지 않음)
-// "9. 15." → "0915" (파일명용)
-function dayToFileTag(day) {
-  var n = String(day).match(/\d+/g);
-  if (!n || n.length < 2) return String(day).replace(/[^0-9A-Za-z가-힣]/g, '');
-  return ('0' + n[0]).slice(-2) + ('0' + n[1]).slice(-2);
-}
-
-function exportDayBackup(day) {
-  var g = groupProductsByDay().filter(function(x){ return x.day === day; })[0];
-  if (!g) { showToast('해당 날짜의 제품이 없어요'); return; }
-
-  // 무엇이 담기는지 먼저 보여준다 (엉뚱한 자료가 들어가는 오해 방지)
-  var names = g.list.slice(0, 5).map(function(p){ return '· ' + (p.name || '(이름 없음)'); }).join('\n');
-  var more = g.list.length > 5 ? '\n· 외 ' + (g.list.length - 5) + '건' : '';
-  var msg = '\u3010' + day + ' 백업\u3011\n\n' +
-            '제품 ' + g.list.length + '개 · 사진 ' + g.photos + '장 · 약 ' + Math.round(g.mb) + 'MB\n\n' +
-            names + more + '\n\n이 내용만 저장합니다. 계속할까요?';
-  if (!window.confirm(msg)) return;
-
-  var t0 = Date.now();
-  try {
-    showToast('\u23F3 백업 파일을 만드는 중...');
-    downloadJson({
-      app: 'guangzhou_fair',
-      version: 'v30',
-      kind: 'day',
-      day: day,
-      exportedAt: new Date().toISOString(),
-      productCount: g.list.length,
-      products: g.list
-    }, '광저우_' + dayToFileTag(day) + '_' + g.list.length + '개.json');
-
-    setDayBackupDone(day, g.list.length);
-    markBackupDone();
-    renderDayBackupList();
-    showToast('✓ ' + day + ' 백업 완료 (제품 ' + g.list.length + '개 · ' +
-              ((Date.now() - t0) / 1000).toFixed(1) + '초)');
-  } catch (err) {
-    console.error(err);
-    showToast('\U0001F6A8 백업 실패: ' + (err.message || '오류'));
-  }
-}
-
-// 사진을 뺀 가벼운 백업
-function stripPhotos(list) {
-  return list.map(function(p) {
-    var c = Object.assign({}, p);
-    c.photoCount = (p.photos || []).length;
-    c.bizCount = (p.bizCards || []).length;
-    c.photos = [];
-    c.bizCards = [];
-    return c;
-  });
-}
-
-function exportLightBackup() {
-  if (!products.length) { showToast('내보낼 제품이 없어요'); return; }
-  try {
-    downloadJson({
-      app: 'guangzhou_fair',
-      version: 'v30',
-      kind: 'light',
-      exportedAt: new Date().toISOString(),
-      productCount: products.length,
-      products: stripPhotos(products)
-    }, '광저우_가벼운백업_' + pptDateStr().replace(/\./g, '') + '.json');
-    markBackupDone();
-    showToast('✓ 가벼운 백업 완료 (제품 ' + products.length + '개)');
-  } catch (err) {
-    console.error(err);
-    showToast('\U0001F6A8 백업 실패: ' + (err.message || '오류'));
-  }
-}
-
-/* 자동 스냅샷 — 앱을 열 때 하루 한 번, 사진을 뺀 상태를 폰 안에 조용히 저장.
-   실수로 전체 삭제하거나 데이터가 손상됐을 때 되돌리기용. 최근 5일치 보관. */
-var SNAP_PREFIX = 'snap:';
-var SNAP_KEEP = 5;
-
-function todayKey() {
-  var d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
-
-function saveDailySnapshot() {
-  if (dataLoadFailed || !products.length) return Promise.resolve(false);
-  var key = SNAP_PREFIX + todayKey();
-  return idbGet(key).then(function(existing) {
-    if (existing) return false;  // 오늘 것은 이미 있음
-    return idbSet(key, {
-      at: Date.now(),
-      productCount: products.length,
-      products: stripPhotos(products)
-    }).then(function() {
-      return pruneSnapshots().then(function(){ return true; });
-    });
-  }).catch(function(){ return false; });
-}
-
-function listSnapshotKeys() {
-  return openDB().then(function(db) {
-    return new Promise(function(resolve) {
-      var tx = db.transaction(DB_STORE, 'readonly');
-      var r = tx.objectStore(DB_STORE).getAllKeys();
-      r.onsuccess = function() {
-        resolve((r.result || []).filter(function(k) {
-          return String(k).indexOf(SNAP_PREFIX) === 0;
-        }).sort());
-      };
-      r.onerror = function() { resolve([]); };
-    });
-  }).catch(function(){ return []; });
-}
-
-function pruneSnapshots() {
-  return listSnapshotKeys().then(function(keys) {
-    if (keys.length <= SNAP_KEEP) return true;
-    return idbBulk(null, keys.slice(0, keys.length - SNAP_KEEP));
-  }).catch(function(){ return true; });
-}
-
-// 스냅샷에서 되돌리기 (사진은 현재 앱에 있는 것을 그대로 유지)
-function restoreFromSnapshot() {
-  listSnapshotKeys().then(function(keys) {
-    if (!keys.length) { showToast('저장된 스냅샷이 없어요'); return; }
-    var lines = keys.slice().reverse().map(function(k, i) {
-      return (i + 1) + '. ' + k.slice(SNAP_PREFIX.length);
-    }).join('\n');
-    var pick = window.prompt('되돌릴 시점을 번호로 골라주세요.\n(사진은 지금 폰에 있는 것을 그대로 씁니다)\n\n' + lines, '1');
-    if (!pick) return;
-    var idx = parseInt(pick, 10) - 1;
-    var ordered = keys.slice().reverse();
-    if (isNaN(idx) || !ordered[idx]) { showToast('번호를 확인해주세요'); return; }
-
-    idbGet(ordered[idx]).then(function(snap) {
-      if (!snap || !Array.isArray(snap.products)) { showToast('스냅샷을 읽을 수 없어요'); return; }
-      if (!window.confirm(ordered[idx].slice(SNAP_PREFIX.length) + ' 시점으로 되돌릴까요?\n제품 ' + snap.products.length + '개\n\n지금 상태는 사라집니다.')) return;
-
-      // 현재 사진을 제품 id로 찾아 다시 붙인다
-      var byId = {};
-      products.forEach(function(p) { byId[p.id] = p; });
-      products = snap.products.map(function(p) {
-        var cur2 = byId[p.id];
-        var c = Object.assign({}, p);
-        c.photos = cur2 ? (cur2.photos || []) : [];
-        c.bizCards = cur2 ? (cur2.bizCards || []) : [];
-        return c;
-      });
-      persist();
-      renderList();
-      updateStorageBar();
-      closeOverlay('backup');
-      showToast('✓ ' + ordered[idx].slice(SNAP_PREFIX.length) + ' 시점으로 되돌렸어요');
-    });
-  });
-}
-
-// 백업 화면을 열 때 날짜별 목록 갱신 + "그 밖의 기능"은 항상 접은 상태로 시작
-function refreshBackupSheet() {
-  renderDayBackupList();
-  var more = document.getElementById('bk-more');
-  var btn = document.getElementById('bk-more-btn');
-  if (more) more.style.display = 'none';
-  if (btn) btn.textContent = '\u2304 그 밖의 기능';
-}
-
-function toggleBackupMore() {
-  var more = document.getElementById('bk-more');
-  var btn = document.getElementById('bk-more-btn');
-  if (!more) return;
-  var open = more.style.display !== 'none';
-  more.style.display = open ? 'none' : 'block';
-  btn.textContent = open ? '\u2304 그 밖의 기능' : '\u2303 접기';
-}
-
 function handleBackupFile(e) {
   var file = e.target.files && e.target.files[0];
   e.target.value = ''; // 같은 파일 재선택 가능하게
@@ -4514,23 +3196,8 @@ function runImport(mode) {
 
     // 가져오는 제품들에 bizCards 필드 보정 (구 버전 호환)
     imported.forEach(function(p) {
-      if (!Array.isArray(p.photos)) p.photos = [];
       if (!Array.isArray(p.bizCards)) p.bizCards = [];
     });
-
-    /* ★ 사진 보호
-       "가벼운 백업"(사진 제외)을 가져올 때, 지금 폰에 있는 사진이 지워지면 안 된다.
-       같은 제품이 이미 있고 가져온 쪽에 사진이 없으면 → 현재 사진을 그대로 유지한다. */
-    var curById = {};
-    products.forEach(function(p) { curById[p.id] = p; });
-    var keptPhotos = 0;
-    imported.forEach(function(p) {
-      var cur2 = curById[p.id];
-      if (!cur2) return;
-      if (!p.photos.length && (cur2.photos || []).length) { p.photos = cur2.photos.slice(); keptPhotos++; }
-      if (!p.bizCards.length && (cur2.bizCards || []).length) { p.bizCards = cur2.bizCards.slice(); }
-    });
-    window._lastKeptPhotos = keptPhotos;
 
     if (mode === 'replace') {
       products = imported.slice();
@@ -5030,245 +3697,14 @@ function pptAddClosing(pres, list) {
 // ─── PPT 라이브러리 로더 (CDN 여러 개 자동 시도) ───
 // 첫 번째 CDN이 막히거나 느려도 두 번째, 세 번째로 자동 재시도
 var _pptLibLoading = null; // Promise 캐싱
-
-// ══════════════════════════════════════════════════════
-//  PDF 내보내기 (브라우저 인쇄 → "PDF로 저장")
-//  외부 라이브러리 불필요 → 인터넷 없어도 항상 동작
-// ══════════════════════════════════════════════════════
-var expFormat = 'ppt';   // 'ppt' | 'pdf'
-
-function setExpFormat(f) {
-  expFormat = f;
-  document.getElementById('fmt-ppt').className = 'ppt-opt-btn' + (f === 'ppt' ? ' active' : '');
-  document.getElementById('fmt-pdf').className = 'ppt-opt-btn' + (f === 'pdf' ? ' active' : '');
-
-  var isPdf = (f === 'pdf');
-  document.getElementById('exp-photo-label').textContent = isPdf ? '사진 포함' : '사진 슬라이드';
-  document.getElementById('mode-single-sub').textContent = isPdf ? '제품당 큰 사진 1장' : '제품당 1장 · 출력용';
-  document.getElementById('mode-all-sub').textContent = isPdf ? '작은 썸네일도 함께' : '탭 순환 · 발표용';
-
-  document.getElementById('exp-info').innerHTML = isPdf
-    ? '제품 발굴 리포트를 A4 문서로 만듭니다. <b>인터넷 없어도 됩니다.</b><br>' +
-      '· 버튼을 누르면 <b>인쇄 화면</b>이 뜨고, 거기서 <b>“PDF로 저장”</b>을 고르세요<br>' +
-      '· 아이폰: 프린터 미리보기 화면에서 공유 → 파일에 저장'
-    : '제품 발굴 리포트를 PowerPoint 파일로 저장합니다.<br>' +
-      '· 사진은 원본 비율 그대로 배치됩니다<br>' +
-      '· <b>대표 이미지만</b>: 제품당 1장 (출력·공유용)<br>' +
-      '· <b>사진 전부</b>: 메인 이미지 탭하면 다음 사진으로 순환 (발표모드)';
-
-  var b = document.getElementById('ppt-confirm');
-  b.innerHTML = isPdf ? '🖨 PDF 만들기 (인쇄 → PDF로 저장)' : '✓ PPT 파일 생성 &amp; 다운로드';
-}
-
-/* 사진이 너무 많으면 폰이 파일을 만들다 멈춘다.
-   내보내기 전에 예상 용량을 계산해 미리 알려준다. */
-function estimateExportMB(list, photoMode) {
-  var bytes = 0;
-  list.forEach(function(p) {
-    var ph = (p.photos || []).filter(isValidPhoto);
-    var use = (photoMode === 'all') ? ph : ph.slice(0, 1);
-    use.forEach(function(s) { bytes += s.length * 0.75; });
-    var bc = (p.bizCards || []).filter(isValidPhoto);
-    if (bc.length) bytes += bc[0].length * 0.75 * (photoMode === 'all' ? Math.max(1, use.length) : 1);
-  });
-  return bytes / (1024 * 1024);
-}
-
-function confirmExportSize(list, photoMode, kind) {
-  var mb = estimateExportMB(list, photoMode);
-  var photos = list.reduce(function(a, p) {
-    var n = (p.photos || []).filter(isValidPhoto).length;
-    return a + (photoMode === 'all' ? n : Math.min(1, n));
-  }, 0);
-
-  if (mb < 45) return true;   // 여유 — 그냥 진행
-
-  if (mb >= 120) {
-    return window.confirm(
-      '\u26A0\uFE0F 사진이 너무 많습니다\n\n' +
-      '제품 ' + list.length + '개 · 사진 ' + photos + '장 → 약 ' + Math.round(mb) + 'MB\n\n' +
-      '이 크기는 폰에서 만들다가 멈출 가능성이 높습니다.\n' +
-      '"대표 이미지만"으로 바꾸거나, 범위를 "샘플 신청만"으로 줄이시길 권합니다.\n\n' +
-      '그래도 진행할까요?');
-  }
-  return window.confirm(
-    '제품 ' + list.length + '개 · 사진 ' + photos + '장 → 약 ' + Math.round(mb) + 'MB\n\n' +
-    kind + ' 만드는 데 시간이 걸리고, 폰이 잠시 느려질 수 있습니다.\n계속할까요?');
-}
-
-function runExport() {
-  if (expFormat === 'pdf') exportToPdf();
-  else exportToPpt();
-}
-
-function prEsc(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-// 제품 1건 → 인쇄용 카드 HTML
-function prCard(p, no, photoMode) {
-  var photos = (p.photos || []).filter(function(s){ return isValidPhoto(s); });
-  var main = photos.length
-    ? '<img src="' + photos[0] + '" alt="">'
-    : '<span class="pr-noimg">사진 없음</span>';
-
-  var thumbs = '';
-  if (photoMode === 'all' && photos.length > 1) {
-    thumbs = '<div class="pr-thumbs">' +
-      photos.slice(1, 5).map(function(s){ return '<img src="' + s + '" alt="">'; }).join('') +
-      '</div>';
-  }
-
-  var cards = (p.bizCards || []).filter(function(s){ return isValidPhoto(s); });
-  var bizHtml = cards.length
-    ? '<div class="pr-cardimg"><img src="' + cards[0] + '" alt="">명함 ' + cards.length + '장</div>'
-    : '';
-
-  // 태그
-  var tags = '';
-  if (p.category) tags += '<span class="pr-tag">' + prEsc(p.category) + '</span>';
-  var cbCls = 'cb-n', cbTxt = 'CB 미대응';
-  if (!p.cb) { cbCls = ''; cbTxt = 'CB 미입력'; }
-  else if (p.cb.owned) { cbCls = 'cb-y'; cbTxt = 'CB 보유'; }
-  else if (p.cb.date) { cbCls = 'cb-w'; cbTxt = 'CB 진행중'; }
-  tags += '<span class="pr-tag ' + cbCls + '">' + cbTxt + '</span>';
-  if (p.sample) tags += '<span class="pr-tag smp">샘플 신청</span>';
-
-  // 정보 표
-  var price = (p.moq && p.moq.price && p.moq.price !== '-') ? '$' + prEsc(p.moq.price) : '–';
-  var qty   = (p.moq && p.moq.qty && p.moq.qty !== '-') ? prEsc(p.moq.qty) + ' pcs' : '–';
-  var cbVal = '–';
-  if (p.cb) {
-    if (p.cb.owned) cbVal = '보유';
-    else if (p.cb.date) cbVal = pptFmtDate(p.cb.date) + ' 예정';
-    else cbVal = '미대응';
-  }
-  var smpVal = '–';
-  if (p.sample) {
-    smpVal = pptFmtDate(p.sample.expected) + (p.sample.days ? ' (' + p.sample.days + '일)' : '');
-  }
-
-  var tbl = '<table class="pr-tbl">' +
-    '<tr><th>단가</th><td class="hi">' + price + '</td><th>MOQ</th><td>' + qty + '</td></tr>' +
-    '<tr><th>CB</th><td>' + cbVal + '</td><th>샘플</th><td>' + smpVal + '</td></tr>' +
-    '</table>';
-
-  // 메모
-  var memos = [];
-  if (p.memo) memos.push(prEsc(p.memo));
-  if (p.moq && p.moq.memo) memos.push('<b>MOQ:</b> ' + prEsc(p.moq.memo));
-  if (p.sample && p.sample.memo) memos.push('<b>샘플:</b> ' + prEsc(p.sample.memo));
-  var memoHtml = memos.length ? '<div class="pr-memo">' + memos.join('<br>') + '</div>' : '';
-
-  // 체크리스트
-  var clHtml = '';
-  if (p.sample && p.sample.checklist && p.sample.checklist.length) {
-    clHtml = '<div class="pr-check">' + p.sample.checklist.map(function(it){
-      return it.done
-        ? '<span class="done">☑ ' + prEsc(it.text) + '</span>'
-        : '<span>☐ ' + prEsc(it.text) + '</span>';
-    }).join(' · ') + '</div>';
-  }
-
-  return '<div class="pr-card">' +
-    '<div class="pr-left"><div class="pr-main">' + main + '</div>' + thumbs + bizHtml + '</div>' +
-    '<div class="pr-body">' +
-      '<div class="pr-name"><span class="pr-no">' + String(no).padStart(2, '0') + '</span>' + prEsc(p.name) + '</div>' +
-      '<div class="pr-tags">' + tags + '</div>' +
-      tbl + memoHtml + clHtml +
-    '</div></div>';
-}
-
-function buildPrintReport(list, photoMode) {
-  var smpCnt = list.filter(function(p){ return p.sample; }).length;
-  var cbCnt  = list.filter(function(p){ return p.cb && p.cb.owned; }).length;
-  var scopeTxt = (pptScope === 'sample') ? '샘플 신청 제품만' : '전체 제품';
-
-  var html = '<div class="pr-head">' +
-    '<div class="pr-eyebrow">CANTON FAIR · PRODUCT DISCOVERY</div>' +
-    '<div class="pr-title">광저우 박람회 · 제품 발굴 리포트</div>' +
-    '<div class="pr-sub">생성일 ' + pptDateStr() + ' · 범위: ' + scopeTxt + '</div>' +
-    '<div class="pr-stats">' +
-      '<div class="pr-stat"><b>' + list.length + '</b>건 제품</div>' +
-      '<div class="pr-stat"><b>' + smpCnt + '</b>건 샘플 신청</div>' +
-      '<div class="pr-stat"><b>' + cbCnt + '</b>건 CB 보유</div>' +
-    '</div></div>';
-
-  html += list.map(function(p, i){ return prCard(p, i + 1, photoMode); }).join('');
-  html += '<div class="pr-foot">광저우 박람회 제품 발굴 노트 · ' + pptDateStr() + '</div>';
-
-  document.getElementById('print-report').innerHTML = html;
-}
-
-// 리포트 안의 사진이 모두 로드될 때까지 대기
-function prWaitImages() {
-  var root = document.getElementById('print-report');
-  var imgs = Array.prototype.slice.call(root.querySelectorAll('img'));
-  if (!imgs.length) return Promise.resolve();
-  return Promise.all(imgs.map(function(im) {
-    if (im.complete && im.naturalWidth > 0) return Promise.resolve();
-    return new Promise(function(res) {
-      im.addEventListener('load', res, { once: true });
-      im.addEventListener('error', res, { once: true });
-      setTimeout(res, 3000); // 안전장치
-    });
-  }));
-}
-
-function exportToPdf() {
-  var list = pptScope === 'sample'
-    ? products.filter(function(p){ return p.sample; })
-    : products.slice();
-
-  if (list.length === 0) {
-    showToast(pptScope === 'sample' ? '샘플 신청한 제품이 없어요' : '등록된 제품이 없어요');
-    return;
-  }
-  if (!confirmExportSize(list, pptPhotoMode, 'PDF')) return;
-
-  var btn = document.getElementById('ppt-confirm');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="ppt-spinner"></span> PDF 준비 중...';
-
-  try {
-    buildPrintReport(list, pptPhotoMode);
-    closeOverlay('ppt');
-    showToast('인쇄 화면에서 “PDF로 저장”을 선택하세요');
-
-    // 사진이 모두 그려진 뒤에 인쇄 (빈 사진으로 출력되는 것 방지)
-    prWaitImages().then(function() {
-      setTimeout(function() {
-        try {
-          window.print();
-        } catch (e) {
-          showToast('🚨 인쇄 화면을 열 수 없어요. 브라우저 메뉴에서 “인쇄”를 실행해주세요');
-        }
-      }, 250);
-    });
-  } catch (err) {
-    console.error(err);
-    showToast('🚨 PDF 생성 실패: ' + (err.message || '오류'));
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '🖨 PDF 만들기 (인쇄 → PDF로 저장)';
-  }
-}
-
-// 인쇄가 끝나면 리포트 DOM 비우기 (메모리 반환)
-window.addEventListener('afterprint', function() {
-  var el = document.getElementById('print-report');
-  if (el) el.innerHTML = '';
-});
-
 function loadPptLibrary() {
   if (typeof PptxGenJS !== 'undefined') return Promise.resolve();
   if (_pptLibLoading) return _pptLibLoading;
 
   var cdns = [
-    'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
-    'https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js'
+    'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.2/dist/pptxgen.bundle.js',
+    'https://unpkg.com/pptxgenjs@3.12.2/dist/pptxgen.bundle.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.2/pptxgen.bundle.js'
   ];
 
   _pptLibLoading = new Promise(function(resolve, reject) {
@@ -5303,8 +3739,6 @@ async function exportToPpt() {
     showToast(pptScope === 'sample' ? '샘플 신청한 제품이 없어요' : '등록된 제품이 없어요');
     return;
   }
-
-  if (!confirmExportSize(list, pptPhotoMode, 'PPT')) return;
 
   var btn = document.getElementById('ppt-confirm');
   btn.disabled = true;
