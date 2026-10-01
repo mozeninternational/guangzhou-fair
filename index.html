@@ -419,6 +419,13 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .fi { width: 100%; background: #111827; border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 14px; font-size: 14px; color: var(--t1); font-family: inherit; outline: none; transition: border-color .15s; -webkit-appearance: none; }
 .fi:focus { border-color: var(--orange); }
 .fi::placeholder { color: var(--t3); }
+/* 자동으로 기록된 값 — 입력칸과 같은 자리지만 고칠 수 없다 */
+.ro-val {
+  width: 100%; background: rgba(255,255,255,.04);
+  border: 1.5px dashed var(--border); border-radius: 10px;
+  padding: 11px 14px; font-size: 14px; color: var(--t2);
+  font-family: inherit; box-sizing: border-box;
+}
 .fi[type=date]::-webkit-calendar-picker-indicator { filter: invert(.6); }
 .f2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
@@ -782,7 +789,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v42</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v44</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1074,13 +1081,14 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">📅 샘플 신청</div>
-    <div class="info-box">짧게 탭 → 샘플 신청 완료 토글<br>신청일 + 소요일 → 샘플 완성 예정일이 정해집니다</div>
+    <div class="info-box">신청일은 기록한 날로 자동 입력됩니다<br>소요일만 넣으면 완성 예정일이 정해집니다</div>
     <div class="fg">
-      <div class="fl">샘플 신청일</div>
-      <input class="fi" id="sample-req" type="date" onchange="calcExpected()">
+      <div class="fl">샘플 신청일 (자동)</div>
+      <div class="ro-val" id="sample-req-view">—</div>
+      <input type="hidden" id="sample-req">
     </div>
     <div class="fg">
-      <div class="fl">샘플 제작 소요일</div>
+      <div class="fl">샘플 제작 소요일 (일)</div>
       <input class="fi" id="sample-days" type="number" placeholder="예) 14" inputmode="numeric" oninput="calcExpected()">
     </div>
     <div class="edd" id="edd" style="display:none;">
@@ -1094,8 +1102,6 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
         <input class="fi" id="sample-memo" type="text" placeholder="ex) DHL 수령 예정...">
         <button class="mic-btn" id="mic-sample-memo" type="button" onclick="toggleVoice('sample-memo','mic-sample-memo')" title="음성으로 입력">🎤</button>
       </div>
-    </div>
-    
     </div>
     <button class="confirm-btn g" onclick="saveSample()">✓ 샘플 신청 완료</button>
     <button class="clear-btn" onclick="clearSample()">초기화</button>
@@ -1250,7 +1256,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v42)
+          ⬇️ 최신 버전 받기 (현재 v44)
         </button>
       </div>
 
@@ -2766,7 +2772,10 @@ function openOverlay(name) {
   }
   if (name === 'sample') {
     if (!cur.sample) cur.sample = { days: null, expected: null, memo: '', checklist: defaultChecklist() };
-    document.getElementById('sample-req').value = cur.sample.requested || todayISO();
+    // 신청일은 고르는 게 아니라 "기록한 날"로 자동 입력된다
+    if (!cur.sample.requested) cur.sample.requested = todayISO();
+    document.getElementById('sample-req').value = cur.sample.requested;
+    document.getElementById('sample-req-view').textContent = fmtDate(cur.sample.requested);
     document.getElementById('sample-days').value = cur.sample.days || '';
     document.getElementById('sample-memo').value = cur.sample.memo || '';
     calcExpected();
@@ -2875,6 +2884,8 @@ function saveSample() {
 function clearSample() {
   cur.sample = null;
   document.getElementById('sample-req').value = todayISO();
+  var rv = document.getElementById('sample-req-view');
+  if (rv) rv.textContent = fmtDate(todayISO());
   document.getElementById('sample-days').value = '';
   document.getElementById('sample-memo').value = '';
   document.getElementById('cl-new-item').value = '';
@@ -3801,218 +3812,40 @@ function b64ToArrayBuffer(b64) {
   return bytes.buffer;
 }
 
-/* ── 명함만 잘라내기 ──────────────────────────────
-   사진에서 "밝은 큰 사각형"(= 명함)을 찾아 그 부분만 남긴다.
-   책상·손 같은 배경이 같이 들어가면 엑셀에서 명함이 작게 보이기 때문.
-   못 찾으면 가운데를 명함 비율로 자르는 방식으로 되돌아간다.        */
-var CARD_RATIO = 91 / 55;   // 표준 명함 91 x 55mm
+/* ── 명함 사진 준비 ───────────────────────────────
+   명함은 자르지 않고 찍은 그대로 넣는다.
+   (어떤 배경에서 찍어도 명함이 잘리는 일이 없도록.
+    잘라내기는 엑셀에서 직접 하시면 된다)
 
-/* ── 사진에서 명함 찾기 ───────────────────────────────
-   두 가지 방법을 모두 써 보고 더 명함다운 쪽을 고른다.
-
-   ① 배경 걷어내기 : 사진 테두리 색 = 배경으로 보고, 그와 다른 부분을 찾는다.
-                     (책상 위의 흰 명함, 흰 종이 위의 감색 명함 모두 잘 잡힌다)
-   ② 명암 가르기   : 밝은 덩어리 / 어두운 덩어리를 찾는다.
-                     (배경이 알록달록해서 ①이 흔들릴 때 보조)          */
-function findCardBox(img) {
-  try {
-    var AW = 220;
-    var sc = AW / img.naturalWidth;
-    var AH = Math.max(1, Math.round(img.naturalHeight * sc));
-    if (AH < 8) return null;
-
-    var cv = document.createElement('canvas');
-    cv.width = AW; cv.height = AH;
-    var ctx = cv.getContext('2d', { willReadFrequently: true });
-    ctx.drawImage(img, 0, 0, AW, AH);
-    var d = ctx.getImageData(0, 0, AW, AH).data;
-    var N = AW * AH;
-
-    var R = new Uint8Array(N), G = new Uint8Array(N), B = new Uint8Array(N), L = new Uint8Array(N);
-    for (var i = 0; i < N; i++) {
-      R[i] = d[i*4]; G[i] = d[i*4+1]; B[i] = d[i*4+2];
-      L[i] = (d[i*4]*299 + d[i*4+1]*587 + d[i*4+2]*114) / 1000 | 0;
-    }
-
-    function med(arr) {
-      if (!arr.length) return 0;
-      var a = arr.slice().sort(function(x, y){ return x - y; });
-      return a[a.length >> 1];
-    }
-
-    /* 가로줄·세로줄마다 "명함 픽셀 비율"을 세어 명함이 차지한 구간을 찾는다.
-       기준값은 그 사진에서 가장 진한 줄의 절반쯤으로 잡아,
-       멀리서 찍어 명함이 작게 나온 사진도 찾을 수 있게 한다. */
-    function spanOf(counts, total) {
-      var mx = 0, q;
-      for (q = 0; q < counts.length; q++) if (counts[q] > mx) mx = counts[q];
-      if (!mx) return null;
-      var need = Math.max(0.10, (mx / total) * 0.5);
-      var bs = -1, bl = 0, cs = -1;
-      for (var j = 0; j < counts.length; j++) {
-        if (counts[j] / total >= need) { if (cs < 0) cs = j; }
-        else { if (cs >= 0 && j - cs > bl) { bl = j - cs; bs = cs; } cs = -1; }
-      }
-      if (cs >= 0 && counts.length - cs > bl) { bl = counts.length - cs; bs = cs; }
-      return bl > 0 ? { start: bs, len: bl } : null;
-    }
-
-    function boxFromMask(mask) {
-      var rowC = new Int32Array(AH), colC = new Int32Array(AW);
-      for (var y = 0; y < AH; y++) {
-        for (var x = 0; x < AW; x++) {
-          if (mask[y * AW + x]) { rowC[y]++; colC[x]++; }
-        }
-      }
-      var rs = spanOf(rowC, AW), cs2 = spanOf(colC, AH);
-      if (!rs || !cs2) return null;
-      var b = {
-        x: cs2.start / sc, y: rs.start / sc,
-        w: cs2.len / sc,   h: rs.len / sc
-      };
-      var area = (b.w * b.h) / (img.naturalWidth * img.naturalHeight);
-      if (area < 0.07) return null;                    // 너무 작으면 명함 속 한 조각일 가능성
-      if (b.w < img.naturalWidth * 0.20 || b.h < img.naturalHeight * 0.15) return null;
-
-      var rr = b.w / b.h;
-      var landscape = (rr >= 1.15 && rr <= 2.60);      // 눕혀 찍은 명함
-      var portrait  = (rr >= 0.38 && rr <= 0.87);      // 세워 찍은 명함
-      if (!landscape && !portrait) return null;
-
-      /* 세로 후보는 위험하다 — 명함 안의 흰 띠도 세로 비율로 잡히기 때문.
-         사진 자체가 세로로 길고, 충분히 큰 경우에만 받아들인다. */
-      if (portrait && !(AH > AW * 1.05 && area >= 0.22)) return null;
-
-      /* 찾은 영역이 "배경이 아닌 부분"을 충분히 담고 있는지 확인.
-         명함의 일부만 잡았다면 밖에 남은 조각이 많다. */
-      var inBox = 0, allOn = 0;
-      var x0 = Math.round(cs2.start), x1 = Math.round(cs2.start + cs2.len);
-      var y0 = Math.round(rs.start),  y1 = Math.round(rs.start + rs.len);
-      for (var yy = 0; yy < AH; yy++) {
-        for (var xx = 0; xx < AW; xx++) {
-          if (!mask[yy * AW + xx]) continue;
-          allOn++;
-          if (xx >= x0 && xx < x1 && yy >= y0 && yy < y1) inBox++;
-        }
-      }
-      if (!allOn) return null;
-      var cover = inBox / allOn;
-      if (cover < 0.58) return null;                   // 명함 일부만 잡은 것
-
-      var d1 = Math.abs(rr - CARD_RATIO) / CARD_RATIO;
-      var d2 = Math.abs(rr - 1 / CARD_RATIO) * CARD_RATIO;
-      b.score = Math.min(d1, d2) + (1 - cover) * 0.25; // 많이 담을수록 좋은 후보
-      b.area = area;
-      b.cover = cover;
-      b.landscape = landscape;
-      return b;
-    }
-
-    // ── ① 배경 걷어내기 ──
-    var bandX = Math.max(2, Math.round(AW * 0.05));
-    var bandY = Math.max(2, Math.round(AH * 0.05));
-    var br = [], bg = [], bb = [];
-    for (var y2 = 0; y2 < AH; y2++) {
-      for (var x2 = 0; x2 < AW; x2++) {
-        var edge = (x2 < bandX || x2 >= AW - bandX || y2 < bandY || y2 >= AH - bandY);
-        if (!edge) continue;
-        var k2 = y2 * AW + x2;
-        br.push(R[k2]); bg.push(G[k2]); bb.push(B[k2]);
-      }
-    }
-    var mr = med(br), mg = med(bg), mb = med(bb);
-
-    // 테두리 색이 얼마나 들쭉날쭉한지 → 기준값을 그만큼 넉넉히
-    var devs = [];
-    for (var t = 0; t < br.length; t += 3) {
-      devs.push(Math.abs(br[t]-mr) + Math.abs(bg[t]-mg) + Math.abs(bb[t]-mb));
-    }
-    var tol = Math.max(48, med(devs) * 3);
-
-    var maskBg = new Uint8Array(N);
-    for (var p2 = 0; p2 < N; p2++) {
-      var dist = Math.abs(R[p2]-mr) + Math.abs(G[p2]-mg) + Math.abs(B[p2]-mb);
-      maskBg[p2] = dist > tol ? 1 : 0;
-    }
-    var cand1 = boxFromMask(maskBg);
-
-    // ── ② 명암 가르기 (오츠) ──
-    var hist = new Int32Array(256), s3;
-    for (s3 = 0; s3 < N; s3++) hist[L[s3]]++;
-    var sum = 0, k3;
-    for (k3 = 0; k3 < 256; k3++) sum += k3 * hist[k3];
-    var sumB = 0, wB = 0, best = 0, thr = 128;
-    for (k3 = 0; k3 < 256; k3++) {
-      wB += hist[k3];
-      if (!wB) continue;
-      var wF = N - wB;
-      if (!wF) break;
-      sumB += k3 * hist[k3];
-      var between = wB * wF * (sumB / wB - (sum - sumB) / wF) * (sumB / wB - (sum - sumB) / wF);
-      if (between > best) { best = between; thr = k3; }
-    }
-    var maskHi = new Uint8Array(N), maskLo = new Uint8Array(N);
-    for (var p3 = 0; p3 < N; p3++) {
-      if (L[p3] > thr) maskHi[p3] = 1; else maskLo[p3] = 1;
-    }
-    var cand2 = boxFromMask(maskHi);
-    var cand3 = boxFromMask(maskLo);
-
-    var cands = [cand1, cand2, cand3].filter(Boolean);
-    if (!cands.length) return null;
-    // 눕혀 찍은 명함을 우선으로 본다 (대부분의 촬영 방식)
-    cands.sort(function(a, b2) {
-      if (a.landscape !== b2.landscape) return a.landscape ? -1 : 1;
-      return a.score - b2.score;
-    });
-    if (cands[0].score > 0.45) return null;    // 확신이 없으면 자르지 않는다
-    return cands[0];
-  } catch (e) { return null; }
-}
-
-function cropToCard(dataUrl) {
+   엑셀은 jpeg / png 만 넣을 수 있으므로,
+   다른 형식이면 그림판(캔버스)을 거쳐 jpeg 로 바꿔서 반드시 들어가게 한다. */
+function prepCardImage(dataUrl) {
   return new Promise(function(resolve) {
-    if (!dataUrl || !isValidPhoto(dataUrl)) { resolve(null); return; }
+    if (!dataUrl || typeof dataUrl !== 'string' || dataUrl.indexOf('data:image/') !== 0) {
+      resolve(null); return;
+    }
+    var m = /^data:image\/(png|jpe?g);base64,/i.exec(dataUrl);
+
     var img = new Image();
     img.onload = function() {
-      try {
-        var W = img.naturalWidth, H = img.naturalHeight;
-        if (!W || !H) { resolve(null); return; }
+      var w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h) { resolve(null); return; }
 
-        var box = findCardBox(img);
-        var ratio;
-
-        if (box) {
-          ratio = (box.h > box.w) ? (1 / CARD_RATIO) : CARD_RATIO;
-          // 찾은 영역을 명함 비율에 맞춘다 (가운데 기준)
-          var cx = box.x + box.w / 2, cy = box.y + box.h / 2;
-          var bw = box.w, bh = box.w / ratio;
-          if (bh < box.h) { bh = box.h; bw = box.h * ratio; }
-          // 찾은 크기 그대로 쓴다 (넓히면 배경이, 줄이면 글씨가 들어온다)
-          box = { x: cx - bw / 2, y: cy - bh / 2, w: bw, h: bh };
-          // 사진 밖으로 나가지 않게
-          if (box.x < 0) box.x = 0;
-          if (box.y < 0) box.y = 0;
-          if (box.x + box.w > W) box.x = Math.max(0, W - box.w);
-          if (box.y + box.h > H) box.y = Math.max(0, H - box.h);
-          if (box.w > W) { box.w = W; box.x = 0; }
-          if (box.h > H) { box.h = H; box.y = 0; }
-        } else {
-          /* 못 찾으면 가운데를 명함 비율에 맞춰 자르기만 한다.
-             더 깎으면 명함이 꽉 차게 찍힌 사진에서 글씨가 잘려나간다. */
-          ratio = (H > W) ? (1 / CARD_RATIO) : CARD_RATIO;
-          var cw = W, ch = W / ratio;
-          if (ch > H) { ch = H; cw = H * ratio; }
-          box = { x: (W - cw) / 2, y: (H - ch) / 2, w: cw, h: ch };
-        }
-
-        var outW = 620, outH = Math.round(outW / ratio);
+      if (m) {   // 이미 엑셀이 아는 형식 — 그대로 사용
+        resolve({
+          data: dataUrl,
+          ext: (m[1].toLowerCase() === 'jpg') ? 'jpeg' : m[1].toLowerCase(),
+          w: w, h: h
+        });
+        return;
+      }
+      try {      // 그 외 형식은 jpeg 로 변환
         var cv = document.createElement('canvas');
-        cv.width = outW; cv.height = outH;
+        cv.width = w; cv.height = h;
         var ctx = cv.getContext('2d');
-        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, outW, outH);
-        ctx.drawImage(img, box.x, box.y, box.w, box.h, 0, 0, outW, outH);
-        resolve({ data: cv.toDataURL('image/jpeg', 0.9), ratio: ratio, detected: !!box });
+        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0);
+        resolve({ data: cv.toDataURL('image/jpeg', 0.9), ext: 'jpeg', w: w, h: h });
       } catch (e) { resolve(null); }
     };
     img.onerror = function() { resolve(null); };
@@ -4122,13 +3955,13 @@ async function exportSampleSheet(list, btn) {
 
   ws.getColumn(COL_IMG).width = 15;     // 이미지
   ws.getColumn(COL_NOTE).width = 52;    // 비고
-  ws.getColumn(COL_CARD).width = 24;    // 명함
+  ws.getColumn(COL_CARD).width = 27;    // 명함 (자르지 않은 원본이 들어가므로 넉넉히)
   if (ws.autoFilter) ws.autoFilter = { from: 'A4', to: 'K1004' };
 
   var IMG_BOX = 96;        // 제품 사진이 들어갈 정사각 칸(px)
-  var CARD_W  = 152;       // 명함 가로(px)
-  var CARD_H_MAX = 132;    // 명함 세로 최대(px) — 세로로 찍은 명함이 너무 커지지 않게
-  var ROW_H_MIN = 82;      // 최소 행 높이(pt) — 사진·명함이 들어가는 높이
+  var CARD_BOX_W = 186;    // 명함이 들어갈 칸 가로(px)
+  var CARD_BOX_H = 150;    // 명함이 들어갈 칸 세로(px)
+  var ROW_H_MIN = 122;     // 최소 행 높이(pt) — 명함이 충분히 보이도록
   var NOTE_CHARS = 58;     // 비고 한 줄에 들어가는 대략 글자 폭 (한글 2, 영문 1)
   var NOTE_PT = 9.5;       // 비고 글자 크기
 
@@ -4174,21 +4007,27 @@ async function exportSampleSheet(list, btn) {
       dc.alignment = { vertical: 'middle', horizontal: 'center' };
     });
 
+    /* 명함 칸에도 비고 칸과 같은 테두리를 넣는다.
+       → 명함이 어느 제품 줄에 속하는지 눈으로 바로 구분된다. */
+    try {
+      var jb = ws.getCell(r, COL_NOTE).border;
+      if (jb) ws.getCell(r, COL_CARD).border = JSON.parse(JSON.stringify(jb));
+    } catch (e) {}
+
     var noteText = buildSampleNote(p);
     var note = ws.getCell(r, COL_NOTE);
     note.value = noteText;
     note.alignment = { vertical: 'top', wrapText: true };
     note.font = Object.assign({}, note.font || {}, { size: NOTE_PT });
 
-    /* 명함을 먼저 잘라 크기를 정한다.
-       세로로 찍은 명함은 키가 커서 행 높이를 그만큼 확보해야 잘리지 않는다. */
-    var card = await cropToCard(p.bizCards && p.bizCards[0]);
+    /* 명함은 찍은 그대로 넣는다. 칸 안에 들어가도록 비율을 지키며 줄이기만 한다.
+       → 옆 칸이나 아랫줄로 삐져나가지 않으므로 어느 제품 명함인지 헷갈리지 않는다. */
+    var card = await prepCardImage(p.bizCards && p.bizCards[0]);
     var cardW = 0, cardH = 0;
     if (card) {
-      cardH = Math.min(CARD_W / card.ratio, CARD_H_MAX);
-      cardW = cardH * card.ratio;
-      if (cardW > CARD_W) { cardW = CARD_W; cardH = CARD_W / card.ratio; }
-      cardW = Math.round(cardW); cardH = Math.round(cardH);
+      var csc = Math.min(CARD_BOX_W / card.w, CARD_BOX_H / card.h);
+      cardW = Math.max(8, Math.round(card.w * csc));
+      cardH = Math.max(8, Math.round(card.h * csc));
     }
 
     // 비고가 잘리지 않게 줄 수만큼 행을 늘린다 (사진·명함이 들어갈 높이는 항상 확보)
@@ -4222,7 +4061,7 @@ async function exportSampleSheet(list, btn) {
     // ── 명함 (K열) ──
     if (card && cardW > 0) {
       try {
-        var id2 = wb.addImage({ base64: card.data, extension: 'jpeg' });
+        var id2 = wb.addImage({ base64: card.data, extension: card.ext });
         // 열·행 번호를 정수로 지정 — 명함이 항상 그 제품 줄, 명함 칸에 들어간다
         ws.addImage(id2, {
           tl: { col: COL_CARD - 1, row: r - 1 },
@@ -4647,7 +4486,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v42';
+var APP_VERSION = 'v44';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5197,7 +5036,7 @@ function exportDayBackup(day) {
     showToast('\u23F3 백업 파일을 만드는 중...');
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v42',
+      version: 'v44',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -5233,7 +5072,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v42',
+      version: 'v44',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
