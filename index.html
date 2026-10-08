@@ -291,12 +291,22 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .ps-count {
   display: none;
   /* 사진칸 위쪽 여백에 얹어 두어 별도의 줄을 쓰지 않는다 */
-  position: absolute; top: 0; right: 2px; z-index: 3;
+  position: absolute; top: 0; right: 74px; z-index: 3;
   background: rgba(245,165,0,.18); color: var(--orange);
   padding: 0 7px; border-radius: 8px; line-height: 15px;
   font-size: 10px; font-weight: 700; pointer-events: none;
 }
 .ps-count.has { display: block; }
+/* 사진첩에서 불러오기 — 사진칸 오른쪽 위에 작게 (탭하면 바로 앨범) */
+.ps-album {
+  position: absolute; top: -1px; right: 2px; z-index: 4;
+  background: rgba(74,158,255,.16); color: var(--blue);
+  border: 1px solid rgba(74,158,255,.32); border-radius: 8px;
+  height: 19px; padding: 0 8px; line-height: 17px;
+  font-size: 10px; font-weight: 700; font-family: inherit;
+  cursor: pointer; -webkit-appearance: none; touch-action: manipulation;
+}
+.ps-album:active { background: rgba(74,158,255,.34); }
 .ps-title.biz .ps-count.has { background: rgba(74,158,255,.18); color: var(--blue); }
 
 /* DROP ZONE (drag-drop 파일 업로드 영역) */
@@ -663,6 +673,13 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .td-box.done { background: #2e7d5b; border-color: #2e7d5b; }
 .td-text { flex: 1; min-width: 0; word-break: break-word; cursor: pointer; }
 .td-item.done .td-text { color: var(--t3); text-decoration: line-through; }
+.td-in {
+  flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+  color: var(--t1); font-family: inherit; font-size: 13px; line-height: 1.4;
+  padding: 0; border-bottom: 1px solid rgba(46,125,91,.5);
+}
+.td-in::placeholder { color: var(--t3); }
+.td-item.editing .td-box { border-style: dashed; opacity: .7; }
 .td-del {
   flex-shrink: 0; background: none; border: none; color: var(--t3);
   font-size: 14px; cursor: pointer; padding: 0 2px; font-family: inherit;
@@ -789,7 +806,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v44</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v45</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -907,7 +924,8 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
         placeholder="메모 — 특장점, 부스 위치, 상담 내용" oninput="onMemoInput()"></textarea>
       <button class="mic-btn" id="mic-memo" type="button" onclick="toggleVoice('memo-ta','mic-memo')" title="메모 음성입력">🎤</button>
       <button class="todo-add-btn" id="btn-todo-add" type="button"
-              onclick="addTodoFromMemo()" title="이 줄을 확인할 것으로">＋</button>
+              onmousedown="event.preventDefault()"
+              onclick="addEmptyTodo()" title="확인할 것 추가">＋</button>
     </div>
 
     <!-- 확인할 것 -->
@@ -919,6 +937,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 
     <!-- 📸 제품 사진 섹션 (이름/메모 바로 아래, 깔끔하게) -->
     <div class="photo-section">
+      <button class="ps-album" type="button" onclick="openAlbum()" title="사진첩에서 불러오기">🖼 불러오기</button>
       <span class="ps-count" id="photos-count">0</span>
       <!-- 왼쪽으로 밀면 "앨범" 버튼이 나온다.
            (길게 누르기는 아이폰에서 사진첩을 열 수 없어 스와이프 방식으로 변경) -->
@@ -1256,7 +1275,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v44)
+          ⬇️ 최신 버전 받기 (현재 v45)
         </button>
       </div>
 
@@ -1777,21 +1796,40 @@ function onMemoInput() {
 /* ── 확인할 것 (모든 제품 공통 체크리스트) ──────────────
    예전에는 샘플신청 창 안에 숨어 있어 잘 보지 않게 됐다.
    이제 메모 바로 아래에 두고, 목록 카드에도 그대로 보여준다. */
-function renderTodos() {
+function renderTodos(editId) {
   var box = document.getElementById('td-list');
   if (!box) return;
   var list = cur.todos || [];
   box.innerHTML = list.map(function(t) {
+    var editing = (t.id === editId) || !String(t.text || '').trim();
+    if (editing) {
+      // 적는 중 — 체크박스 옆이 입력칸이 된다
+      return '<div class="td-item editing">' +
+        '<button class="td-box" type="button" disabled></button>' +
+        '<input class="td-in" id="tdin-' + t.id + '" type="text" value="' + escapeHtmlLite(t.text) + '"' +
+          ' placeholder="확인할 것을 적으세요"' +
+          ' onblur="commitTodo(\'' + t.id + '\', this.value)"' +
+          ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}">' +
+        '</div>';
+    }
     return '<div class="td-item' + (t.done ? ' done' : '') + '">' +
       '<button class="td-box' + (t.done ? ' done' : '') + '" type="button" onclick="toggleTodo(\'' + t.id + '\')">' + (t.done ? '✓' : '') + '</button>' +
-      '<span class="td-text" onclick="toggleTodo(\'' + t.id + '\')">' + escapeHtmlLite(t.text) + '</span>' +
+      '<span class="td-text" onclick="editTodo(\'' + t.id + '\')">' + escapeHtmlLite(t.text) + '</span>' +
       '<button class="td-del" type="button" onclick="removeTodo(\'' + t.id + '\')">✕</button>' +
       '</div>';
   }).join('');
+
   // 항목이 없을 때는 자리를 차지하지 않게 접어둔다
   var wrap = box.parentNode;
   if (wrap && wrap.classList && wrap.classList.contains('td-wrap')) {
     wrap.style.display = list.length ? '' : 'none';
+  }
+
+  /* ＋ 를 눌러 연 칸에만 커서를 둔다 (목록을 다시 그릴 때 커서를 뺏지 않도록).
+     칸을 보이게 한 "뒤에" 커서를 둬야 한다 — 숨어 있는 칸에는 커서가 들어가지 않는다. */
+  if (editId) {
+    var inp = document.getElementById('tdin-' + editId);
+    if (inp) { try { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); } catch (e) {} }
   }
 }
 
@@ -1810,31 +1848,39 @@ function addTodo(text) {
   scheduleAutoSave();
 }
 
-/* 메모에 적은 마지막 줄을 "확인할 것"으로 옮긴다.
-   메모를 쓰다가 ＋ 만 누르면 그 줄이 체크 항목이 된다.        */
-function addTodoFromMemo() {
-  var el = document.getElementById('memo-ta');
-  if (!el) return;
+/* ＋ 를 누르면 빈 체크박스가 하나 생기고, 그 옆에 바로 적을 수 있다.
+   메모는 메모대로 남는다.                                      */
+function addEmptyTodo() {
+  if (!Array.isArray(cur.todos)) cur.todos = [];
 
-  var lines = el.value.split('\n');
-  var idx = -1;
-  for (var i = lines.length - 1; i >= 0; i--) {
-    if (lines[i].trim()) { idx = i; break; }
-  }
-  if (idx < 0) {
-    showToast('메모에 적은 뒤 ＋ 를 눌러주세요');
-    el.focus();
+  // 이미 비어 있는 칸이 열려 있으면 거기로 커서만 옮긴다 (빈 칸이 쌓이지 않게)
+  var blank = cur.todos.find(function(t) { return !String(t.text || '').trim(); });
+  if (blank) { renderTodos(blank.id); return; }
+
+  var id = 't' + Date.now() + Math.floor(Math.random() * 1000);
+  cur.todos.push({ id: id, text: '', done: false });
+  renderTodos(id);
+}
+
+// 체크박스 옆 글씨를 눌러 고칠 수 있게 한다
+function editTodo(id) { renderTodos(id); }
+
+// 적은 내용을 확정한다. 비워 둔 채 나가면 그 칸은 없앤다.
+function commitTodo(id, value) {
+  var t = (cur.todos || []).find(function(x) { return x.id === id; });
+  if (!t) return;
+  var text = String(value || '').trim();
+  if (!text) {
+    cur.todos = cur.todos.filter(function(x) { return x.id !== id; });
+    renderTodos();
+    updateSaveBtn();
     return;
   }
-
-  var text = lines[idx].trim();
-  lines.splice(idx, 1);
-  el.value = lines.join('\n').replace(/\n+$/, '');
-  onMemoInput();
-
-  addTodo(text);
-  showToast('확인할 것에 추가 · ' + text);
-  el.focus();
+  var changed = (t.text !== text);
+  t.text = text;
+  renderTodos();
+  updateSaveBtn();
+  if (changed) scheduleAutoSave();
 }
 
 function toggleTodo(id) {
@@ -2956,6 +3002,11 @@ function performAutoSave() {
 function saveProduct() {
   var name = document.getElementById('name-ta').value.replace(/\s*\n\s*/g, ' ').trim() || '(이름 없음)';
   var memo = document.getElementById('memo-ta').value.trim();
+
+  // 적다 만 빈 체크 항목은 저장하지 않는다
+  if (Array.isArray(cur.todos)) {
+    cur.todos = cur.todos.filter(function(t){ return String(t.text || '').trim(); });
+  }
 
   if (editingId) {
     // 수정 모드 — 기존 제품 업데이트
@@ -4486,7 +4537,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v44';
+var APP_VERSION = 'v45';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5036,7 +5087,7 @@ function exportDayBackup(day) {
     showToast('\u23F3 백업 파일을 만드는 중...');
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v44',
+      version: 'v45',
       kind: 'day',
       day: day,
       exportedAt: new Date().toISOString(),
@@ -5072,7 +5123,7 @@ function exportLightBackup() {
   try {
     downloadJson({
       app: 'guangzhou_fair',
-      version: 'v44',
+      version: 'v45',
       kind: 'light',
       exportedAt: new Date().toISOString(),
       productCount: products.length,
