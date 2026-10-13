@@ -838,7 +838,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v46</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v47</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1311,7 +1311,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v46)
+          ⬇️ 최신 버전 받기 (현재 v47)
         </button>
       </div>
 
@@ -2256,7 +2256,7 @@ function bindPhotoEntryPoints() {
     if (id !== 'fab-add') bindPhotoLongPress(el);
     el.addEventListener('click', function(e) {
       e.preventDefault(); e.stopPropagation();
-      if (el.__lpAt && Date.now() - el.__lpAt < 800) return;   // 길게 눌러 앨범을 연 직후
+      if (id !== 'fab-add' && photoSlotClickIsAlbum(el)) return;   // 길게 누름 → 앨범
 
       // 방금 스와이프한 동작이면 카메라를 열지 않는다
       if (photoSwipeGuard) return;
@@ -2375,7 +2375,7 @@ function renderPhotos() {
     scroll.innerHTML =
       '<div class="dropzone-empty" id="dropzone-empty-el">' +
       '<span class="dropzone-empty-icon">＋</span>' +
-      '<span class="dropzone-empty-text">사진<small>탭: 촬영 · 길게: 앨범</small></span>' +
+      '<span class="dropzone-empty-text">사진<small data-l="탭: 촬영 · 길게: 앨범">탭: 촬영 · 길게: 앨범</small></span>' +
       '</div>';
     hint.textContent = '';
     bindPhotoEntryPoints();
@@ -2392,7 +2392,7 @@ function renderPhotos() {
       imgHtml +
       '<button class="photo-del" onclick="event.stopPropagation(); delPhoto(' + i + ')">×</button>' +
       '</div>';
-  }).join('') + '<button class="add-photo-btn" id="add-photo-btn-el" type="button"><span>+</span><small>길게: 앨범</small></button>';
+  }).join('') + '<button class="add-photo-btn" id="add-photo-btn-el" type="button"><span>+</span><small data-l="길게: 앨범">길게: 앨범</small></button>';
   scroll.innerHTML = html;
   hint.textContent = cur.photos.length > 1
     ? '사진을 길게 눌러 순서 변경 · 맨 위가 PPT 대표 이미지'
@@ -3695,43 +3695,84 @@ function setupListReorder() {
 function bindPhotoLongPress(el) {
   if (!el || el.__lpBound) return;
   el.__lpBound = true;
+  /* 폰마다 길게 누를 때의 동작이 달라서 세 겹으로 처리한다.
+     ① 손을 떼는 순간(touchend) 앨범 열기 — 아이폰 기본
+     ② 그래도 '클릭'이 오면, 누른 시간이 길었으면 카메라 대신 앨범 — 클릭은 항상 허용되는 동작
+     ③ 안드로이드처럼 길게 누르면 터치가 취소되는 폰 — 칸이 '탭: 앨범'으로 바뀌고 다음 탭에 앨범 */
   var timer = null, ready = false, x0 = 0, y0 = 0;
+  el.__pressAt = 0; el.__armedUntil = 0; el.__lpAt = 0;
+  var label = el.querySelector('small');
+  var labelText = label ? label.textContent : '';
+  function setLabel(t) { if (label) label.textContent = t; }
+  function disarmSoon() {
+    setTimeout(function() {
+      if (Date.now() >= el.__armedUntil) { el.classList.remove('lp-ready'); setLabel(labelText); }
+    }, 4100);
+  }
   function start(e) {
     var t = e.touches ? e.touches[0] : e;
     x0 = t.clientX; y0 = t.clientY; ready = false;
+    el.__pressAt = Date.now();
     clearTimeout(timer);
     timer = setTimeout(function() {
-      ready = true; el.classList.add('lp-ready');
+      ready = true; el.classList.add('lp-ready'); setLabel('놓으면 앨범');
       try { if (navigator.vibrate) navigator.vibrate(15); } catch (er) {}
     }, 450);
   }
   function move(e) {
     var t = e.touches ? e.touches[0] : e;
-    if (Math.abs(t.clientX - x0) > 10 || Math.abs(t.clientY - y0) > 10) {
-      clearTimeout(timer); ready = false; el.classList.remove('lp-ready');
+    if (Math.abs(t.clientX - x0) > 16 || Math.abs(t.clientY - y0) > 16) {
+      clearTimeout(timer); ready = false; el.__pressAt = 0;
+      el.classList.remove('lp-ready'); setLabel(labelText);
     }
   }
   function end(e) {
     clearTimeout(timer);
-    el.classList.remove('lp-ready');
     if (!ready) return;
     ready = false;
+    el.classList.remove('lp-ready'); setLabel(labelText);
     if (e.cancelable) e.preventDefault();   // 뒤따르는 '촬영' 클릭 막기
     el.__lpAt = Date.now();
     openAlbum();
   }
+  function cancelled() {
+    clearTimeout(timer);
+    if (ready) {                              // ③ 길게 누르다 터치가 취소된 경우
+      ready = false;
+      el.__armedUntil = Date.now() + 4000;
+      setLabel('탭하면 앨범');
+      disarmSoon();
+    }
+  }
   el.addEventListener('touchstart', start, { passive: true });
   el.addEventListener('touchmove', move, { passive: true });
   el.addEventListener('touchend', end, { passive: false });
-  el.addEventListener('touchcancel', function() { clearTimeout(timer); ready = false; el.classList.remove('lp-ready'); });
+  el.addEventListener('touchcancel', cancelled);
+  el.addEventListener('contextmenu', function(e) { e.preventDefault(); });
   el.addEventListener('mousedown', function(e) {
-    if (e.button !== 0) return;
+    if (e.button !== 0 || e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
+    if (Date.now() - el.__pressAt < 1000 && el.__pressAt) return; // 터치에서 따라온 마우스 이벤트
     start(e);
     function mv(ev) { move(ev); }
     function up(ev) { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); end(ev); }
     document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
   });
-  el.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+}
+// 클릭 시: 촬영 / 앨범 판정 (true = 앨범을 열었음 또는 이미 처리됨)
+function photoSlotClickIsAlbum(el) {
+  var now = Date.now();
+  if (el.__lpAt && now - el.__lpAt < 800) return true;                 // ①에서 이미 열었음
+  if (el.__armedUntil && now < el.__armedUntil) {                        // ③
+    el.__armedUntil = 0; el.classList.remove('lp-ready');
+    var sm = el.querySelector('small'); if (sm) sm.textContent = sm.getAttribute('data-l') || sm.textContent;
+    openAlbum(); return true;
+  }
+  if (el.__pressAt && now - el.__pressAt >= 450 && now - el.__pressAt < 5000) { // ②
+    el.__pressAt = 0; el.classList.remove('lp-ready');
+    openAlbum(); return true;
+  }
+  el.__pressAt = 0;
+  return false;
 }
 
 // 사진을 찍은 직후에는 다음 빈칸(+)이 화면에 보이도록 입력창을 스크롤
@@ -4844,7 +4885,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v46';
+var APP_VERSION = 'v47';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
