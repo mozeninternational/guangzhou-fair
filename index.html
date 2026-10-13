@@ -797,6 +797,38 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   .pr-foot { margin-top: 8pt; font-size: 7pt; color: #a89f93; text-align: center; }
 }
 
+
+/* ═══ v7 추가 ═══════════════════════════════════════════ */
+/* 주목 제품 ★ — 제목만 노란색으로, 별은 오른쪽 위에 작게 */
+.p-head-r { display: flex; align-items: flex-start; gap: 2px; flex-shrink: 0; }
+.p-star { background: none; border: none; padding: 0 2px 6px 8px; margin-top: -2px; font-size: 17px; line-height: 1; color: var(--t3); cursor: pointer; font-family: inherit; -webkit-appearance: none; touch-action: manipulation; }
+.p-star.on { color: var(--amber); }
+.p-name.starred { color: var(--amber); }
+.lightbox-info-name.starred { color: var(--amber); }
+/* 제품 카드 길게 눌러 순서 변경 */
+.p-card { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.p-row.sortable-ghost { opacity: .35; }
+.p-row.sortable-chosen .p-card { border-color: var(--orange); }
+.p-row.sortable-drag, .p-row.sortable-fallback { opacity: .95 !important; box-shadow: 0 14px 30px rgba(0,0,0,.55); border-radius: 14px; }
+/* 사진: 한 줄 3칸 → 2장 찍으면 다음 빈칸이 같은 줄에 바로 보인다 */
+.photo-scroll { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.photo-thumb-wrap::before { top: 4px; left: 4px; padding: 2px 6px; font-size: 8px; }
+.photo-del { top: 4px; right: 4px; width: 22px; height: 22px; font-size: 14px; }
+.ps-album { display: none !important; }      /* 불러오기 버튼 제거 → 빈칸 길게 누르기로 대체 */
+.ps-count { right: 2px; }
+.add-photo-btn { flex-direction: column; gap: 2px; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.add-photo-btn small { font-size: 9px; color: var(--t3); font-weight: 500; }
+.dropzone-empty { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.dropzone-empty-text small { font-size: 10px; color: var(--t3); margin-left: 4px; }
+.add-photo-btn.lp-ready, .dropzone-empty.lp-ready { border-color: var(--blue) !important; color: var(--blue) !important; background: rgba(74,158,255,.12); }
+.add-photo-btn.lp-ready small, .dropzone-empty.lp-ready small { color: var(--blue); }
+/* 사진 크게 보기 — 확대/이동 */
+.lightbox { touch-action: none; }
+#lightbox-img { touch-action: none; will-change: transform; transform-origin: center center; -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.lightbox.zoomed #lightbox-img { cursor: grab; }
+.lightbox.zoomed .lightbox-nav, .lightbox.zoomed .lightbox-counter { opacity: .25; }
+.lightbox-zoom-hint { position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,.55); font-size: 11px; pointer-events: none; white-space: nowrap; }
+.lightbox.zoomed .lightbox-zoom-hint { display: none; }
 </style>
 </head>
 <body>
@@ -806,7 +838,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v45</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v46</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1015,7 +1047,11 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 
   <!-- BOTTOM NAV -->
   <nav class="bnav">
-    <button class="bnav-item active" onclick="switchNav(this,'products')">
+    <button class="bnav-item active" id="bnav-write" onclick="switchNav(this,'write')">
+      <span class="bnav-icon">✏️</span>
+      <span class="bnav-label">기록</span>
+    </button>
+    <button class="bnav-item" id="bnav-list" onclick="switchNav(this,'products')">
       <span class="bnav-icon">📦</span>
       <span class="bnav-label">제품목록</span>
     </button>
@@ -1275,7 +1311,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v45)
+          ⬇️ 최신 버전 받기 (현재 v46)
         </button>
       </div>
 
@@ -2188,6 +2224,7 @@ function processImageFiles(files, target) {
 }
 
 function handleProductPhoto(e) {
+  if (e.target.files && e.target.files.length) photoJustAddedAt = Date.now();
   processImageFiles(Array.from(e.target.files || []), 'photos');
   e.target.value = '';
 }
@@ -2216,8 +2253,10 @@ function bindPhotoEntryPoints() {
     var el = document.getElementById(id);
     if (!el || el.__camBound) return;
     el.__camBound = true;
+    if (id !== 'fab-add') bindPhotoLongPress(el);
     el.addEventListener('click', function(e) {
       e.preventDefault(); e.stopPropagation();
+      if (el.__lpAt && Date.now() - el.__lpAt < 800) return;   // 길게 눌러 앨범을 연 직후
 
       // 방금 스와이프한 동작이면 카메라를 열지 않는다
       if (photoSwipeGuard) return;
@@ -2336,7 +2375,7 @@ function renderPhotos() {
     scroll.innerHTML =
       '<div class="dropzone-empty" id="dropzone-empty-el">' +
       '<span class="dropzone-empty-icon">＋</span>' +
-      '<span class="dropzone-empty-text">사진</span>' +
+      '<span class="dropzone-empty-text">사진<small>탭: 촬영 · 길게: 앨범</small></span>' +
       '</div>';
     hint.textContent = '';
     bindPhotoEntryPoints();
@@ -2353,7 +2392,7 @@ function renderPhotos() {
       imgHtml +
       '<button class="photo-del" onclick="event.stopPropagation(); delPhoto(' + i + ')">×</button>' +
       '</div>';
-  }).join('') + '<button class="add-photo-btn" id="add-photo-btn-el">+</button>';
+  }).join('') + '<button class="add-photo-btn" id="add-photo-btn-el" type="button"><span>+</span><small>길게: 앨범</small></button>';
   scroll.innerHTML = html;
   hint.textContent = cur.photos.length > 1
     ? '사진을 길게 눌러 순서 변경 · 맨 위가 PPT 대표 이미지'
@@ -2362,6 +2401,7 @@ function renderPhotos() {
   setupPhotoSwipe();
   scroll.scrollTop = scroll.scrollHeight;
   initPhotoSortable();
+  revealNextPhotoSlot();
 }
 
 // ── 제품 사진 원본 보기 (스와이프 갤러리) ─────────────────
@@ -2377,7 +2417,7 @@ function openProductPhotoLightbox(pid, idx) {
   var p = products.find(function(x){ return x.id === pid; });
   if (!p || !p.photos) return;
   openLightbox(p.photos, idx, {
-    name: p.name, category: p.category, moq: p.moq, cb: p.cb, sample: p.sample,
+    name: p.name, star: !!p.star, category: p.category, moq: p.moq, cb: p.cb, sample: p.sample,
     bizCount: (p.bizCards && p.bizCards.length) || 0
   });
 }
@@ -2403,7 +2443,8 @@ function renderLightboxInfo(info) {
   if (!nameEl || !badgesEl) return;
   if (!info) { nameEl.textContent = ''; badgesEl.innerHTML = ''; return; }
 
-  nameEl.textContent = info.name || '(이름 없음)';
+  nameEl.textContent = (info.star ? '★ ' : '') + (info.name || '(이름 없음)');
+  nameEl.classList.toggle('starred', !!info.star);
 
   var badges = [];
   if (info.moq) badges.push('<span class="badge orange">$' + info.moq.price + ' · MOQ ' + info.moq.qty + '</span>');
@@ -2422,6 +2463,7 @@ function renderLightboxInfo(info) {
   applyLightboxInfoPos(); // 사용자가 지난번에 옮겨둔 위치를 그대로 적용
 }
 function renderLightbox() {
+  if (window.resetLightboxZoom) resetLightboxZoom();
   document.getElementById('lightbox-img').src = lightboxPhotos[lightboxIndex];
   var counter = document.getElementById('lightbox-counter');
   var multi = lightboxPhotos.length > 1;
@@ -2440,6 +2482,7 @@ function lightboxNav(dir) {
   renderLightbox();
 }
 function closeLightbox() {
+  if (window.resetLightboxZoom) resetLightboxZoom();
   document.getElementById('lightbox').classList.remove('open');
   document.getElementById('lightbox-img').src = '';
   lightboxPhotos = []; lightboxIndex = 0;
@@ -2515,20 +2558,7 @@ function applyLightboxInfoPos() {
   document.addEventListener('mouseup', onUp);
   window.addEventListener('resize', applyLightboxInfoPos);
 })();
-(function setupLightboxSwipe(){
-  var lb = document.getElementById('lightbox');
-  if (!lb) return;
-  lb.addEventListener('touchstart', function(e){
-    lightboxTouchStartX = e.touches[0].clientX;
-  }, {passive:true});
-  lb.addEventListener('touchend', function(e){
-    if (lightboxTouchStartX === null) return;
-    var dx = e.changedTouches[0].clientX - lightboxTouchStartX;
-    lightboxTouchStartX = null;
-    if (Math.abs(dx) < 40) return;
-    lightboxNav(dx < 0 ? 1 : -1);
-  }, {passive:true});
-})();
+/* 기존 좌우 스와이프는 v7 setupLightboxZoom 안으로 통합 */
 document.addEventListener('keydown', function(e){
   var lb = document.getElementById('lightbox');
   if (!lb || !lb.classList.contains('open')) return;
@@ -2962,6 +2992,7 @@ function performAutoSave() {
       name: name,
       memo: memo,
       date: products[idx].date,
+      star: !!products[idx].star,
       photos: cur.photos.slice(),
       bizCards: cur.bizCards.slice(),
       category: cur.category,
@@ -3018,6 +3049,7 @@ function saveProduct() {
         name: name,
         memo: memo,
         date: products[idx].date,  // 원래 등록일 유지
+        star: !!products[idx].star,  // 주목 표시 유지
         photos: cur.photos.slice(),
         bizCards: cur.bizCards.slice(),
         category: cur.category,
@@ -3108,6 +3140,7 @@ var draftingId = null;
 function editProduct(id, asDraft) {
   var p = products.find(function(x){ return x.id === id; });
   if (!p) return;
+  ensureWriteMode();
 
   editingId = id;
   isEditingExisting = !asDraft;
@@ -3328,7 +3361,9 @@ function renderList() {
       '<button class="p-row-del" type="button" onclick="event.stopPropagation(); confirmDeleteProduct(' + p.id + ')">' +
         '<span>🗑️</span>삭제</button>' +
       '<div class="p-card" onclick="onCardTap(event, ' + p.id + ')">' +
-      '<div class="p-head"><div class="p-name">' + escapeHtmlLite(p.name) + '</div><div class="p-date">' + p.date + '</div></div>' +
+      '<div class="p-head"><div class="p-name' + (p.star ? ' starred' : '') + '">' + escapeHtmlLite(p.name) + '</div>' +
+        '<div class="p-head-r"><div class="p-date">' + p.date + '</div>' +
+        '<button class="p-star' + (p.star ? ' on' : '') + '" type="button" title="주목 제품 표시" onclick="event.stopPropagation(); toggleStar(' + p.id + ')">' + (p.star ? '★' : '☆') + '</button></div></div>' +
       (catBadge ? '<div class="p-cat-row">' + catBadge + '</div>' : '') +
       photos +
       '<div class="p-badges">' + badges.join('') + '</div>' +
@@ -3338,6 +3373,7 @@ function renderList() {
   });
   list.innerHTML = html;
   setupSwipeDelete();
+  setupListReorder();
 }
 
 /* ══════════════════════════════════════════════════════
@@ -3354,6 +3390,7 @@ function closeSwipeRow() {
 
 // 스와이프가 열려 있을 때의 첫 탭은 "닫기"로 쓴다 (실수로 편집 열리는 것 방지)
 function onCardTap(e, id) {
+  if (listReorderActive || Date.now() - listReorderEndedAt < 500) return; // 순서 변경 직후 탭 무시
   if (openSwipeRow) { closeSwipeRow(); return; }
   editProduct(id);
 }
@@ -3375,6 +3412,7 @@ function setupSwipeDelete() {
 
     function move(e) {
       if (!active) return;
+      if (listReorderActive) { active = false; row.classList.remove('dragging'); card.style.transform = ''; return; }
       var t = e.touches ? e.touches[0] : e;
       var mx = t.clientX - x0, my = t.clientY - y0;
 
@@ -3456,6 +3494,260 @@ function confirmDeleteProduct(id) {
 }
 
 // ── NAV ───────────────────────────────────────────────
+
+/* ══════════════════════════════════════════════════════
+   v7: 주목 제품 ★ 토글
+   ══════════════════════════════════════════════════════ */
+function toggleStar(id) {
+  var p = products.find(function(x){ return x.id === id; });
+  if (!p) return;
+  p.star = !p.star;
+  renderList();
+  persistSafe().then(function(ok) {
+    if (!ok) { p.star = !p.star; renderList(); showToast('🚨 저장 실패 - 다시 시도해주세요'); return; }
+    showToast(p.star ? '★ 주목 제품으로 표시했어요' : '주목 표시를 해제했어요');
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   v7: 제품 카드 길게 눌러 위치 바꾸기
+   - 0.4초 이상 누르고 있으면 카드가 들리고, 위아래로 옮길 수 있다
+   - 짧게 탭 = 편집, 가로로 밀기 = 삭제 버튼 (기존 동작 그대로)
+   - 탭/카테고리로 걸러 보고 있을 때도, 보이는 제품끼리의 순서만 바뀐다
+   ══════════════════════════════════════════════════════ */
+var listSortable = null;
+var listReorderActive = false;
+var listReorderEndedAt = 0;
+
+function setupListReorder() {
+  var el = document.getElementById('p-list');
+  if (!el || !window.Sortable) return;
+  if (listSortable) { listSortable.destroy(); listSortable = null; }
+  listSortable = Sortable.create(el, {
+    draggable: '.p-row',
+    animation: 180,
+    delay: 400,
+    delayOnTouchOnly: false,
+    touchStartThreshold: 8,
+    filter: '.p-star, .p-row-del, .p-photo',
+    preventOnFilter: false,
+    forceFallback: true,
+    fallbackTolerance: 4,
+    scroll: true, scrollSensitivity: 80, scrollSpeed: 12, bubbleScroll: true,
+    onChoose: function() {
+      listReorderActive = true;
+      closeSwipeRow();
+      try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
+    },
+    onUnchoose: function() {
+      // 짧은 탭에도 이 신호가 오므로, 실제로 들어올렸을 때만 직후 탭을 막는다
+      if (listReorderActive) listReorderEndedAt = Date.now();
+      listReorderActive = false;
+    },
+    onEnd: function(evt) {
+      listReorderActive = false;
+      if (evt.oldIndex === evt.newIndex) return;
+      listReorderEndedAt = Date.now();
+      var ids = Array.prototype.map.call(el.querySelectorAll('.p-row'), function(r){ return Number(r.getAttribute('data-id')); });
+      var set = {}; ids.forEach(function(id){ set[id] = true; });
+      var slots = [];
+      products.forEach(function(p, i){ if (set[p.id]) slots.push(i); });
+      if (slots.length !== ids.length) { renderList(); return; }
+      var byId = {}; products.forEach(function(p){ byId[p.id] = p; });
+      var before = products.slice();
+      ids.forEach(function(id, k){ products[slots[k]] = byId[id]; });
+      persistSafe().then(function(ok) {
+        if (!ok) { products = before; renderList(); showToast('🚨 순서 저장 실패'); return; }
+        showToast('✓ 순서를 바꿨어요');
+      });
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   v7: 사진 크게 보기 — 두 손가락 확대, 두 번 탭 확대/원래대로,
+   확대 상태에서 한 손가락으로 이동, 기본 상태에서 좌우 밀기 = 다음 사진
+   PC: 마우스 휠 확대, 더블클릭, 끌어서 이동
+   ══════════════════════════════════════════════════════ */
+(function setupLightboxZoom() {
+  var lb = document.getElementById('lightbox');
+  var img = document.getElementById('lightbox-img');
+  if (!lb || !img) return;
+  var hint = document.createElement('div');
+  hint.className = 'lightbox-zoom-hint';
+  hint.textContent = '두 번 탭하거나 두 손가락으로 확대';
+  lb.appendChild(hint);
+
+  var MAX = 5, s = 1, tx = 0, ty = 0;
+  var mode = null, sx = 0, sy = 0, t0x = 0, t0y = 0, s0 = 1, d0 = 1, px = 0, py = 0;
+  var lastTap = 0, lastTouchTime = 0, moved = false;
+
+  function apply(anim) {
+    img.style.transition = anim ? 'transform .22s ease' : 'none';
+    img.style.transform = (s === 1 && tx === 0 && ty === 0) ? '' : 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
+    lb.classList.toggle('zoomed', s > 1.01);
+  }
+  function center() { return { x: img.offsetLeft + img.offsetWidth / 2, y: img.offsetTop + img.offsetHeight / 2 }; }
+  function clampPan() {
+    var mx = Math.max(0, (img.offsetWidth * s - lb.clientWidth) / 2) + 40;
+    var my = Math.max(0, (img.offsetHeight * s - lb.clientHeight) / 2) + 40;
+    if (s <= 1.01) { mx = 0; my = 0; }
+    tx = Math.max(-mx, Math.min(mx, tx));
+    ty = Math.max(-my, Math.min(my, ty));
+  }
+  function zoomAt(x, y, ns) {
+    var c = center();
+    var qx = (x - c.x - tx) / s, qy = (y - c.y - ty) / s;
+    s = Math.max(1, Math.min(MAX, ns));
+    tx = x - c.x - s * qx; ty = y - c.y - s * qy;
+    if (s <= 1.01) { s = 1; tx = 0; ty = 0; }
+    clampPan();
+  }
+  window.resetLightboxZoom = function() { s = 1; tx = 0; ty = 0; mode = null; apply(false); };
+  function dist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY) || 1; }
+  function mid(t) { return { x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 }; }
+  function skip(e) { return e.target.closest && e.target.closest('.lightbox-info, button'); }
+
+  lb.addEventListener('touchstart', function(e) {
+    if (skip(e)) return;
+    lastTouchTime = Date.now();
+    if (e.touches.length === 2) {
+      mode = 'pinch'; s0 = s; d0 = dist(e.touches);
+      var m = mid(e.touches), c = center();
+      px = (m.x - c.x - tx) / s; py = (m.y - c.y - ty) / s;
+      moved = true;
+    } else if (e.touches.length === 1) {
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY; t0x = tx; t0y = ty;
+      mode = s > 1.01 ? 'pan' : 'swipe'; moved = false;
+    }
+  }, { passive: true });
+
+  lb.addEventListener('touchmove', function(e) {
+    if (!mode) return;
+    if (e.cancelable) e.preventDefault();
+    if (mode === 'pinch' && e.touches.length === 2) {
+      var m = mid(e.touches), c = center();
+      s = Math.max(1, Math.min(MAX, s0 * dist(e.touches) / d0));
+      tx = m.x - c.x - s * px; ty = m.y - c.y - s * py;
+      apply(false);
+    } else if (e.touches.length === 1) {
+      var dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) moved = true;
+      if (mode === 'pan') { tx = t0x + dx; ty = t0y + dy; clampPan(); apply(false); }
+    }
+  }, { passive: false });
+
+  lb.addEventListener('touchend', function(e) {
+    if (!mode) return;
+    lastTouchTime = Date.now();
+    if (mode === 'pinch') {
+      if (s <= 1.05) { s = 1; tx = 0; ty = 0; } else clampPan();
+      apply(true);
+      if (e.touches.length === 1) {   // 한 손가락이 남아 있으면 이어서 이동
+        sx = e.touches[0].clientX; sy = e.touches[0].clientY; t0x = tx; t0y = ty;
+        mode = s > 1.01 ? 'pan' : null;
+      } else mode = null;
+      return;
+    }
+    var t = e.changedTouches[0];
+    var dx = t.clientX - sx, dy = t.clientY - sy;
+    if (mode === 'swipe' && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      lightboxNav(dx < 0 ? 1 : -1);
+    } else if (!moved && e.target === img) {
+      var now = Date.now();
+      if (now - lastTap < 300) {          // 두 번 탭
+        if (s > 1.01) { s = 1; tx = 0; ty = 0; } else zoomAt(t.clientX, t.clientY, 2.5);
+        apply(true); lastTap = 0;
+      } else lastTap = now;
+    }
+    mode = null;
+  });
+  lb.addEventListener('touchcancel', function() { mode = null; });
+
+  // PC
+  lb.addEventListener('wheel', function(e) {
+    if (!lb.classList.contains('open')) return;
+    e.preventDefault();
+    zoomAt(e.clientX, e.clientY, s * (e.deltaY < 0 ? 1.18 : 1 / 1.18));
+    apply(false);
+  }, { passive: false });
+  img.addEventListener('dblclick', function(e) {
+    if (Date.now() - lastTouchTime < 800) return;  // 터치 기기의 중복 이벤트 무시
+    if (s > 1.01) { s = 1; tx = 0; ty = 0; } else zoomAt(e.clientX, e.clientY, 2.5);
+    apply(true);
+  });
+  img.addEventListener('mousedown', function(e) {
+    if (s <= 1.01) return;
+    e.preventDefault();
+    var ox = e.clientX, oy = e.clientY, bx = tx, by = ty;
+    function mv(ev) { tx = bx + ev.clientX - ox; ty = by + ev.clientY - oy; clampPan(); apply(false); }
+    function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  });
+  img.addEventListener('dragstart', function(e) { e.preventDefault(); });
+})();
+
+/* ══════════════════════════════════════════════════════
+   v7: 사진 빈칸 — 짧게 탭 = 촬영 / 길게 눌렀다 떼기 = 앨범
+   아이폰은 '손을 떼는 순간'에만 앨범을 열어주므로,
+   0.45초 이상 누르면 칸이 파랗게 바뀌고 손을 뗄 때 앨범이 열린다.
+   ══════════════════════════════════════════════════════ */
+function bindPhotoLongPress(el) {
+  if (!el || el.__lpBound) return;
+  el.__lpBound = true;
+  var timer = null, ready = false, x0 = 0, y0 = 0;
+  function start(e) {
+    var t = e.touches ? e.touches[0] : e;
+    x0 = t.clientX; y0 = t.clientY; ready = false;
+    clearTimeout(timer);
+    timer = setTimeout(function() {
+      ready = true; el.classList.add('lp-ready');
+      try { if (navigator.vibrate) navigator.vibrate(15); } catch (er) {}
+    }, 450);
+  }
+  function move(e) {
+    var t = e.touches ? e.touches[0] : e;
+    if (Math.abs(t.clientX - x0) > 10 || Math.abs(t.clientY - y0) > 10) {
+      clearTimeout(timer); ready = false; el.classList.remove('lp-ready');
+    }
+  }
+  function end(e) {
+    clearTimeout(timer);
+    el.classList.remove('lp-ready');
+    if (!ready) return;
+    ready = false;
+    if (e.cancelable) e.preventDefault();   // 뒤따르는 '촬영' 클릭 막기
+    el.__lpAt = Date.now();
+    openAlbum();
+  }
+  el.addEventListener('touchstart', start, { passive: true });
+  el.addEventListener('touchmove', move, { passive: true });
+  el.addEventListener('touchend', end, { passive: false });
+  el.addEventListener('touchcancel', function() { clearTimeout(timer); ready = false; el.classList.remove('lp-ready'); });
+  el.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
+    start(e);
+    function mv(ev) { move(ev); }
+    function up(ev) { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); end(ev); }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  });
+  el.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+}
+
+// 사진을 찍은 직후에는 다음 빈칸(+)이 화면에 보이도록 입력창을 스크롤
+var photoJustAddedAt = 0;
+function revealNextPhotoSlot() {
+  if (!photoJustAddedAt || Date.now() - photoJustAddedAt > 20000) return;
+  photoJustAddedAt = 0;
+  var btn = document.getElementById('add-photo-btn-el');
+  var area = document.querySelector('.cur-area');
+  if (!btn || !area) return;
+  setTimeout(function() {
+    var br = btn.getBoundingClientRect(), ar = area.getBoundingClientRect();
+    if (br.bottom > ar.bottom - 6) area.scrollTop += (br.bottom - ar.bottom) + 12;
+  }, 60);
+}
+
 function switchNav(el, page) {
   document.querySelectorAll('.bnav-item').forEach(function(n){ n.classList.remove('active'); });
   el.classList.add('active');
@@ -3475,9 +3767,24 @@ function switchNav(el, page) {
     pp.style.display = '';
     if (curArea) curArea.style.display = 'none';
     renderPhotosPage();
+  } else if (page === 'products') {
+    // 제품목록 탭 — 기록한 제품만 보여준다 (입력창 숨김)
+    main.style.display = '';
+    if (curArea) curArea.style.display = 'none';
+    renderList();
   } else {
+    // 기록 탭 — 입력창 + 목록 (기존 화면)
     main.style.display = '';
     if (curArea) curArea.style.display = '';
+  }
+}
+
+// 제품을 고칠 때는 입력창이 있는 '기록' 탭으로 자동 이동
+function ensureWriteMode() {
+  var area = document.querySelector('.cur-area');
+  if (area && area.style.display === 'none') {
+    var b = document.getElementById('bnav-write');
+    if (b) switchNav(b, 'write');
   }
 }
 
@@ -4537,7 +4844,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v45';
+var APP_VERSION = 'v46';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
