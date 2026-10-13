@@ -822,6 +822,9 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .dropzone-empty-text small { font-size: 10px; color: var(--t3); margin-left: 4px; }
 .add-photo-btn.lp-ready, .dropzone-empty.lp-ready { border-color: var(--blue) !important; color: var(--blue) !important; background: rgba(74,158,255,.12); }
 .add-photo-btn.lp-ready small, .dropzone-empty.lp-ready small { color: var(--blue); }
+/* 사진 길게 누를 때 휴대폰 기본 메뉴(복사·저장·복제) 막기 → 순서 변경이 바로 동작 */
+.photo-thumb, .photo-thumb-wrap, .p-photo { -webkit-touch-callout: none; -webkit-user-drag: none; -webkit-user-select: none; user-select: none; }
+.photo-thumb-wrap.sortable-fallback { opacity: .9 !important; }
 /* 사진 크게 보기 — 확대/이동 */
 .lightbox { touch-action: none; }
 #lightbox-img { touch-action: none; will-change: transform; transform-origin: center center; -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
@@ -838,7 +841,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v48</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v49</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1311,7 +1314,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v48)
+          ⬇️ 최신 버전 받기 (현재 v49)
         </button>
       </div>
 
@@ -2280,6 +2283,7 @@ function bindPhotoEntryPoints() {
    2) 사진이 있을 때는 순서 변경(SortableJS)이 터치를 먼저 가져간다.
       → 래퍼에 캡처 단계로 붙여 우리가 먼저 판정한다. */
 var photoSwipeGuard = false;   // true면 다음 click을 무시한다
+var photoSortChosen = false;   // 사진을 길게 눌러 집은 상태 → 앨범 밀기 동작 중지
 
 function setupPhotoSwipe() {
   var row = document.getElementById('ph-swipe');
@@ -2297,6 +2301,10 @@ function setupPhotoSwipe() {
 
   function move(e) {
     if (!active) return;
+    if (photoSortChosen) {          // 사진 순서 변경 중에는 앨범 밀기를 하지 않는다
+      active = false; row.classList.remove('dragging'); body.style.transform = ''; photoSwipeGuard = false;
+      return;
+    }
     var t = e.touches ? e.touches[0] : e;
     var mx = t.clientX - x0, my = t.clientY - y0;
 
@@ -2387,7 +2395,7 @@ function renderPhotos() {
     var isBroken = !isValidPhoto(src);
     var imgHtml = isBroken
       ? '<div class="photo-thumb" style="display:flex;align-items:center;justify-content:center;background:rgba(224,85,85,.15);color:var(--red);font-size:24px;gap:8px;font-weight:700;"><span>⚠️</span><span style="font-size:11px;">손상된 사진</span></div>'
-      : '<img class="photo-thumb" src="' + src + '" onclick="event.stopPropagation(); viewProductPhoto(' + i + ')">';
+      : '<img class="photo-thumb" draggable="false" src="' + src + '" onclick="event.stopPropagation(); viewProductPhoto(' + i + ')">';
     return '<div class="photo-thumb-wrap" data-idx="' + i + '">' +
       imgHtml +
       '<button class="photo-del" onclick="event.stopPropagation(); delPhoto(' + i + ')">×</button>' +
@@ -2405,7 +2413,9 @@ function renderPhotos() {
 }
 
 // ── 제품 사진 원본 보기 (스와이프 갤러리) ─────────────────
+var photoSortEndAt = 0;
 function viewProductPhoto(i) {
+  if (Date.now() - photoSortEndAt < 500) return;   // 순서 변경 직후의 탭은 무시
   if (!cur.photos[i]) return;
   openLightbox(cur.photos, i, {
     name: cur.name, category: cur.category, moq: cur.moq, cb: cur.cb, sample: cur.sample,
@@ -2589,7 +2599,7 @@ function renderBizCards() {
     var isBroken = !isValidPhoto(src);
     var imgHtml = isBroken
       ? '<div class="photo-thumb" style="display:flex;align-items:center;justify-content:center;background:rgba(224,85,85,.15);color:var(--red);font-size:24px;gap:8px;font-weight:700;"><span>⚠️</span><span style="font-size:11px;">손상된 명함</span></div>'
-      : '<img class="photo-thumb" src="' + src + '">';
+      : '<img class="photo-thumb" draggable="false" src="' + src + '">';
     return '<div class="photo-thumb-wrap biz" data-idx="' + i + '">' +
       imgHtml +
       '<button class="photo-del" onclick="event.stopPropagation(); delBizCard(' + i + ')">×</button>' +
@@ -2609,10 +2619,16 @@ function initPhotoSortable() {
     animation: 200,
     filter: '.add-photo-btn, .photo-del, .dropzone-empty',
     preventOnFilter: false,
-    delay: 200,
+    delay: 250,
     delayOnTouchOnly: true,
-    touchStartThreshold: 5,
+    touchStartThreshold: 6,
+    forceFallback: true,        // 아이폰 '끌어서 복사/복제' 대신 앱 안에서만 이동
+    fallbackTolerance: 3,
+    onChoose: function() { photoSortChosen = true; closePhotoSwipe(); },
+    onUnchoose: function() { photoSortChosen = false; },
+    onStart: function() { photoSortEndAt = Date.now() + 60000; },
     onEnd: function() {
+      photoSortEndAt = Date.now();
       var wraps = el.querySelectorAll('.photo-thumb-wrap');
       var newOrder = [];
       wraps.forEach(function(w) {
@@ -2639,10 +2655,16 @@ function initBizSortable() {
     animation: 200,
     filter: '.add-photo-btn, .photo-del, .dropzone-empty',
     preventOnFilter: false,
-    delay: 200,
+    delay: 250,
     delayOnTouchOnly: true,
-    touchStartThreshold: 5,
+    touchStartThreshold: 6,
+    forceFallback: true,        // 아이폰 '끌어서 복사/복제' 대신 앱 안에서만 이동
+    fallbackTolerance: 3,
+    onChoose: function() { photoSortChosen = true; closePhotoSwipe(); },
+    onUnchoose: function() { photoSortChosen = false; },
+    onStart: function() { photoSortEndAt = Date.now() + 60000; },
     onEnd: function() {
+      photoSortEndAt = Date.now();
       var wraps = el.querySelectorAll('.photo-thumb-wrap');
       var newOrder = [];
       wraps.forEach(function(w) {
@@ -3340,7 +3362,7 @@ function renderList() {
     var photos = p.photos && p.photos.length ?
       '<div class="p-photos">' + p.photos.map(function(src, pIdx){
         return isValidPhoto(src)
-          ? '<img class="p-photo" src="' + src + '" onclick="event.stopPropagation(); openProductPhotoLightbox(' + p.id + ',' + pIdx + ')">'
+          ? '<img class="p-photo" draggable="false" src="' + src + '" onclick="event.stopPropagation(); openProductPhotoLightbox(' + p.id + ',' + pIdx + ')">'
           : '<div class="p-photo" style="display:flex;align-items:center;justify-content:center;background:rgba(224,85,85,.1);color:var(--red);font-size:14px;">⚠️</div>';
       }).join('') + '</div>' : '';
 
@@ -3518,6 +3540,10 @@ function toggleStar(id) {
 var listSortable = null;
 var listReorderActive = false;
 var listReorderEndedAt = 0;
+
+document.addEventListener('contextmenu', function(e) {
+  if (e.target.closest && e.target.closest('.photo-thumb-wrap, .p-photo, .p-card, #lightbox')) e.preventDefault();
+});
 
 function setupListReorder() {
   var el = document.getElementById('p-list');
@@ -4887,7 +4913,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v48';
+var APP_VERSION = 'v49';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
