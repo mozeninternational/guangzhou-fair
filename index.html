@@ -915,6 +915,18 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .sh-t { font-size: 14px; font-weight: 700; }
 .sh-d { font-size: 11.5px; color: var(--t2); margin-top: 2px; line-height: 1.45; }
 
+/* v66: 기수(1기 가전 / 2기 주방) 나누기 */
+.fn-chip.on-blue { background: rgba(74,158,255,.16); border-color: var(--blue); color: var(--blue); }
+.phase-bar { display: flex; gap: 6px; padding: 0 16px 9px; flex-shrink: 0; }
+.ph-btn {
+  flex: 1; padding: 6px 4px; border-radius: 10px; border: 1px solid var(--border);
+  background: transparent; color: var(--t2); font-family: inherit; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; -webkit-appearance: none; touch-action: manipulation;
+}
+.ph-btn b { font-weight: 800; opacity: .8; margin-left: 2px; }
+.ph-btn.active { background: rgba(245,165,0,.15); border-color: var(--orange); color: var(--orange); }
+.ph-btn.active[data-ph="2"] { background: rgba(74,158,255,.14); border-color: var(--blue); color: var(--blue); }
+
 /* v64: 상단 동영상 촬영 버튼 */
 .fab-inline.video-btn { font-size: 14px; background: #c0392b; box-shadow: 0 2px 8px rgba(192,57,43,.35); }
 .fab-inline.video-btn:active { background: #a93226; }
@@ -999,7 +1011,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v65</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v67</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1013,6 +1025,13 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
         <button class="fab-inline video-btn" id="fab-add" type="button" title="동영상 촬영" onclick="openVideoCamera()">🎥</button>
       </div>
     </div>
+  </div>
+
+  <!-- v66: 박람회 기수 나누기 (기록한 날짜로 자동: ~10/20 = 1기 가전, 10/21~ = 2기 주방 · 칩으로 직접 변경 가능) -->
+  <div class="phase-bar" id="phase-bar">
+    <button class="ph-btn" type="button" data-ph="all" onclick="setPhase('all')">전체 <b id="ph-n-all"></b></button>
+    <button class="ph-btn" type="button" data-ph="1" onclick="setPhase('1')">1기 가전 <b id="ph-n-1"></b></button>
+    <button class="ph-btn" type="button" data-ph="2" onclick="setPhase('2')">2기 주방 <b id="ph-n-2"></b></button>
   </div>
 
   <!-- 백업 리마인드 배너 -->
@@ -1107,6 +1126,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       <button class="fn-chip" id="fn-sample" type="button"><span class="fn-chip-ico">📅</span><span id="fn-sample-t">샘플 신청</span></button>
       <button class="fn-chip" id="fn-card" type="button"><span class="fn-chip-ico">📇</span><span id="fn-card-t">명함</span></button>
       <button class="fn-chip" id="fn-cat" type="button" onclick="openCatPicker()"><span class="fn-chip-ico">🏷</span><span id="fn-cat-t">카테고리</span></button>
+      <button class="fn-chip" id="fn-phase" type="button" onclick="togglePhaseChip()" title="탭하면 1기 가전 ⇄ 2기 주방"><span id="fn-phase-t">1기 가전</span></button>
     </div>
 
     <!-- 카테고리 선택 줄은 화면에서 제거 (데이터 필드는 보존) -->
@@ -1368,6 +1388,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           <span class="ppt-opt-label">샘플 신청만</span>
         </button>
       </div>
+      <div id="ppt-phase-note" style="font-size:11.5px; color:var(--blue); margin-top:7px;"></div>
     </div>
 
     <div class="fg">
@@ -1540,7 +1561,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v65)
+          ⬇️ 최신 버전 받기 (현재 v67)
         </button>
       </div>
 
@@ -2302,6 +2323,12 @@ function renderFnChips() {
   else fnSet('fn-card', 'fn-card-t', '명함', '');
 
   // 카테고리
+  // 기수 (v67) — 탭하면 1기 가전 ⇄ 2기 주방
+  if (typeof PHASE_NAMES !== 'undefined' && PHASE_NAMES) {   // 앱 시작 직후(설정 읽기 전)에는 건너뛴다
+    var eph = curEffectivePhase();
+    fnSet('fn-phase', 'fn-phase-t', PHASE_NAMES[eph], eph === '2' ? 'on-blue' : 'on-orange');
+  }
+
   if (cur.category) fnSet('fn-cat', 'fn-cat-t', cur.category, 'on-orange');
   else fnSet('fn-cat', 'fn-cat-t', '카테고리', '');
 }
@@ -3131,8 +3158,11 @@ function openOverlay(name) {
   }
   if (name === 'ppt') {
     // refresh counts
-    document.getElementById('cnt-all').textContent = products.length;
-    document.getElementById('cnt-sample').textContent = products.filter(function(p){ return p.sample; }).length;
+    var phb = phaseProducts();
+    document.getElementById('cnt-all').textContent = phb.length;
+    document.getElementById('cnt-sample').textContent = phb.filter(function(p){ return p.sample; }).length;
+    var pl = document.getElementById('ppt-phase-note');
+    if (pl) pl.textContent = phaseLabel() ? '※ 상단에서 고른 ' + phaseLabel() + ' 제품만 들어갑니다' : '';
   }
   if (name === 'backup') {
     // 예상 파일 크기 — 사진이 많을 때 JSON.stringify로 재면 화면이 멈추므로 길이 합으로 계산
@@ -3272,7 +3302,8 @@ function performAutoSave() {
       todos: (cur.todos || []).map(function(t){ return Object.assign({}, t); }),
       moq: cur.moq ? Object.assign({}, cur.moq) : null,
       cb: cur.cb ? Object.assign({}, cur.cb) : null,
-      sample: cloneSample(cur.sample)
+      sample: cloneSample(cur.sample),
+      phase: cur.phase || products[idx].phase || null
     };
   } else {
     var p = {
@@ -3286,7 +3317,8 @@ function performAutoSave() {
       todos: (cur.todos || []).map(function(t){ return Object.assign({}, t); }),
       moq: cur.moq ? Object.assign({}, cur.moq) : null,
       cb: cur.cb ? Object.assign({}, cur.cb) : null,
-      sample: cloneSample(cur.sample)
+      sample: cloneSample(cur.sample),
+      phase: newProductPhase()
     };
     products.unshift(p);
     editingId = p.id;          // 이후 입력은 같은 항목에 계속 자동 저장됨
@@ -3329,7 +3361,8 @@ function saveProduct() {
         todos: (cur.todos || []).map(function(t){ return Object.assign({}, t); }),
         moq: cur.moq ? Object.assign({}, cur.moq) : null,
         cb: cur.cb ? Object.assign({}, cur.cb) : null,
-        sample: cloneSample(cur.sample)
+        sample: cloneSample(cur.sample),
+        phase: cur.phase || products[idx].phase || null
       };
       persistSafe().then(function(ok) {
         if (!ok) {
@@ -3369,7 +3402,8 @@ function saveProduct() {
       todos: (cur.todos || []).map(function(t){ return Object.assign({}, t); }),
       moq: cur.moq ? Object.assign({}, cur.moq) : null,
       cb: cur.cb ? Object.assign({}, cur.cb) : null,
-      sample: cloneSample(cur.sample)
+      sample: cloneSample(cur.sample),
+      phase: newProductPhase()
     };
     products.unshift(p);
     persistSafe().then(function(ok) {
@@ -3382,9 +3416,14 @@ function saveProduct() {
       }
       draftingId = null;
       resetCur();
-      renderList();
+      if (curPhase !== 'all' && productPhase(p) !== curPhase) {
+        setPhase(productPhase(p));   // 다른 기수를 보고 있었으면 저장한 제품이 보이도록 전환
+        showToast('✓ 저장했어요 · ' + PHASE_NAMES[productPhase(p)] + ' 목록으로 전환');
+      } else {
+        renderList();
+        showToast('✓ 제품이 저장되었어요!');
+      }
       updateStorageBar();
-      showToast('✓ 제품이 저장되었어요!');
     });
   }
 }
@@ -3428,6 +3467,7 @@ function editProduct(id, asDraft) {
   cur.moq = p.moq ? Object.assign({}, p.moq) : null;
   cur.cb = p.cb ? Object.assign({}, p.cb) : null;
   cur.sample = cloneSample(p.sample);
+  cur.phase = (p.phase === '1' || p.phase === '2') ? p.phase : null;
 
   var ta = document.getElementById('name-ta');
   ta.value = cur.name;
@@ -3514,7 +3554,7 @@ function resetCur() {
   clearTimeout(autoSaveTimer);
   cur.name = ''; cur.memo = ''; cur.todos = [];
   cur.photos = []; cur.bizCards = []; cur.category = null;
-  cur.moq = null; cur.cb = null; cur.sample = null;
+  cur.moq = null; cur.cb = null; cur.sample = null; cur.phase = null;
 
   // edit mode 해제 (저장/취소/삭제로 명시적으로 끝냈을 때만 여기로 옴)
   editingId = null;
@@ -3574,7 +3614,8 @@ function visibleProducts() {
 
 function renderList() {
   updateTrashCount();
-  var vis = visibleProducts();   // 작성 중인 항목은 목록에서 제외
+  renderPhaseBar();
+  var vis = visibleProducts().filter(inPhase);   // 작성 중인 항목 제외 + 선택한 기수만
   var base = curTab === 'all' ? vis :
     vis.filter(function(p){ return curTab === 'sample' ? p.sample : !p.sample; });
   var filtered = curCat === 'all' ? base :
@@ -4116,7 +4157,7 @@ function renderPhotosPage() {
   var countEl = document.getElementById('ph-count');
 
   var items = [];
-  products.forEach(function(p) {
+  phaseProducts().forEach(function(p) {
     (p.photos || []).forEach(function(src, idx) {
       if (isValidPhoto(src)) items.push({ pid: p.id, idx: idx, src: src, name: p.name || '(이름 없음)' });
     });
@@ -4160,7 +4201,7 @@ function resetToMain() {
 
 // ── SAMPLE PAGE ───────────────────────────────────────
 function renderSamplePage() {
-  var sampled = products.filter(function(p){ return p.sample; });
+  var sampled = phaseProducts().filter(function(p){ return p.sample; });
   document.getElementById('sm-count').textContent = '샘플 신청 제품 ' + sampled.length + '개';
   var emptyEl = document.getElementById('sm-empty');
   var listEl = document.getElementById('sm-list');
@@ -4406,7 +4447,7 @@ function loadZipLibrary() {
 // 등록된 모든 제품 사진을 원본 그대로(변형 없이) zip으로 묶어서 다운로드
 async function exportAllPhotosZip() {
   var items = [];
-  products.forEach(function(p) {
+  phaseProducts().forEach(function(p) {
     (p.photos || []).forEach(function(src, idx) {
       if (isValidPhoto(src)) items.push({ src: src, name: p.name || '이름없음', idx: idx });
     });
@@ -4442,7 +4483,7 @@ async function exportAllPhotosZip() {
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = '광저우박람회_전체사진_' + pptDateStr().replace(/\./g, '') + '.zip';
+    a.download = '광저우박람회_' + phaseFileTag() + '사진_' + pptDateStr().replace(/\./g, '') + '.zip';
     a.click();
     URL.revokeObjectURL(url);
     showToast('✓ 사진 ' + items.length + '장 압축 다운로드 완료!');
@@ -4720,7 +4761,7 @@ async function exportSampleSheet(list, btn) {
 
 async function exportExcel(scope, btnEl) {
   scope = scope || 'all';
-  var list = scope === 'sample' ? products.filter(function(p){ return p.sample; }) : products.slice();
+  var list = scope === 'sample' ? phaseProducts().filter(function(p){ return p.sample; }) : phaseProducts();
   if (!list.length) {
     showToast(scope === 'sample' ? '샘플 신청한 제품이 없어요' : '등록된 제품이 없어요');
     return;
@@ -4745,7 +4786,7 @@ async function exportExcel(scope, btnEl) {
       var urlS = URL.createObjectURL(blobS);
       var aS = document.createElement('a');
       aS.href = urlS;
-      aS.download = '샘플관리_' + pptDateStr().replace(/\./g, '') + '.xlsx';
+      aS.download = '샘플관리_' + phaseFileTag() + pptDateStr().replace(/\./g, '') + '.xlsx';
       aS.click();
       URL.revokeObjectURL(urlS);
       showToast('✓ 샘플관리 시트 ' + list.length + '건 내려받았어요');
@@ -4838,7 +4879,7 @@ async function exportExcel(scope, btnEl) {
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = '광저우박람회_' + (scope === 'sample' ? '샘플목록_' : '제품목록_') + pptDateStr().replace(/\./g, '') + '.xlsx';
+    a.download = '광저우박람회_' + phaseFileTag() + (scope === 'sample' ? '샘플목록_' : '제품목록_') + pptDateStr().replace(/\./g, '') + '.xlsx';
     a.click();
     URL.revokeObjectURL(url);
     showToast('✓ 엑셀 파일(사진 포함) 다운로드 완료!');
@@ -5116,7 +5157,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v65';
+var APP_VERSION = 'v67';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5401,6 +5442,77 @@ function cleanupOrphanPhotos() {
 
 
 
+
+
+/* ══════════════════════════════════════════════════════
+   v66: 박람회 기수 나누기
+   ──────────────────────────────────────────────────────
+   기록한 날짜(제품 번호 = 만든 시각)로 자동 분류한다.
+   · 1기 가전 : 10월 20일까지 기록
+   · 2기 주방 : 10월 21일부터 기록
+   v67: 제품마다 직접 정한 기수(p.phase)가 있으면 날짜보다 우선한다.
+   상단 [전체 · 1기 가전 · 2기 주방]이 목록·샘플관리·사진·리포트·엑셀에 함께 적용된다.
+   ══════════════════════════════════════════════════════ */
+var PHASE2_START = 20261021;    // 2기 시작일 (YYYYMMDD) — v67: 10/21부터
+var PHASE_NAMES = { '1': '1기 가전', '2': '2기 주방' };
+var curPhase = 'all';
+try { curPhase = localStorage.getItem('gz_phase') || 'all'; } catch (e) {}
+if (!/^(all|1|2)$/.test(curPhase)) curPhase = 'all';
+
+function productPhase(p) {
+  if (p && (p.phase === '1' || p.phase === '2')) return p.phase;   // 직접 정한 기수가 우선
+  var k = productDayKey(p);
+  return (k >= PHASE2_START && k < 99999999) ? '2' : '1';
+}
+function inPhase(p) { return curPhase === 'all' || productPhase(p) === curPhase; }
+function phaseProducts() { return products.filter(inPhase); }
+// 입력 카드의 제품이 몇 기인지: 직접 고른 것 → 기존 제품의 기수 → 상단에서 보고 있는 기수 → 오늘 날짜
+function curEffectivePhase() {
+  if (cur.phase === '1' || cur.phase === '2') return cur.phase;
+  if (editingId) {
+    var ep = products.find(function(x) { return x.id === editingId; });
+    if (ep) return productPhase(ep);
+  }
+  if (curPhase !== 'all') return curPhase;
+  return productPhase({ id: Date.now() });
+}
+function togglePhaseChip() {
+  cur.phase = (curEffectivePhase() === '1') ? '2' : '1';
+  renderFnChips();
+  if (editingId) scheduleAutoSave();
+  showToast('이 제품을 ' + PHASE_NAMES[cur.phase] + '(으)로 분류했어요');
+}
+// 새로 만드는 제품의 기수 (직접 고른 것 → 상단에서 보고 있는 기수 → 없으면 날짜로 자동)
+function newProductPhase() {
+  if (cur.phase === '1' || cur.phase === '2') return cur.phase;
+  return curPhase !== 'all' ? curPhase : null;
+}
+
+function phaseLabel() { return curPhase === 'all' ? '' : PHASE_NAMES[curPhase]; }
+function phaseFileTag() { return curPhase === 'all' ? '' : (curPhase + '기_'); }
+
+function renderPhaseBar() {
+  var vis = products.filter(function(p) { return p.id !== draftingId; });
+  var n1 = vis.filter(function(p) { return productPhase(p) === '1'; }).length;
+  var n2 = vis.length - n1;
+  var set = function(id, n) { var el = document.getElementById(id); if (el) el.textContent = n; };
+  set('ph-n-all', vis.length); set('ph-n-1', n1); set('ph-n-2', n2);
+  document.querySelectorAll('.ph-btn').forEach(function(b) {
+    b.classList.toggle('active', b.getAttribute('data-ph') === curPhase);
+  });
+  renderFnChips();   // 입력 카드의 기수 칩도 함께 맞춘다
+}
+
+function setPhase(ph) {
+  curPhase = String(ph);
+  try { localStorage.setItem('gz_phase', curPhase); } catch (e) {}
+  renderList();
+  renderFnChips();
+  var sp = document.getElementById('sample-page');
+  if (sp && sp.style.display !== 'none' && sp.style.display !== '') renderSamplePage();
+  var pp = document.getElementById('photos-page');
+  if (pp && pp.style.display !== 'none') renderPhotosPage();
+}
 
 /* ══════════════════════════════════════════════════════
    v64: 상단 🎥 — 동영상 촬영 → 휴대폰에 바로 저장
@@ -6778,7 +6890,7 @@ function pptAddCoverSummary(pres, list, totalSlides) {
   s.addText("Product", { x:M, y:0.95, w:8, h:1.0, fontFace:FH, fontSize:58, color:PT.onBg, margin:0 });
   s.addText("Discovery.", { x:M, y:1.88, w:8, h:1.0, fontFace:FH, fontSize:58, color:PT.onAccent, italic:true, margin:0 });
 
-  s.addText("광저우 박람회 제품 발굴 리포트", {
+  s.addText("광저우 박람회 제품 발굴 리포트" + (phaseLabel() ? " · " + phaseLabel() : ""), {
     x:M, y:2.95, w:8, h:0.42, fontFace:FK, fontSize:19, color:PT.onBg, margin:0
   });
   s.addShape(pres.shapes.RECTANGLE, { x:M, y:3.5, w:1.2, h:0.03, fill:{color:PT.onAccent}, line:{type:'none'} });
@@ -7325,7 +7437,7 @@ function buildPrintReport(list, photoMode) {
 
   var html = '<div class="pr-head">' +
     '<div class="pr-eyebrow">CANTON FAIR · PRODUCT DISCOVERY</div>' +
-    '<div class="pr-title">광저우 박람회 · 제품 발굴 리포트</div>' +
+    '<div class="pr-title">광저우 박람회 · 제품 발굴 리포트' + (phaseLabel() ? ' · ' + phaseLabel() : '') + '</div>' +
     '<div class="pr-sub">생성일 ' + pptDateStr() + ' · 범위: ' + scopeTxt + '</div>' +
     '<div class="pr-stats">' +
       '<div class="pr-stat"><b>' + list.length + '</b>건 제품</div>' +
@@ -7377,9 +7489,10 @@ function reportOrder(list) {
     .map(function(x) { return x.p; });
 }
 function reportList() {
+  var base = phaseProducts();
   return reportOrder(pptScope === 'sample'
-    ? products.filter(function(p){ return p.sample; })
-    : products.slice());
+    ? base.filter(function(p){ return p.sample; })
+    : base);
 }
 
 function exportToPdf() {
@@ -7521,7 +7634,7 @@ async function exportToPpt() {
 
     pptAddClosing(pres, list);
 
-    var fname = '광저우박람회_' + pptDateStr().replace(/\./g,'') + '.pptx';
+    var fname = '광저우박람회_' + phaseFileTag() + pptDateStr().replace(/\./g,'') + '.pptx';
     await pres.writeFile({ fileName: fname });
 
     showToast('✓ PPT 다운로드 완료!');
