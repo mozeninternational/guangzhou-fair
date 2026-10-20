@@ -915,7 +915,23 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .sh-t { font-size: 14px; font-weight: 700; }
 .sh-d { font-size: 11.5px; color: var(--t2); margin-top: 2px; line-height: 1.45; }
 
-/* v61: 받은 제품 불러오기 버튼 (목록 맨 위) */
+/* v62: 받은 제품 불러오기 — 날짜·버전 옆 작은 버튼 */
+.recv-pill {
+  display: inline-block; margin-left: 5px; padding: 1px 7px; vertical-align: 1px;
+  border-radius: 6px; border: 1px solid rgba(46,204,113,.4); background: rgba(46,204,113,.10);
+  color: #6ee7b7; font-family: inherit; font-size: 10.5px; font-weight: 700; line-height: 16px;
+  cursor: pointer; -webkit-appearance: none; touch-action: manipulation;
+}
+.recv-pill:active { background: rgba(46,204,113,.25); }
+/* v62: 상단 버튼은 아이콘 없이 한 줄 고정 → 높이가 늘어나지 않는다 */
+.ppt-btn, .backup-btn { white-space: nowrap; flex-shrink: 0; padding: 6px 12px; line-height: 18px; }
+.hdr-btn-row { flex-wrap: nowrap; }
+.hdr-title { white-space: nowrap; }
+/* 왼쪽(제목·날짜)이 화면 밖으로 밀리지 않게: 좁은 폰에서는 📥 받기가 다음 줄로 내려간다 */
+.hdr > div:first-child { min-width: 0; flex: 1 1 auto; margin-right: 8px; }
+.hdr-sub { line-height: 1.75; }
+.hdr-right { flex-shrink: 0; }
+/* v61: 받은 제품 불러오기 버튼 (목록 맨 위) — v62에서 사용 안 함 */
 .recv-btn {
   display: block; width: 100%; margin: 0 0 9px; padding: 9px 12px;
   background: rgba(46,204,113,.10); border: 1px solid rgba(46,204,113,.35); border-radius: 11px;
@@ -979,15 +995,15 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v61</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v62</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
         <button class="ppt-btn" id="ppt-hdr-btn" onclick="openSheet('ppt')">
-          <span>📄</span><span>리포트</span>
+          <span>리포트</span>
         </button>
         <button class="backup-btn" onclick="openSheet('backup')">
-          <span>💾</span><span>백업</span>
+          <span>백업</span>
         </button>
         <button class="trash-hdr-btn" id="trash-hdr-btn" type="button" onclick="openTrash()" title="휴지통">🗑<span class="trash-badge" id="trash-badge"></span></button>
         <button class="fab-inline" id="fab-add" type="button" title="탭=촬영 · 길게=앨범">+</button>
@@ -1146,8 +1162,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 
   <!-- PRODUCT LIST -->
   <div class="content" id="main-page">
-    <!-- v61: 공유받은 제품 파일을 한 번에 불러오기 -->
-    <button class="recv-btn" type="button" onclick="document.getElementById('backup-input').click()">📥 받은 제품 불러오기</button>
+
     <div class="empty" id="empty-state">
       <div class="empty-icon">📋</div>
       <div class="empty-title">등록된 제품이 없어요</div>
@@ -1410,7 +1425,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <button class="sh-opt" type="button" onclick="shareAsAppFile()">
       <span class="sh-ico">📦</span>
       <span><div class="sh-t">앱 파일로 보내기</div>
-      <div class="sh-d">같은 앱을 쓰는 사람에게 · 받은 사람은 앱 첫 화면 <b>📥 받은 제품 불러오기</b>로 사진까지 그대로 추가</div></span>
+      <div class="sh-d">같은 앱을 쓰는 사람에게 · 받은 사람은 앱 상단 날짜 옆 <b>📥 받기</b>로 사진까지 그대로 추가</div></span>
     </button>
   </div>
 </div>
@@ -1507,7 +1522,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v61)
+          ⬇️ 최신 버전 받기 (현재 v62)
         </button>
       </div>
 
@@ -5082,7 +5097,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v61';
+var APP_VERSION = 'v62';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5707,7 +5722,7 @@ function shareAsAppFile() {
     productCount: 1, products: [clean]
   };
   var f = new File([JSON.stringify(payload)], '광저우_공유_' + shareSafeName(p) + '.json', { type: 'application/json' });
-  shareFiles([f], '광저우 박람회 앱 → 📥 받은 제품 불러오기 로 여세요 (안드로이드: 이 파일을 공유 → 광저우 박람회)', p.name)
+  shareFiles([f], '광저우 박람회 앱 상단 📥 받기 로 여세요 (안드로이드: 이 파일을 공유 → 광저우 박람회)', p.name)
     .then(function(done) { if (done) closeShare(); })
     .catch(function(e) { showToast('🚨 공유 실패: ' + ((e && e.message) || '오류')); });
 }
