@@ -848,6 +848,21 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .memo-ta { max-height: 134px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 
 /* ═══ v57: 휴지통 ═══════════════════════════════════════ */
+/* v58: 상단 휴지통 버튼 (항상 보임) */
+.trash-hdr-btn {
+  position: relative; width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  background: var(--card); border: 1px solid var(--border); color: var(--t1);
+  font-size: 14px; line-height: 1; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+  -webkit-appearance: none; touch-action: manipulation;
+}
+.trash-hdr-btn:active { transform: scale(.92); }
+.trash-badge {
+  display: none; position: absolute; top: -5px; right: -5px; min-width: 16px; height: 16px;
+  padding: 0 4px; border-radius: 8px; background: var(--red); color: #fff;
+  font-size: 9.5px; font-weight: 800; line-height: 16px; text-align: center;
+}
+.trash-badge.has { display: block; }
 .trash-link {
   display: block; margin: 14px auto 0; padding: 8px 14px;
   background: transparent; border: 1px dashed var(--border); border-radius: 10px;
@@ -885,6 +900,76 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   padding: 7px 13px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;
   -webkit-appearance: none; touch-action: manipulation;
 }
+
+/* ═══ v60: 제품 공유 ═══════════════════════════════════ */
+.p-share { background: none; border: none; padding: 0 2px 6px 6px; margin-top: -2px; font-size: 15px; line-height: 1; color: var(--t2); cursor: pointer; font-family: inherit; -webkit-appearance: none; touch-action: manipulation; }
+.p-share:active { color: var(--orange); }
+.sh-preview { width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; margin-bottom: 12px; max-height: 42dvh; object-fit: contain; background: #fff; }
+.sh-wait { text-align: center; color: var(--t2); font-size: 13px; padding: 26px 0; }
+.sh-opt { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; margin-bottom: 8px;
+  background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 12px 14px;
+  color: var(--t1); font-family: inherit; cursor: pointer; -webkit-appearance: none; touch-action: manipulation; }
+.sh-opt:active { border-color: var(--orange); background: rgba(245,165,0,.08); }
+.sh-opt:disabled { opacity: .5; }
+.sh-ico { font-size: 24px; flex-shrink: 0; }
+.sh-t { font-size: 14px; font-weight: 700; }
+.sh-d { font-size: 11.5px; color: var(--t2); margin-top: 2px; line-height: 1.45; }
+
+/* v61: 받은 제품 불러오기 버튼 (목록 맨 위) */
+.recv-btn {
+  display: block; width: 100%; margin: 0 0 9px; padding: 9px 12px;
+  background: rgba(46,204,113,.10); border: 1px solid rgba(46,204,113,.35); border-radius: 11px;
+  color: #6ee7b7; font-family: inherit; font-size: 13px; font-weight: 700; text-align: center;
+  cursor: pointer; -webkit-appearance: none; touch-action: manipulation;
+}
+.recv-btn:active { background: rgba(46,204,113,.22); }
+
+/* ═══ v59: 글자 크기 살짝 키우기 (약 +1px) ═══════════════════
+   버튼·칸 크기와 배치는 그대로, 읽는 글자만 키운다. */
+.hdr-title { font-size: 20px; }
+.hdr-sub { font-size: 12px; }
+/* 입력 카드 */
+.nm-ta { font-size: 18px; }
+.nm-ta::placeholder { font-size: 15px; }
+.memo-ta { font-size: 15px; }
+.memo-ta::placeholder { font-size: 14px; }
+.fn-chip { font-size: 13px; }
+.fn-chip-sub { font-size: 11px; }
+.td-item, .td-in { font-size: 14px; }
+.save-btn { font-size: 12px; }
+.dropzone-empty, .dropzone-empty-text { font-size: 13px; }
+.photo-hint { font-size: 11px; }
+/* 제품 목록 */
+.p-name { font-size: 15.5px; }
+.p-date { font-size: 11px; }
+.p-memo { font-size: 13.5px; }
+.p-todo-item { font-size: 13px; }
+.p-todo-more { font-size: 12px; }
+.badge { font-size: 11px; }
+.empty-sub { font-size: 13px; }
+/* 샘플관리 · 사진 */
+.sm-name { font-size: 15px; }
+.sm-meta { font-size: 12px; }
+.sm-date { font-size: 14px; }
+.sm-badge { font-size: 12px; }
+.sm-label { font-size: 14px; }
+.sm-group-hd { font-size: 12px; }
+.ph-thumb-name { font-size: 10px; }
+/* 시트(입력창) · 백업 · 휴지통 */
+.sheet-title { font-size: 17px; }
+.fl { font-size: 12px; }
+.fi { font-size: 15px; }
+.info-box { font-size: 13px; }
+.bk-card-title { font-size: 15px; }
+.bk-card-desc, .bk-card-info { font-size: 12px; }
+.tr-name { font-size: 14px; }
+.tr-sub { font-size: 11.5px; }
+.tr-info { font-size: 12px; }
+/* 하단 메뉴 · 알림 */
+.bnav-label { font-size: 11px; }
+.toast { font-size: 13px; }
+.undo-msg { font-size: 13.5px; }
+.lightbox-info-name { font-size: 16px; }
 </style>
 </head>
 <body>
@@ -894,7 +979,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v57</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v61</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -904,6 +989,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
         <button class="backup-btn" onclick="openSheet('backup')">
           <span>💾</span><span>백업</span>
         </button>
+        <button class="trash-hdr-btn" id="trash-hdr-btn" type="button" onclick="openTrash()" title="휴지통">🗑<span class="trash-badge" id="trash-badge"></span></button>
         <button class="fab-inline" id="fab-add" type="button" title="탭=촬영 · 길게=앨범">+</button>
       </div>
     </div>
@@ -1060,6 +1146,8 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 
   <!-- PRODUCT LIST -->
   <div class="content" id="main-page">
+    <!-- v61: 공유받은 제품 파일을 한 번에 불러오기 -->
+    <button class="recv-btn" type="button" onclick="document.getElementById('backup-input').click()">📥 받은 제품 불러오기</button>
     <div class="empty" id="empty-state">
       <div class="empty-icon">📋</div>
       <div class="empty-title">등록된 제품이 없어요</div>
@@ -1303,6 +1391,30 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <button class="undo-btn" type="button" onclick="runUndo()">되돌리기</button>
 </div>
 
+<!-- 제품 공유 -->
+<div class="overlay" id="share-overlay" onclick="overlayClick(event,'share')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📤 제품 공유 <span id="sh-name" style="font-size:13px;color:var(--t2);font-weight:500;"></span></div>
+    <div id="sh-preview-box"><div class="sh-wait">카드 이미지를 만드는 중...</div></div>
+    <button class="sh-opt" id="sh-btn-image" type="button" onclick="shareAsImage()" disabled>
+      <span class="sh-ico">🖼</span>
+      <span><div class="sh-t">카드 이미지 + 사진 원본</div>
+      <div class="sh-d">앱이 없는 사람에게 · 카톡·문자로 보내기 좋아요</div></span>
+    </button>
+    <button class="sh-opt" type="button" onclick="shareAsText()">
+      <span class="sh-ico">📝</span>
+      <span><div class="sh-t">텍스트만</div>
+      <div class="sh-d">단가·MOQ·CB·샘플·메모·확인할 것을 글로</div></span>
+    </button>
+    <button class="sh-opt" type="button" onclick="shareAsAppFile()">
+      <span class="sh-ico">📦</span>
+      <span><div class="sh-t">앱 파일로 보내기</div>
+      <div class="sh-d">같은 앱을 쓰는 사람에게 · 받은 사람은 앱 첫 화면 <b>📥 받은 제품 불러오기</b>로 사진까지 그대로 추가</div></span>
+    </button>
+  </div>
+</div>
+
 <!-- 휴지통 -->
 <div class="overlay" id="trash-overlay" onclick="overlayClick(event,'trash')">
   <div class="sheet">
@@ -1327,6 +1439,10 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <button class="bk-action-btn" type="button" onclick="openTrash()"
             style="background:transparent; border:1px solid var(--border); color:var(--t1); margin-bottom:12px; text-align:left;">
       🗑 휴지통 <span id="bk-trash-count" style="color:var(--t2); font-weight:500;"></span>
+    </button>
+    <button class="bk-action-btn green" type="button" onclick="document.getElementById('backup-input').click()"
+            style="margin-bottom:12px; text-align:left;">
+      📥 받은 제품 불러오기 <span style="font-weight:500; opacity:.85;">(다른 사람이 공유한 파일)</span>
     </button>
 
     <!-- ① 날짜별 백업 (주력) -->
@@ -1391,7 +1507,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v57)
+          ⬇️ 최신 버전 받기 (현재 v61)
         </button>
       </div>
 
@@ -1865,6 +1981,7 @@ function resumeDraftIfAny() {
     checkBackupReminder();
     updateStorageBar();
     resumeDraftIfAny(); // 이전에 저장/취소하지 않고 중단된 작성 중 항목이 있으면 이어서 열기
+    setTimeout(checkSharedInbox, 300);   // 안드로이드 공유창으로 받은 제품 파일 처리
 
     // 하루 한 번, 사진을 뺀 상태를 폰 안에 조용히 저장 (실수 삭제·손상 대비)
     setTimeout(function() {
@@ -2777,6 +2894,7 @@ function initBizSortable() {
 }
 
 function delPhoto(i) {
+  if (!confirm('이 사진은\n\n휴지통으로 이동됩니다.\n(30일 동안 휴지통에서 복구할 수 있어요)')) return;
   var src = cur.photos[i];
   cur.photos.splice(i, 1);
   renderPhotos();
@@ -2786,6 +2904,7 @@ function delPhoto(i) {
 }
 
 function delBizCard(i) {
+  if (!confirm('이 명함은\n\n휴지통으로 이동됩니다.\n(30일 동안 휴지통에서 복구할 수 있어요)')) return;
   var src = cur.bizCards[i];
   cur.bizCards.splice(i, 1);
   renderBizCards();
@@ -3322,7 +3441,7 @@ function deleteCurrentProduct() {
   if (!editingId) return;
   var p = products.find(function(x){ return x.id === editingId; });
   var name = p ? p.name : '이 제품';
-  if (!confirm('"' + name + '"을(를) 휴지통으로 옮길까요?\n30일 동안 복구할 수 있어요.')) return;
+  if (!confirm('"' + name + '"\n\n휴지통으로 이동됩니다.\n(30일 동안 휴지통에서 복구할 수 있어요)')) return;
   var backup = products.slice(), trashBackup = trash.slice();
   var delId = editingId;
   var tids = trashProducts([delId]);
@@ -3484,6 +3603,7 @@ function renderList() {
       '<div class="p-card" onclick="onCardTap(event, ' + p.id + ')">' +
       '<div class="p-head"><div class="p-name' + (p.star ? ' starred' : '') + '">' + escapeHtmlLite(p.name) + '</div>' +
         '<div class="p-head-r"><div class="p-date">' + p.date + '</div>' +
+        '<button class="p-share" type="button" title="공유" onclick="event.stopPropagation(); openShare(' + p.id + ')">📤</button>' +
         '<button class="p-star' + (p.star ? ' on' : '') + '" type="button" title="주목 제품 표시" onclick="event.stopPropagation(); toggleStar(' + p.id + ')">' + (p.star ? '★' : '☆') + '</button></div></div>' +
       (catBadge ? '<div class="p-cat-row">' + catBadge + '</div>' : '') +
       photos +
@@ -3588,7 +3708,7 @@ function setupSwipeDelete() {
 function confirmDeleteProduct(id) {
   var p = products.find(function(x){ return x.id === id; });
   if (!p) return;
-  if (!confirm('"' + (p.name || '이 제품') + '"을(를) 휴지통으로 옮길까요?\n30일 동안 복구할 수 있어요.')) {
+  if (!confirm('"' + (p.name || '이 제품') + '"\n\n휴지통으로 이동됩니다.\n(30일 동안 휴지통에서 복구할 수 있어요)')) {
     closeSwipeRow();
     return;
   }
@@ -3653,7 +3773,7 @@ function setupListReorder() {
     delay: 400,
     delayOnTouchOnly: false,
     touchStartThreshold: 8,
-    filter: '.p-star, .p-row-del, .p-photo',
+    filter: '.p-star, .p-share, .p-row-del, .p-photo',
     preventOnFilter: false,
     forceFallback: true,
     fallbackTolerance: 4,
@@ -4840,7 +4960,7 @@ function updateStorageBar() {
 // ── 전체 데이터 삭제 ────────────────────────────────────
 function resetAllData() {
   if (!products.length) { showToast('삭제할 데이터가 없어요'); return; }
-  var ok1 = window.confirm('저장된 ' + products.length + '개 제품을 전부 휴지통으로 옮길까요?\n30일 동안 휴지통에서 복구할 수 있어요.');
+  var ok1 = window.confirm('저장된 제품 ' + products.length + '개 전부\n\n휴지통으로 이동됩니다.\n(30일 동안 휴지통에서 복구할 수 있어요)');
   if (!ok1) return;
   var backup = products.slice(), trashBackup = trash.slice();
   var tids = trashProducts(products.map(function(p) { return p.id; }));
@@ -4962,7 +5082,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v57';
+var APP_VERSION = 'v61';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5245,6 +5365,353 @@ function cleanupOrphanPhotos() {
 }
 
 
+
+
+/* ══════════════════════════════════════════════════════
+   v61: 안드로이드 공유창으로 받은 제품 파일
+   ──────────────────────────────────────────────────────
+   카톡에서 파일 공유 → "광저우 박람회" 선택 → 서비스워커가 파일을 잠시 보관하고
+   앱을 연다(?shared=1). 앱은 보관함의 파일을 꺼내 바로 불러오기를 진행한다.
+   ══════════════════════════════════════════════════════ */
+var SHARE_INBOX = 'gz-share-inbox';
+function checkSharedInbox() {
+  if (!window.caches || dataLoadFailed) return;
+  caches.open(SHARE_INBOX).then(function(cache) {
+    return cache.keys().then(function(reqs) {
+      if (!reqs.length) return;
+      // 한 번에 하나씩: 꺼내서 지우고, 기존 불러오기 흐름으로 넘긴다
+      var req = reqs[0];
+      return cache.match(req).then(function(res) { return res ? res.blob() : null; }).then(function(blob) {
+        return cache.delete(req).then(function() {
+          if (!blob) return;
+          handleBackupFile({ target: { files: [blob], value: '' } });
+          if (reqs.length > 1) setTimeout(checkSharedInbox, 1500);
+        });
+      });
+    });
+  }).catch(function(e) { console.warn('[share-inbox]', e); }).then(function() {
+    if (/[?&]shared=1/.test(location.search)) {
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   v60: 제품 하나 공유하기
+   ──────────────────────────────────────────────────────
+   ① 카드 이미지 + 사진 원본 : 앱이 없는 사람에게 (카톡·문자)
+   ② 텍스트만               : 내용만 빠르게
+   ③ 앱 파일                : 같은 앱 사용자에게 — 받는 쪽에서 불러오면 사진까지 그대로 추가
+   아이폰은 "누른 순간"에만 공유창을 열어주므로, 카드 이미지는 시트를 열 때 미리 만들어 둔다.
+   ══════════════════════════════════════════════════════ */
+var shareCtx = null;   // { p, cardFile, cardUrl }
+
+function shareSafeName(p) {
+  return (p.name || '제품').replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 30) || '제품';
+}
+
+function buildShareText(p) {
+  var L = [];
+  L.push('[광저우 박람회] ' + (p.star ? '★ ' : '') + (p.name || '(이름 없음)'));
+  if (p.category) L.push('· 카테고리: ' + p.category);
+  var price = (p.moq && p.moq.price && p.moq.price !== '-') ? '$' + p.moq.price : '';
+  var qty = (p.moq && p.moq.qty && p.moq.qty !== '-') ? p.moq.qty + 'pcs' : '';
+  if (price || qty) L.push('· 단가 ' + (price || '-') + ' / MOQ ' + (qty || '-'));
+  if (p.moq && p.moq.memo) L.push('  (' + p.moq.memo + ')');
+  if (p.cb) L.push('· CB: ' + (p.cb.owned ? '보유' : p.cb.date ? '진행중 (' + fmtDate(p.cb.date) + ' 예정)' : '미대응'));
+  if (p.sample) {
+    var sm = '· 샘플: ' + (p.sample.requested ? fmtDate(p.sample.requested) + ' 신청' : '신청');
+    if (p.sample.expected) sm += ', ' + fmtDate(p.sample.expected) + ' 입고 예정';
+    L.push(sm);
+    if (p.sample.memo) L.push('  (' + p.sample.memo + ')');
+  }
+  if (p.date) L.push('· 기록일: ' + p.date);
+  if (p.memo) { L.push(''); L.push('[메모]'); L.push(p.memo); }
+  var todos = Array.isArray(p.todos) ? p.todos : migrateTodos(p);
+  if (todos.length) {
+    L.push(''); L.push('[확인할 것]');
+    todos.forEach(function(t) { L.push((t.done ? '■ ' : '□ ') + t.text); });
+  }
+  var nph = (p.photos || []).filter(isValidPhoto).length, nbc = (p.bizCards || []).filter(isValidPhoto).length;
+  if (nph || nbc) { L.push(''); L.push('사진 ' + nph + '장' + (nbc ? ' · 명함 ' + nbc + '장' : '')); }
+  return L.join('\n');
+}
+
+function loadImg(src) {
+  return new Promise(function(res) {
+    var im = new Image();
+    im.onload = function() { res(im); };
+    im.onerror = function() { res(null); };
+    im.src = src;
+  });
+}
+
+// 카드 내용을 이미지 한 장으로 (폭 1080px, 높이는 내용만큼)
+async function renderShareCard(p) {
+  var W = 1080, PAD = 56, IW = W - PAD * 2;
+  var FONT = '-apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif';
+  var photos = (p.photos || []).filter(isValidPhoto);
+  var cards = (p.bizCards || []).filter(isValidPhoto);
+  var mainImg = photos.length ? await loadImg(photos[0]) : null;
+  var thumbs = [];
+  for (var i = 1; i < Math.min(photos.length, 9); i++) { var t = await loadImg(photos[i]); if (t) thumbs.push(t); }
+  var cardImg = cards.length ? await loadImg(cards[0]) : null;
+
+  var cv = document.createElement('canvas');
+  var ctx = cv.getContext('2d');
+
+  function wrap(text, font, maxW) {
+    ctx.font = font;
+    var out = [];
+    String(text || '').split('\n').forEach(function(para) {
+      if (!para) { out.push(''); return; }
+      // 띄어쓰기 단위로 줄바꿈, 한 단어가 한 줄보다 길 때만 글자 단위로 자른다
+      var line = '';
+      para.split(/(\s+)/).forEach(function(tok) {
+        if (!tok) return;
+        var test = line + tok;
+        if (ctx.measureText(test).width <= maxW) { line = test; return; }
+        if (line.trim()) { out.push(line.replace(/\s+$/, '')); line = ''; }
+        if (/^\s+$/.test(tok)) return;
+        if (ctx.measureText(tok).width <= maxW) { line = tok; return; }
+        for (var k = 0; k < tok.length; k++) {
+          var t2 = line + tok[k];
+          if (ctx.measureText(t2).width > maxW && line) { out.push(line); line = tok[k]; }
+          else line = t2;
+        }
+      });
+      out.push(line);
+    });
+    return out;
+  }
+
+  // 정보 줄
+  var info = [];
+  var price = (p.moq && p.moq.price && p.moq.price !== '-') ? '$' + p.moq.price : '-';
+  var qty = (p.moq && p.moq.qty && p.moq.qty !== '-') ? p.moq.qty + 'pcs' : '-';
+  info.push(['단가', price + (p.moq && p.moq.memo ? '  (' + p.moq.memo + ')' : '')]);
+  info.push(['MOQ', qty]);
+  info.push(['CB', !p.cb ? '미입력' : p.cb.owned ? '보유' : p.cb.date ? '진행중 · ' + fmtDate(p.cb.date) + ' 예정' : '미대응']);
+  if (p.sample) {
+    var sv = (p.sample.requested ? fmtDate(p.sample.requested) + ' 신청' : '신청') + (p.sample.expected ? ' · ' + fmtDate(p.sample.expected) + ' 입고 예정' : '');
+    if (p.sample.memo) sv += '  (' + p.sample.memo + ')';
+    info.push(['샘플', sv]);
+  } else info.push(['샘플', '미신청']);
+  if (p.category) info.push(['카테고리', p.category]);
+
+  var todos = Array.isArray(p.todos) ? p.todos : migrateTodos(p);
+  var F_NAME = 'bold 50px ' + FONT, F_INFO = '32px ' + FONT, F_KEY = 'bold 30px ' + FONT,
+      F_MEMO = '34px ' + FONT, F_TODO = '32px ' + FONT, F_SMALL = '26px ' + FONT;
+  var KEYW = 150;
+
+  // 레이아웃 계산 + 그리기 (draw=false 로 높이만 잰다)
+  function layout(draw) {
+    var y = PAD;
+    // 대표 사진
+    if (mainImg) {
+      var r = Math.min(IW / mainImg.width, (IW * 1.0) / mainImg.height);
+      var w = mainImg.width * r, h = mainImg.height * r;
+      if (draw) { ctx.drawImage(mainImg, PAD + (IW - w) / 2, y, w, h); }
+      y += h + 18;
+    }
+    // 나머지 사진 썸네일
+    if (thumbs.length) {
+      var tw = (IW - 7 * 12) / 8;
+      thumbs.forEach(function(t, k) {
+        if (draw) {
+          var x = PAD + k * (tw + 12), sc = Math.max(tw / t.width, tw / t.height);
+          var sw = tw / sc, sh = tw / sc;
+          ctx.drawImage(t, (t.width - sw) / 2, (t.height - sh) / 2, sw, sh, x, y, tw, tw);
+        }
+      });
+      if (draw && photos.length > 9) {
+        ctx.fillStyle = '#8a7f73'; ctx.font = F_SMALL; ctx.fillText('외 ' + (photos.length - 9) + '장', PAD, y + tw + 34);
+      }
+      y += tw + (photos.length > 9 ? 50 : 18);
+    }
+    y += 22;
+    // 제품명
+    var nameLines = wrap((p.star ? '★ ' : '') + (p.name || '(이름 없음)'), F_NAME, IW);
+    nameLines.forEach(function(ln) {
+      if (draw) { ctx.fillStyle = p.star ? '#b8892d' : '#1a1613'; ctx.font = F_NAME; ctx.fillText(ln, PAD, y + 50); }
+      y += 64;
+    });
+    if (draw) { ctx.fillStyle = '#1a1613'; ctx.fillRect(PAD, y + 8, IW, 3); }
+    y += 34;
+    // 정보
+    info.forEach(function(row) {
+      var lines = wrap(row[1], F_INFO, IW - KEYW);
+      lines.forEach(function(ln, k) {
+        if (draw) {
+          if (k === 0) { ctx.fillStyle = '#8a7f73'; ctx.font = F_KEY; ctx.fillText(row[0], PAD, y + 34); }
+          ctx.fillStyle = '#1a1613'; ctx.font = F_INFO; ctx.fillText(ln, PAD + KEYW, y + 34);
+        }
+        y += 46;
+      });
+    });
+    // 메모 · 확인할 것 (연한 블루 칸)
+    var memoLines = p.memo ? wrap(p.memo, F_MEMO, IW - 56) : [];
+    var todoLines = [];
+    todos.forEach(function(t) {
+      wrap((t.done ? '■ ' : '□ ') + t.text, F_TODO, IW - 56).forEach(function(ln) { todoLines.push({ ln: ln, done: t.done }); });
+    });
+    if (memoLines.length || todoLines.length) {
+      y += 20;
+      var boxH = 40 + memoLines.length * 50 + (memoLines.length && todoLines.length ? 16 : 0) + todoLines.length * 46 + 24;
+      if (draw) {
+        ctx.fillStyle = '#EFF5F9'; ctx.strokeStyle = '#CFE0EA'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.rect(PAD, y, IW, boxH); ctx.fill(); ctx.stroke();
+      }
+      var yy = y + 28;
+      memoLines.forEach(function(ln) {
+        if (draw) { ctx.fillStyle = '#1a1613'; ctx.font = F_MEMO; ctx.fillText(ln, PAD + 28, yy + 36); }
+        yy += 50;
+      });
+      if (memoLines.length && todoLines.length) yy += 16;
+      todoLines.forEach(function(o) {
+        if (draw) { ctx.fillStyle = o.done ? '#8a7f73' : '#4a423a'; ctx.font = F_TODO; ctx.fillText(o.ln, PAD + 28, yy + 34); }
+        yy += 46;
+      });
+      y += boxH;
+    }
+    // 명함
+    if (cardImg) {
+      y += 30;
+      if (draw) { ctx.fillStyle = '#8a7f73'; ctx.font = F_KEY; ctx.fillText('명함' + (cards.length > 1 ? ' (' + cards.length + '장 중 1장)' : ''), PAD, y + 30); }
+      y += 46;
+      var cr = Math.min(IW * 0.7 / cardImg.width, 520 / cardImg.height);
+      if (draw) ctx.drawImage(cardImg, PAD, y, cardImg.width * cr, cardImg.height * cr);
+      y += cardImg.height * cr;
+    }
+    // 바닥글
+    y += 40;
+    if (draw) {
+      ctx.fillStyle = '#d9d1c2'; ctx.fillRect(PAD, y, IW, 2);
+      ctx.fillStyle = '#8a7f73'; ctx.font = F_SMALL;
+      ctx.fillText('광저우 박람회 제품 노트' + (p.date ? ' · 기록일 ' + p.date : ''), PAD, y + 40);
+    }
+    y += 40 + PAD;
+    return y;
+  }
+
+  cv.width = W; cv.height = 10;
+  var H = Math.ceil(layout(false));
+  cv.width = W; cv.height = Math.min(H, 16000);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, cv.height);
+  layout(true);
+
+  return new Promise(function(res) {
+    cv.toBlob(function(b) {
+      if (!b) { res(null); return; }
+      res(new File([b], shareSafeName(p) + '_카드.jpg', { type: 'image/jpeg' }));
+    }, 'image/jpeg', 0.9);
+  });
+}
+
+function openShare(pid) {
+  var p = products.find(function(x) { return x.id === pid; });
+  if (!p) return;
+  closeSwipeRow && closeSwipeRow();
+  shareCtx = { p: p, cardFile: null, cardUrl: null };
+  document.getElementById('sh-name').textContent = p.name || '';
+  document.getElementById('sh-preview-box').innerHTML = '<div class="sh-wait">카드 이미지를 만드는 중...</div>';
+  var b = document.getElementById('sh-btn-image'); b.disabled = true;
+  openOverlay('share');
+  var my = shareCtx;
+  renderShareCard(p).then(function(f) {
+    if (shareCtx !== my) return;
+    if (!f) { document.getElementById('sh-preview-box').innerHTML = '<div class="sh-wait">카드 이미지를 만들지 못했어요. 텍스트·앱 파일로 보내주세요.</div>'; return; }
+    my.cardFile = f;
+    my.cardUrl = URL.createObjectURL(f);
+    document.getElementById('sh-preview-box').innerHTML = '<img class="sh-preview" src="' + my.cardUrl + '">';
+    b.disabled = false;
+  });
+}
+
+function closeShare() {
+  if (shareCtx && shareCtx.cardUrl) { try { URL.revokeObjectURL(shareCtx.cardUrl); } catch (e) {} }
+  shareCtx = null;
+  closeOverlay('share');
+}
+
+function downloadBlobFile(file) {
+  var url = URL.createObjectURL(file);
+  var a = document.createElement('a');
+  a.href = url; a.download = file.name; a.style.display = 'none';
+  document.body.appendChild(a); a.click();
+  setTimeout(function() { try { document.body.removeChild(a); } catch (e) {} URL.revokeObjectURL(url); }, 800);
+}
+
+function shareFiles(files, text, title) {
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: files })) {
+    return navigator.share({ files: files, title: title || '', text: text || '' }).then(function() { return true; })
+      .catch(function(e) { if (e && e.name === 'AbortError') return false; throw e; });
+  }
+  // 공유 기능이 없는 기기(주로 PC) → 파일로 내려받기
+  files.forEach(function(f, i) { setTimeout(function() { downloadBlobFile(f); }, i * 250); });
+  showToast('ℹ️ 이 기기는 파일로 내려받습니다');
+  return Promise.resolve(true);
+}
+
+function shareAsImage() {
+  if (!shareCtx || !shareCtx.cardFile) return;
+  var p = shareCtx.p, base = shareSafeName(p);
+  var files = [shareCtx.cardFile];
+  (p.photos || []).filter(isValidPhoto).forEach(function(s, i) { var f = dataUrlToFile(s, base + '_' + (i + 1) + '.jpg'); if (f) files.push(f); });
+  (p.bizCards || []).filter(isValidPhoto).forEach(function(s, i) { var f = dataUrlToFile(s, base + '_명함' + (i + 1) + '.jpg'); if (f) files.push(f); });
+  shareFiles(files, buildShareText(p), p.name).then(function(done) { if (done) closeShare(); })
+    .catch(function(e) {
+      // 파일이 많아 실패하면 카드 이미지만이라도 보낸다
+      shareFiles([shareCtx.cardFile], buildShareText(p), p.name).then(function(done) { if (done) closeShare(); })
+        .catch(function() { showToast('🚨 공유 실패: ' + ((e && e.message) || '오류')); });
+    });
+}
+
+function shareAsText() {
+  if (!shareCtx) return;
+  var text = buildShareText(shareCtx.p);
+  if (navigator.share) {
+    navigator.share({ text: text }).then(function() { closeShare(); }).catch(function(e) {
+      if (e && e.name === 'AbortError') return;
+      copyText(text);
+    });
+  } else copyText(text);
+}
+
+function copyText(text) {
+  var done = function() { showToast('✓ 내용을 복사했어요. 원하는 곳에 붙여넣으세요'); closeShare(); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(function() { legacyCopy(text) ? done() : showToast('⚠️ 복사 실패'); });
+  } else { legacyCopy(text) ? done() : showToast('⚠️ 복사 실패'); }
+}
+function legacyCopy(text) {
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    var ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
+
+function shareAsAppFile() {
+  if (!shareCtx) return;
+  var p = shareCtx.p;
+  var clean = Object.assign({}, p);
+  clean.photos = (p.photos || []).filter(isValidPhoto);
+  clean.bizCards = (p.bizCards || []).filter(isValidPhoto);
+  var payload = {
+    app: 'guangzhou_fair', version: APP_VERSION, kind: 'share',
+    exportedAt: new Date().toISOString(), from: p.date || '',
+    productCount: 1, products: [clean]
+  };
+  var f = new File([JSON.stringify(payload)], '광저우_공유_' + shareSafeName(p) + '.json', { type: 'application/json' });
+  shareFiles([f], '광저우 박람회 앱 → 📥 받은 제품 불러오기 로 여세요 (안드로이드: 이 파일을 공유 → 광저우 박람회)', p.name)
+    .then(function(done) { if (done) closeShare(); })
+    .catch(function(e) { showToast('🚨 공유 실패: ' + ((e && e.message) || '오류')); });
+}
+
 /* ══════════════════════════════════════════════════════
    v57: 휴지통
    ──────────────────────────────────────────────────────
@@ -5478,7 +5945,9 @@ function updateTrashCount() {
   var a = document.getElementById('bk-trash-count');
   if (a) a.textContent = n ? '(' + n + '건)' : '(비어 있음)';
   var l = document.getElementById('trash-link');
-  if (l) { l.style.display = n ? 'block' : 'none'; l.textContent = '🗑 휴지통 (' + n + ')'; }
+  if (l) { l.style.display = 'block'; l.textContent = '🗑 휴지통' + (n ? ' (' + n + ')' : ''); }
+  var bd = document.getElementById('trash-badge');
+  if (bd) { bd.textContent = n > 99 ? '99+' : String(n); bd.className = 'trash-badge' + (n ? ' has' : ''); }
 }
 
 // ── 지운 직후 [되돌리기] ──
@@ -5948,6 +6417,20 @@ function handleBackupFile(e) {
       }
 
       _pendingImportData = data;
+
+      // 공유받은 제품 파일 → 묻고 바로 합치기 (전체 교체 선택지는 보여주지 않는다)
+      if (data.kind === 'share') {
+        var names = data.products.map(function(x) { return '· ' + (x.name || '(이름 없음)'); }).join('\n');
+        var dup = data.products.filter(function(x) { return products.some(function(y) { return y.id === x.id; }); }).length;
+        if (!confirm('공유받은 제품을 추가할까요?\n\n' + names +
+                     (data.from ? '\n\n기록일: ' + data.from : '') +
+                     (dup ? '\n\n※ 같은 제품이 이미 있어 최신 내용으로 바뀝니다.' : ''))) {
+          _pendingImportData = null; return;
+        }
+        closeOverlay('backup');
+        runImport('merge');
+        return;
+      }
 
       // 확인창 정보 채우기
       var exportedStr = '';

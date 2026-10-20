@@ -6,7 +6,8 @@
       (예: v45 → v46) 숫자를 안 올리면 폰이 예전 화면을 계속 보여준다.
    ══════════════════════════════════════════════════════ */
 
-var CACHE = 'gz-fair-v57';
+var CACHE = 'gz-fair-v61';
+var SHARE_INBOX = 'gz-share-inbox';   // 안드로이드 공유창으로 받은 파일 임시 보관
 
 var PRECACHE = [
   './',
@@ -29,7 +30,7 @@ self.addEventListener('activate', function (e) {
   e.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(keys.map(function (k) {
-        if (k !== CACHE) return caches.delete(k);
+        if (k !== CACHE && k !== SHARE_INBOX) return caches.delete(k);
       }));
     }).then(function () { return self.clients.claim(); })
   );
@@ -43,6 +44,17 @@ self.addEventListener('activate', function (e) {
    외부 주소  : 건드리지 않음 (CDN·폰트 등은 원래대로)               */
 self.addEventListener('fetch', function (e) {
   var req = e.request;
+
+  /* 안드로이드 공유창 → "광저우 박람회"로 보낸 파일 받기 (manifest의 share_target)
+     파일을 잠시 보관해 두고 앱을 연다. 앱이 열리면 바로 불러오기를 진행한다. */
+  if (req.method === 'POST') {
+    var u0;
+    try { u0 = new URL(req.url); } catch (err) { return; }
+    if (u0.origin === self.location.origin && u0.searchParams.has('share-target')) {
+      e.respondWith(receiveShare(req));
+    }
+    return;
+  }
 
   if (req.method !== 'GET') return;
 
@@ -121,5 +133,18 @@ function cacheFirst(req) {
     }).catch(function () {
       return new Response('', { status: 504 });
     });
+  });
+}
+
+function receiveShare(req) {
+  return req.formData().then(function (form) {
+    var files = form.getAll('file').filter(function (f) { return f && typeof f !== 'string'; });
+    return caches.open(SHARE_INBOX).then(function (c) {
+      return Promise.all(files.map(function (f, i) {
+        return c.put('./__shared/' + Date.now() + '_' + i, new Response(f));
+      }));
+    });
+  }).catch(function () {}).then(function () {
+    return Response.redirect('./?shared=1', 303);
   });
 }
