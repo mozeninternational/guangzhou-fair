@@ -846,6 +846,45 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 #main-page { min-height: calc(66px + env(safe-area-inset-bottom, 0px)); }
 /* 메모: 6줄까지 늘어나고, 넘으면 칸 안에서 스크롤 → 사진칸이 너무 멀어지지 않게 */
 .memo-ta { max-height: 134px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+
+/* ═══ v57: 휴지통 ═══════════════════════════════════════ */
+.trash-link {
+  display: block; margin: 14px auto 0; padding: 8px 14px;
+  background: transparent; border: 1px dashed var(--border); border-radius: 10px;
+  color: var(--t2); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  -webkit-appearance: none; touch-action: manipulation;
+}
+.trash-link:active { color: var(--t1); border-color: var(--t2); }
+.tr-info { font-size: 11px; color: var(--t2); line-height: 1.5; margin-bottom: 12px; }
+.tr-empty { text-align: center; color: var(--t3); font-size: 13px; padding: 30px 0; }
+.tr-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.tr-item:last-child { border-bottom: none; }
+.tr-thumb { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border); background: #111827; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.tr-body { flex: 1; min-width: 0; }
+.tr-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tr-sub { font-size: 10.5px; color: var(--t2); margin-top: 2px; }
+.tr-btns { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+.tr-btn { border: none; border-radius: 8px; padding: 6px 10px; font-size: 11px; font-weight: 700; font-family: inherit; cursor: pointer; -webkit-appearance: none; touch-action: manipulation; }
+.tr-btn.restore { background: #2e7d5b; color: #fff; }
+.tr-btn.restore:active { background: #25664a; }
+.tr-btn.purge { background: transparent; color: var(--t3); border: 1px solid var(--border); }
+.tr-btn.purge:active { color: var(--red); border-color: var(--red); }
+/* 지운 직후 잠깐 뜨는 [되돌리기] 바 */
+.undo-bar {
+  position: fixed; left: 50%; bottom: 82px; transform: translateX(-50%) translateY(14px);
+  width: calc(100% - 32px); max-width: 398px; z-index: 520;
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 16px;
+  background: #253045; border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  opacity: 0; pointer-events: none; transition: all .25s;
+}
+.undo-bar.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.undo-msg { flex: 1; min-width: 0; font-size: 12.5px; color: var(--t1); }
+.undo-btn {
+  flex-shrink: 0; background: var(--orange); color: #fff; border: none; border-radius: 9px;
+  padding: 7px 13px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;
+  -webkit-appearance: none; touch-action: manipulation;
+}
 </style>
 </head>
 <body>
@@ -855,7 +894,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v56</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v57</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1027,6 +1066,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       <div class="empty-sub">위 버튼으로 정보를 입력하고 저장해보세요</div>
     </div>
     <div class="p-list" id="p-list" style="display:none;"></div>
+    <button class="trash-link" id="trash-link" type="button" onclick="openTrash()" style="display:none;">🗑 휴지통</button>
   </div>
 
   <!-- SAMPLE PAGE -->
@@ -1257,6 +1297,23 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 
 <div class="toast" id="toast"></div>
 
+<!-- 지운 직후 [되돌리기] -->
+<div class="undo-bar" id="undo-bar">
+  <span class="undo-msg" id="undo-msg"></span>
+  <button class="undo-btn" type="button" onclick="runUndo()">되돌리기</button>
+</div>
+
+<!-- 휴지통 -->
+<div class="overlay" id="trash-overlay" onclick="overlayClick(event,'trash')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🗑 휴지통</div>
+    <div class="tr-info">지운 제품·사진·명함은 <b>30일 동안</b> 여기에 보관됩니다. 30일이 지나면 자동으로 정리됩니다.</div>
+    <div id="trash-list"></div>
+    <button class="clear-btn" id="trash-empty-btn" type="button" onclick="emptyTrash()" style="margin-top:14px;">🗑 휴지통 비우기 (영구 삭제)</button>
+  </div>
+</div>
+
 <!-- BACKUP FILE INPUT (숨김) -->
 <input type="file" id="backup-input" accept=".json,application/json" style="display:none" onchange="handleBackupFile(event)">
 
@@ -1265,6 +1322,12 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">💾 백업</div>
+
+    <!-- 휴지통 바로가기 -->
+    <button class="bk-action-btn" type="button" onclick="openTrash()"
+            style="background:transparent; border:1px solid var(--border); color:var(--t1); margin-bottom:12px; text-align:left;">
+      🗑 휴지통 <span id="bk-trash-count" style="color:var(--t2); font-weight:500;"></span>
+    </button>
 
     <!-- ① 날짜별 백업 (주력) -->
     <div class="bk-card" style="border-color: rgba(46,125,91,.5); background: rgba(46,125,91,.07);">
@@ -1328,7 +1391,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v56)
+          ⬇️ 최신 버전 받기 (현재 v57)
         </button>
       </div>
 
@@ -1609,7 +1672,24 @@ function buildMetaAndPuts() {
     copy.bizCards = bc;
     return copy;
   });
-  return { meta: meta, puts: puts, used: used };
+
+  // 휴지통도 같은 방식(사진은 번호만)으로 저장 → 휴지통 사진은 지워지지 않는다
+  var trashMeta = trash.map(function(t) {
+    var c = Object.assign({}, t);
+    if (t.type === 'product' && t.product) {
+      var pc = Object.assign({}, t.product);
+      pc.photos = (t.product.photos || []).map(function(s) { return photoIdFor(s, puts); }).filter(Boolean);
+      pc.bizCards = (t.product.bizCards || []).map(function(s) { return photoIdFor(s, puts); }).filter(Boolean);
+      pc.photos.concat(pc.bizCards).forEach(function(id) { used.add(id); });
+      c.product = pc;
+    } else {
+      c.photo = photoIdFor(t.src, puts);
+      if (c.photo) used.add(c.photo);
+      delete c.src;
+    }
+    return c;
+  });
+  return { meta: meta, puts: puts, used: used, trashMeta: trashMeta };
 }
 
 // 저장소 형태(사진 번호) → 메모리 형태(사진 원본)로 복원
@@ -1681,7 +1761,7 @@ function loadProducts() {
     });
   }).then(function(list) {
     dataLoadFailed = false;
-    return list;
+    return loadTrash().then(function() { return list; });
   }).catch(function(err) {
     console.error('[loadProducts] 불러오기 실패:', err);
     // 읽기에 실패했는데 빈 목록으로 시작하면, 이후 자동저장이 원본을 덮어써 데이터가 전부 사라진다.
@@ -2697,17 +2777,21 @@ function initBizSortable() {
 }
 
 function delPhoto(i) {
+  var src = cur.photos[i];
   cur.photos.splice(i, 1);
   renderPhotos();
   updateSaveBtn();
   updateCardBtn();
+  trashPhoto(src, 'photo');
 }
 
 function delBizCard(i) {
+  var src = cur.bizCards[i];
   cur.bizCards.splice(i, 1);
   renderBizCards();
   updateSaveBtn();
   updateCardBtn();
+  trashPhoto(src, 'card');
 }
 
 function updateCardBtn() {
@@ -3238,24 +3322,24 @@ function deleteCurrentProduct() {
   if (!editingId) return;
   var p = products.find(function(x){ return x.id === editingId; });
   var name = p ? p.name : '이 제품';
-  if (!confirm('"' + name + '"을(를) 삭제할까요?\n이 동작은 되돌릴 수 없습니다.')) return;
-  var backup = products.slice();
-  products = products.filter(function(p){ return p.id !== editingId; });
+  if (!confirm('"' + name + '"을(를) 휴지통으로 옮길까요?\n30일 동안 복구할 수 있어요.')) return;
+  var backup = products.slice(), trashBackup = trash.slice();
+  var delId = editingId;
+  var tids = trashProducts([delId]);
   resetCur();
   renderList();
 
   persistSafe().then(function(ok) {
     if (!ok) {
-      products = backup;
+      products = backup; trash = trashBackup;
       renderList();
       showToast('\U0001F6A8 삭제 실패 — 다시 시도해주세요');
       return;
     }
-    cleanupOrphanPhotos().then(function(n){ if (n) updateStorageBar(); });
     updateStorageBar();
     checkAndShowRecoveryBanner();
     renderDayBackupList();
-    showToast('삭제되었습니다');
+    showUndo('🗑 "' + name + '" 휴지통으로 옮겼어요', function() { restoreTrashItems(tids); });
   });
 }
 
@@ -3336,6 +3420,7 @@ function visibleProducts() {
 }
 
 function renderList() {
+  updateTrashCount();
   var vis = visibleProducts();   // 작성 중인 항목은 목록에서 제외
   var base = curTab === 'all' ? vis :
     vis.filter(function(p){ return curTab === 'sample' ? p.sample : !p.sample; });
@@ -3503,12 +3588,12 @@ function setupSwipeDelete() {
 function confirmDeleteProduct(id) {
   var p = products.find(function(x){ return x.id === id; });
   if (!p) return;
-  if (!confirm('"' + (p.name || '이 제품') + '"을(를) 삭제할까요?\n되돌릴 수 없습니다.')) {
+  if (!confirm('"' + (p.name || '이 제품') + '"을(를) 휴지통으로 옮길까요?\n30일 동안 복구할 수 있어요.')) {
     closeSwipeRow();
     return;
   }
-  var backup = products.slice();
-  products = products.filter(function(x){ return x.id !== id; });
+  var backup = products.slice(), trashBackup = trash.slice();
+  var tids = trashProducts([id]);
   if (editingId === id) resetCur();
   closeSwipeRow();
   renderList();
@@ -3516,16 +3601,15 @@ function confirmDeleteProduct(id) {
   // 저장이 실제로 됐는지 확인한다. 실패하면 되돌려서 화면과 저장 내용이 어긋나지 않게 한다.
   persistSafe().then(function(ok) {
     if (!ok) {
-      products = backup;
+      products = backup; trash = trashBackup;
       renderList();
       showToast('\U0001F6A8 삭제 실패 — 다시 시도해주세요');
       return;
     }
-    cleanupOrphanPhotos().then(function(n){ if (n) updateStorageBar(); });
     updateStorageBar();
     checkAndShowRecoveryBanner();
     renderDayBackupList();   // 백업 날짜 목록도 즉시 갱신
-    showToast('삭제되었습니다');
+    showUndo('🗑 "' + (p.name || '이 제품') + '" 휴지통으로 옮겼어요', function() { restoreTrashItems(tids); });
   });
 }
 
@@ -4756,21 +4840,23 @@ function updateStorageBar() {
 // ── 전체 데이터 삭제 ────────────────────────────────────
 function resetAllData() {
   if (!products.length) { showToast('삭제할 데이터가 없어요'); return; }
-  var ok1 = window.confirm('저장된 ' + products.length + '개 제품 정보를 전부 삭제할까요?\n먼저 내보내기로 백업하셨는지 확인해주세요.');
+  var ok1 = window.confirm('저장된 ' + products.length + '개 제품을 전부 휴지통으로 옮길까요?\n30일 동안 휴지통에서 복구할 수 있어요.');
   if (!ok1) return;
-  var ok2 = window.confirm('정말 삭제하시겠어요? 되돌릴 수 없습니다.');
-  if (!ok2) return;
-  products = [];
-  var allPhotoKeys = [];
-  storedPhotoIds.forEach(function(id) { allPhotoKeys.push(PHOTO_PREFIX + id); });
-  photoIdMap.clear();
-  storedPhotoIds.clear();
-  idbBulk(null, allPhotoKeys.concat(['products'])).catch(function(e){ console.error(e); });
+  var backup = products.slice(), trashBackup = trash.slice();
+  var tids = trashProducts(products.map(function(p) { return p.id; }));
   resetCur();
   renderList();
-  updateStorageBar();
   closeOverlay('backup');
-  showToast('🗑️ 모든 제품 데이터가 삭제되었어요');
+  persistSafe().then(function(ok) {
+    if (!ok) {
+      products = backup; trash = trashBackup; renderList();
+      showToast('\U0001F6A8 삭제 실패 — 다시 시도해주세요');
+      return;
+    }
+    updateStorageBar();
+    renderDayBackupList();
+    showUndo('🗑 제품 ' + tids.length + '개를 휴지통으로 옮겼어요', function() { restoreTrashItems(tids); });
+  });
 }
 
 // ── 사진 전체 재압축 (수동 실행 전용) ────────────────────
@@ -4831,6 +4917,7 @@ function persistSafe() {
 
   var puts = built.puts;
   puts['products'] = built.meta;
+  if (!trashLoadFailed) puts[TRASH_KEY] = built.trashMeta;
 
   // 제품 ↔ 사진 연결정보 사본.
   // 구버전 앱은 'products' 키만 덮어쓰므로 이 사본은 살아남는다.
@@ -4875,7 +4962,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v56';
+var APP_VERSION = 'v57';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -4950,6 +5037,12 @@ function scanLostPhotos() {
         var id = photoIdMap.get(photoFingerprint(v));
         if (id) used.add(id);
       });
+    });
+    trashPhotoSrcs().forEach(function(v) {      // 휴지통 사진은 "잃어버린 사진"이 아니다
+      if (typeof v !== 'string' || !v) return;
+      if (v.indexOf(MISSING_MARK) === 0) { used.add(v.slice(MISSING_MARK.length)); return; }
+      var id = photoIdMap.get(photoFingerprint(v));
+      if (id) used.add(id);
     });
     return allIds.filter(function(id) { return !used.has(id); });
   });
@@ -5149,6 +5242,265 @@ function cleanupOrphanPhotos() {
     orphans.forEach(function(k) { storedPhotoIds.delete(k.slice(PHOTO_PREFIX.length)); });
     return orphans.length;
   }).catch(function() { return 0; });
+}
+
+
+/* ══════════════════════════════════════════════════════
+   v57: 휴지통
+   ──────────────────────────────────────────────────────
+   제품·사진·명함을 지우면 바로 없애지 않고 휴지통에 30일 보관한다.
+   휴지통 사진도 저장소의 사진 번호로 남겨 두므로 자동 정리에 지워지지 않는다.
+   ══════════════════════════════════════════════════════ */
+var TRASH_KEY = 'trash';
+var TRASH_DAYS = 30;
+var trash = [];
+var trashLoadFailed = false;
+
+function newTrashId() { return 'tr' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+// 휴지통 안의 모든 사진(원본) — "잃어버린 사진" 판정에서 빼기 위해 쓴다
+function trashPhotoSrcs() {
+  var out = [];
+  trash.forEach(function(t) {
+    if (t.type === 'product' && t.product) out = out.concat(t.product.photos || [], t.product.bizCards || []);
+    else if (t.src) out.push(t.src);
+  });
+  return out;
+}
+
+function loadTrash() {
+  return idbGet(TRASH_KEY).then(function(saved) {
+    var meta = Array.isArray(saved) ? saved : [];
+    var cutoff = Date.now() - TRASH_DAYS * 86400000;
+    var expired = meta.filter(function(t) { return !t || !(t.at >= cutoff); });
+    meta = meta.filter(function(t) { return t && t.at >= cutoff; });
+
+    function idsOf(list) {
+      var ids = [];
+      list.forEach(function(t) {
+        if (!t) return;
+        if (t.type === 'product' && t.product) ids = ids.concat(t.product.photos || [], t.product.bizCards || []);
+        else if (t.photo) ids.push(t.photo);
+      });
+      return ids.filter(function(id) { return typeof id === 'string' && id.indexOf('data:') !== 0; });
+    }
+
+    return idbGetMany(idsOf(meta).map(function(id) { return PHOTO_PREFIX + id; })).then(function(blobs) {
+      function pull(id) {
+        if (typeof id === 'string' && id.indexOf('data:') === 0) return id;
+        var v = blobs[PHOTO_PREFIX + id];
+        if (typeof v === 'string' && v) {
+          photoIdMap.set(photoFingerprint(v), id);
+          storedPhotoIds.add(id);
+          return v;
+        }
+        return MISSING_MARK + id;
+      }
+      trash = meta.map(function(t) {
+        var c = Object.assign({}, t);
+        if (t.type === 'product' && t.product) {
+          var pp = Object.assign({}, t.product);
+          pp.photos = (pp.photos || []).map(pull);
+          pp.bizCards = (pp.bizCards || []).map(pull);
+          c.product = pp;
+        } else {
+          c.src = pull(t.photo);
+          delete c.photo;
+        }
+        return c;
+      });
+      trashLoadFailed = false;
+
+      // 30일 지난 항목의 사진 파일 정리 (지금 쓰는 제품·휴지통 사진은 건드리지 않는다)
+      if (expired.length) {
+        var used = buildMetaAndPuts().used;
+        var drop = idsOf(expired).filter(function(id) { return !used.has(id); })
+                                 .map(function(id) { return PHOTO_PREFIX + id; });
+        idbBulk({ trash: buildMetaAndPuts().trashMeta }, drop).catch(function() {});
+      }
+    });
+  }).catch(function(e) {
+    console.error('[trash] 불러오기 실패:', e);
+    trash = [];
+    trashLoadFailed = true;        // 저장할 때 휴지통을 덮어쓰지 않는다
+    orphanCleanupBlocked = true;   // 휴지통 사진이 지워지지 않도록 자동 정리 중지
+  });
+}
+
+// 제품들을 휴지통으로 (목록에서 빼고, 원래 자리를 기억)
+function trashProducts(ids) {
+  var set = {}; ids.forEach(function(id) { set[id] = true; });
+  var tids = [], now = Date.now();
+  products.forEach(function(p, i) {
+    if (!set[p.id]) return;
+    var tid = newTrashId();
+    tids.push(tid);
+    trash.unshift({ tid: tid, type: 'product', at: now, idx: i, product: p });
+  });
+  products = products.filter(function(p) { return !set[p.id]; });
+  if (draftingId && set[draftingId]) draftingId = null;
+  updateTrashCount();
+  return tids;
+}
+
+// 입력 중인 제품에서 지운 사진·명함 한 장을 휴지통으로
+function trashPhoto(src, kind) {
+  if (!src || typeof src !== 'string') return;
+  var tid = newTrashId();
+  trash.unshift({ tid: tid, type: kind, at: Date.now(), pid: editingId || null, pname: cur.name || '' , src: src });
+  updateTrashCount();
+  persist();             // 휴지통 저장
+  scheduleAutoSave();    // 제품에서 빠진 것도 저장
+  showUndo('🗑 ' + (kind === 'card' ? '명함' : '사진') + '을 휴지통으로 옮겼어요', function() { restoreTrashItems([tid]); });
+}
+
+// 휴지통에서 되살리기
+function restoreTrashItems(tids) {
+  var set = {}; tids.forEach(function(t) { set[t] = true; });
+  var items = trash.filter(function(t) { return set[t.tid]; });
+  if (!items.length) return;
+  var restored = 0, skipped = 0;
+
+  // 제품은 원래 순서대로 원래 자리에 넣는다
+  items.filter(function(t) { return t.type === 'product'; })
+       .sort(function(a, b) { return (a.idx || 0) - (b.idx || 0); })
+       .forEach(function(t) {
+    if (products.some(function(p) { return p.id === t.product.id; })) { skipped++; set[t.tid] = false; return; }
+    products.splice(Math.min(t.idx || 0, products.length), 0, t.product);
+    restored++;
+  });
+
+  // 사진·명함은 원래 제품으로 돌려보낸다. 제품이 없으면 새 제품으로 만든다.
+  items.filter(function(t) { return t.type !== 'product'; }).forEach(function(t) {
+    var field = (t.type === 'card') ? 'bizCards' : 'photos';
+    var target = t.pid ? products.find(function(p) { return p.id === t.pid; }) : null;
+    if (target) {
+      if (!Array.isArray(target[field])) target[field] = [];
+      target[field].push(t.src);
+      if (editingId === t.pid) {
+        cur[field].push(t.src);
+        if (field === 'photos') renderPhotos(); else renderBizCards();
+        updateSaveBtn(); updateCardBtn();
+      }
+    } else {
+      var np = {
+        id: Date.now() + restored, name: t.pname || '복구된 ' + (field === 'photos' ? '사진' : '명함'),
+        memo: '', date: new Date().toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }),
+        photos: [], bizCards: [], category: null, todos: [], moq: null, cb: null, sample: null
+      };
+      np[field].push(t.src);
+      products.unshift(np);
+    }
+    restored++;
+  });
+
+  trash = trash.filter(function(t) { return !set[t.tid]; });
+  hideUndo();
+  persistSafe().then(function(ok) {
+    renderList();
+    renderTrash();
+    updateStorageBar();
+    renderDayBackupList();
+    if (!ok) { showToast('\U0001F6A8 복구 저장 실패 — 다시 시도해주세요'); return; }
+    showToast('✓ ' + restored + '건 복구했어요' + (skipped ? ' (이미 목록에 있는 ' + skipped + '건 제외)' : ''));
+  });
+}
+
+function purgeTrashItem(tid) {
+  var t = trash.find(function(x) { return x.tid === tid; });
+  if (!t) return;
+  var label = t.type === 'product' ? '"' + (t.product.name || '이 제품') + '"' : (t.type === 'card' ? '이 명함' : '이 사진');
+  if (!confirm(label + '을(를) 완전히 삭제할까요?\n다시는 복구할 수 없습니다.')) return;
+  trash = trash.filter(function(x) { return x.tid !== tid; });
+  persistSafe().then(function(ok) {
+    if (ok) cleanupOrphanPhotos().then(function() { updateStorageBar(); });
+    renderTrash();
+  });
+}
+
+function emptyTrash() {
+  if (!trash.length) { showToast('휴지통이 비어 있어요'); return; }
+  if (!confirm('휴지통의 ' + trash.length + '건을 모두 완전히 삭제할까요?\n다시는 복구할 수 없습니다.')) return;
+  var before = trash.slice();
+  trash = [];
+  persistSafe().then(function(ok) {
+    if (!ok) { trash = before; showToast('\U0001F6A8 비우기 실패'); }
+    else cleanupOrphanPhotos().then(function() { updateStorageBar(); });
+    renderTrash();
+  });
+}
+
+function openTrash() {
+  closeOverlay('backup');
+  renderTrash();
+  openOverlay('trash');
+}
+
+function trashTimeStr(ms) {
+  var d = new Date(ms);
+  return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
+function renderTrash() {
+  updateTrashCount();
+  var box = document.getElementById('trash-list');
+  if (!box) return;
+  var btn = document.getElementById('trash-empty-btn');
+  if (btn) btn.style.display = trash.length ? '' : 'none';
+  if (!trash.length) { box.innerHTML = '<div class="tr-empty">휴지통이 비어 있어요</div>'; return; }
+  box.innerHTML = trash.map(function(t) {
+    var thumb, name, sub;
+    var left = Math.max(0, TRASH_DAYS - Math.floor((Date.now() - t.at) / 86400000));
+    if (t.type === 'product') {
+      var p = t.product || {};
+      var ph = (p.photos || []).filter(isValidPhoto);
+      thumb = ph.length ? '<img class="tr-thumb" src="' + ph[0] + '">' : '<div class="tr-thumb">📦</div>';
+      name = escapeHtmlLite(p.name || '(이름 없음)');
+      sub = '제품 · 사진 ' + (p.photos || []).length + '장' + ((p.bizCards || []).length ? ' · 명함 ' + p.bizCards.length : '');
+    } else {
+      thumb = isValidPhoto(t.src) ? '<img class="tr-thumb" src="' + t.src + '">' : '<div class="tr-thumb">🖼️</div>';
+      name = (t.type === 'card' ? '명함' : '사진') + (t.pname ? ' · ' + escapeHtmlLite(t.pname) : '');
+      sub = t.pid && products.some(function(p) { return p.id === t.pid; }) ? '복구하면 원래 제품으로 돌아가요' : '복구하면 새 제품으로 만들어져요';
+    }
+    return '<div class="tr-item">' + thumb +
+      '<div class="tr-body"><div class="tr-name">' + name + '</div>' +
+      '<div class="tr-sub">' + sub + '</div>' +
+      '<div class="tr-sub">' + trashTimeStr(t.at) + ' 삭제 · ' + left + '일 후 자동 정리</div></div>' +
+      '<div class="tr-btns">' +
+        '<button class="tr-btn restore" type="button" onclick="restoreTrashItems([\'' + t.tid + '\'])">복구</button>' +
+        '<button class="tr-btn purge" type="button" onclick="purgeTrashItem(\'' + t.tid + '\')">영구 삭제</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+function updateTrashCount() {
+  var n = trash.length;
+  var a = document.getElementById('bk-trash-count');
+  if (a) a.textContent = n ? '(' + n + '건)' : '(비어 있음)';
+  var l = document.getElementById('trash-link');
+  if (l) { l.style.display = n ? 'block' : 'none'; l.textContent = '🗑 휴지통 (' + n + ')'; }
+}
+
+// ── 지운 직후 [되돌리기] ──
+var undoFn = null, undoTimer = null;
+function showUndo(msg, fn) {
+  undoFn = fn;
+  document.getElementById('undo-msg').textContent = msg;
+  document.getElementById('toast').classList.remove('show');
+  document.getElementById('undo-bar').classList.add('show');
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(hideUndo, 6000);
+}
+function hideUndo() {
+  clearTimeout(undoTimer);
+  undoFn = null;
+  var b = document.getElementById('undo-bar');
+  if (b) b.classList.remove('show');
+}
+function runUndo() {
+  var fn = undoFn;
+  hideUndo();
+  if (fn) fn();
 }
 
 // 기존 호출부 호환용(자동저장 등). 실패하면 토스트로 알린다.
