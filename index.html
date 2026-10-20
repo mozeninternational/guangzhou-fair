@@ -855,7 +855,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v52</span></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v53</span></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1328,7 +1328,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v52)
+          ⬇️ 최신 버전 받기 (현재 v53)
         </button>
       </div>
 
@@ -4238,7 +4238,12 @@ var TPL_FIRST_ROW = 5;          // 데이터 시작 행
    G 샘플 테스트 · H 2차 샘플 신청일 · I 현황 · J 비고 · K 명함        */
 var COL_IMG = 2, COL_NAME = 3, COL_PRICE = 4, COL_REQ = 5,
     COL_IN = 6, COL_TEST = 7, COL_REQ2 = 8, COL_STATUS = 9,
-    COL_NOTE = 10, COL_CARD = 11;
+    COL_NOTE = 10, COL_PROG = 11, COL_CHK0 = 12, COL_CARD = 20;
+
+/* PM 체크리스트 (비고 오른쪽) — K 진행률 · L~S 체크 8칸 · T 명함
+   ✔ 완료 · △ 진행중 · – 해당없음(진행률 계산에서 빠짐) */
+var PM_CHECKS = ['사양\n확정', '디자인\n컬러', '단가\n확정', 'KC\n인증',
+                 '패키지\n설명서', '상세\n페이지', '초도품\n검수', '입고\n출시'];
 
 // 엑셀 날짜 일련번호 (1900-01-01 = 1, 1900년 윤년 버그 포함)
 function excelSerialDate(y, m, d) {
@@ -4384,7 +4389,8 @@ async function exportSampleSheet(list, btn) {
     'G5:G1004': { type: 'list', allowBlank: true, formulae: ['목록!$B$2:$B$21'] },   // 샘플 테스트
     'I5:I1004': { type: 'list', allowBlank: true, formulae: ['목록!$A$2:$A$21'] },   // 현황
     'E5:F1004': { type: 'date', allowBlank: true, operator: 'between', formulae: [DMIN, DMAX] },
-    'H5:H1004': { type: 'date', allowBlank: true, operator: 'between', formulae: [DMIN, DMAX] }
+    'H5:H1004': { type: 'date', allowBlank: true, operator: 'between', formulae: [DMIN, DMAX] },
+    'L5:S1004': { type: 'list', allowBlank: true, formulae: ['"✔,△,–"'] }           // PM 체크리스트
   };
 
   // ── 명함 열(K) 만들기 — 비고 오른쪽 ──
@@ -4397,7 +4403,85 @@ async function exportSampleSheet(list, btn) {
   ws.getColumn(COL_IMG).width = 15;     // 이미지
   ws.getColumn(COL_NOTE).width = 52;    // 비고
   ws.getColumn(COL_CARD).width = 27;    // 명함 (자르지 않은 원본이 들어가므로 넉넉히)
-  if (ws.autoFilter) ws.autoFilter = { from: 'A4', to: 'K1004' };
+  if (ws.autoFilter) ws.autoFilter = { from: 'A4', to: 'T1004' };
+
+  /* ── PM 체크리스트 (K 진행률 · L~S 체크) ──
+     샘플 이후 개발 단계를 칸마다 ✔/△/– 로 체크하고, 진행률은 자동 계산된다.
+     빈 줄(1000행까지)에도 수식·드롭다운을 깔아 두어 나중에 추가한 제품도 그대로 쓴다. */
+  var hProg = ws.getCell(4, COL_PROG);
+  hProg.value = 'PM\n진행률';
+  try { hProg.style = JSON.parse(JSON.stringify(hdrJ.style)); } catch (e) {}
+  hProg.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+  ws.getColumn(COL_PROG).width = 9;
+  PM_CHECKS.forEach(function(label, k) {
+    var h = ws.getCell(4, COL_CHK0 + k);
+    h.value = label;
+    try { h.style = JSON.parse(JSON.stringify(hdrJ.style)); } catch (e) {}
+    h.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+    ws.getColumn(COL_CHK0 + k).width = 8.5;
+  });
+  ws.getRow(4).height = Math.max(ws.getRow(4).height || 0, 34);
+
+  var jBorder = null;
+  try { jBorder = JSON.parse(JSON.stringify(ws.getCell(TPL_FIRST_ROW, COL_NOTE).border || {})); } catch (e) {}
+  for (var rr = TPL_FIRST_ROW; rr <= 1004; rr++) {
+    var pc = ws.getCell(rr, COL_PROG);
+    pc.value = { formula: 'IF(C' + rr + '="","",IFERROR(COUNTIF(L' + rr + ':S' + rr + ',"✔")/(8-COUNTIF(L' + rr + ':S' + rr + ',"–")),0))' };
+    pc.numFmt = '0%';
+    pc.alignment = { vertical: 'middle', horizontal: 'center' };
+    pc.font = Object.assign({}, ws.getCell(rr, COL_NOTE).font || {}, { bold: true, size: 11 });
+    if (jBorder) pc.border = jBorder;
+    for (var cc2 = COL_CHK0; cc2 < COL_CHK0 + 8; cc2++) {
+      var ck = ws.getCell(rr, cc2);
+      ck.alignment = { vertical: 'middle', horizontal: 'center' };
+      ck.font = Object.assign({}, ws.getCell(rr, COL_NOTE).font || {}, { size: 13 });
+      if (jBorder) ck.border = jBorder;
+    }
+  }
+
+  // 체크 색상: ✔ 초록 · △ 노랑 · – 회색 / 진행률 100% 초록 · 1~99% 파랑
+  ws.addConditionalFormatting({ ref: 'L5:S1004', rules: [
+    { type: 'cellIs', operator: 'equal', formulae: ['"✔"'], priority: 1,
+      style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFD7EFDD' } }, font: { color: { argb: 'FF1E7A4A' }, bold: true } } },
+    { type: 'cellIs', operator: 'equal', formulae: ['"△"'], priority: 2,
+      style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFFCF0CF' } }, font: { color: { argb: 'FF9A6B00' }, bold: true } } },
+    { type: 'cellIs', operator: 'equal', formulae: ['"–"'], priority: 3,
+      style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFEDEDED' } }, font: { color: { argb: 'FF8A8A8A' } } } }
+  ]});
+  ws.addConditionalFormatting({ ref: 'K5:K1004', rules: [
+    { type: 'expression', formulae: ['AND(ISNUMBER(K5),K5>=1)'], priority: 4,
+      style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFD7EFDD' } }, font: { color: { argb: 'FF1E7A4A' }, bold: true } } },
+    { type: 'expression', formulae: ['AND(ISNUMBER(K5),K5>0,K5<1)'], priority: 5,
+      style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFDCE9F7' } }, font: { color: { argb: 'FF2E5D9A' }, bold: true } } }
+  ]});
+
+  // 안내 문구에 체크 방법 추가
+  try {
+    var guide = ws.getCell(2, 1);
+    var add = ' · PM 체크리스트: ✔ 완료 · △ 진행중 · – 해당없음(진행률 제외)';
+    if (typeof guide.value === 'string') guide.value = guide.value + add;
+    else if (guide.value && Array.isArray(guide.value.richText)) {
+      var runs = guide.value.richText.slice();
+      var lastFont = runs.length ? runs[runs.length - 1].font : undefined;
+      runs.push({ text: add, font: lastFont });
+      guide.value = { richText: runs };
+    }
+  } catch (e) {}
+
+  // 대시보드에 PM 진행 지표 두 줄 추가 (A11·A12)
+  if (dash) {
+    try {
+      var refA = dash.getCell('A10'), refB = dash.getCell('B10');
+      [[11, 'PM 체크 진행 중 (1~99%)', 'COUNTIFS(샘플현황!$C$5:$C$1004,"<>",샘플현황!$K$5:$K$1004,">0",샘플현황!$K$5:$K$1004,"<1")'],
+       [12, 'PM 체크 완료 (100%)',     'COUNTIFS(샘플현황!$C$5:$C$1004,"<>",샘플현황!$K$5:$K$1004,">=1")']
+      ].forEach(function(d) {
+        var a = dash.getCell('A' + d[0]), b = dash.getCell('B' + d[0]);
+        a.value = d[1];
+        b.value = { formula: d[2] };
+        try { a.style = JSON.parse(JSON.stringify(refA.style)); b.style = JSON.parse(JSON.stringify(refB.style)); } catch (e) {}
+      });
+    } catch (e) {}
+  }
 
   var IMG_BOX = 96;        // 제품 사진이 들어갈 정사각 칸(px)
   var CARD_BOX_W = 186;    // 명함이 들어갈 칸 가로(px)
@@ -4927,7 +5011,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v52';
+var APP_VERSION = 'v53';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5943,8 +6027,10 @@ function pptAddProductSlide(pres, p, productNo, photoIdx, photoTotal, curSlideId
   var L_BOTTOM = L_Y + L_H;          // 사진 칸의 아래 끝 — 메모 칸도 여기에 맞춘다
 
   // ── 상단 라벨 ──
-  s.addText("PRODUCT · " + String(productNo).padStart(2,'0'), {
-    x:0.6, y:0.42, w:3, h:0.25, fontFace:FM, fontSize:9, color:PT.muted, bold:true, charSpacing:3, margin:0
+  var dk = productDayKey(p);
+  var dayTag = (dk < 99999999) ? ("  ·  " + Math.floor(dk / 100 % 100) + "/" + (dk % 100)) : "";
+  s.addText("PRODUCT · " + String(productNo).padStart(2,'0') + dayTag + (p.sample ? "  ·  SAMPLE" : ""), {
+    x:0.6, y:0.42, w:6, h:0.25, fontFace:FM, fontSize:9, color:PT.muted, bold:true, charSpacing:3, margin:0
   });
   if (p.category) {
     s.addText(p.category, {
@@ -6384,10 +6470,36 @@ function prWaitImages() {
   }));
 }
 
-function exportToPdf() {
-  var list = pptScope === 'sample'
+/* ── 리포트(PPT·PDF) 정렬 순서 ──
+   ① 샘플 신청한 제품 먼저 ② 그 안에서·그 다음은 기록한 날짜순(1일차 → 마지막 날)
+   ③ 같은 날짜 안에서는 제품 목록 화면에서 정해둔 순서를 그대로 따른다. */
+function productDayKey(p) {
+  var t = Number(p.id);
+  if (isFinite(t) && t > 1000000000000) {
+    var d = new Date(t);
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  }
+  return 99999999;   // 날짜를 알 수 없는 항목은 맨 뒤
+}
+function reportOrder(list) {
+  return list.map(function(p, i) { return { p: p, i: i }; })
+    .sort(function(a, b) {
+      var sa = a.p.sample ? 0 : 1, sb = b.p.sample ? 0 : 1;
+      if (sa !== sb) return sa - sb;
+      var da = productDayKey(a.p), db = productDayKey(b.p);
+      if (da !== db) return da - db;
+      return a.i - b.i;
+    })
+    .map(function(x) { return x.p; });
+}
+function reportList() {
+  return reportOrder(pptScope === 'sample'
     ? products.filter(function(p){ return p.sample; })
-    : products.slice();
+    : products.slice());
+}
+
+function exportToPdf() {
+  var list = reportList();
 
   if (list.length === 0) {
     showToast(pptScope === 'sample' ? '샘플 신청한 제품이 없어요' : '등록된 제품이 없어요');
@@ -6463,9 +6575,7 @@ function loadPptLibrary() {
 
 // ─── 메인 실행 ───────────────────────────────
 async function exportToPpt() {
-  var list = pptScope === 'sample'
-    ? products.filter(function(p){ return p.sample; })
-    : products.slice();
+  var list = reportList();
 
   if (list.length === 0) {
     showToast(pptScope === 'sample' ? '샘플 신청한 제품이 없어요' : '등록된 제품이 없어요');
