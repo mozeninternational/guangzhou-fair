@@ -1015,7 +1015,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v68</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v69</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1360,10 +1360,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <div class="sheet-title">📄 리포트 내보내기</div>
 
     <div class="info-box" id="exp-info">
-      제품 발굴 리포트를 PowerPoint 파일로 저장합니다.<br>
-      · 사진은 원본 비율 그대로 배치됩니다<br>
-      · <b>대표 이미지만</b>: 제품당 1장 (출력·공유용)<br>
-      · <b>사진 전부</b>: 메인 이미지 탭하면 다음 사진으로 순환 (발표모드)
+      제품 발굴 리포트를 PowerPoint 파일로 저장합니다.<br>· 제품당 1장 · 사진이 여러 장이면 대표 사진 옆에 작은 사진이 함께 들어갑니다<br>· 발표 중 <b>작은 사진을 누르면</b> 대표 사진 자리에 크게 바뀝니다<br>· 인쇄할 때는 PDF 버튼을 쓰거나, PowerPoint 인쇄에서 <b>"숨겨진 슬라이드 인쇄" 체크 해제</b>
     </div>
 
     <div class="fg">
@@ -1393,20 +1390,6 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
         </button>
       </div>
       <div id="ppt-phase-note" style="font-size:11.5px; color:var(--blue); margin-top:7px;"></div>
-    </div>
-
-    <div class="fg">
-      <div class="fl" id="exp-photo-label">사진 슬라이드</div>
-      <div class="ppt-options">
-        <button class="ppt-opt-btn active" id="mode-single" onclick="setPptMode('single')">
-          <span class="ppt-opt-label" style="font-size:12px;font-weight:700;">대표 이미지만</span>
-          <span class="ppt-opt-label" style="opacity:.8;" id="mode-single-sub">제품당 1장 · 출력용</span>
-        </button>
-        <button class="ppt-opt-btn" id="mode-all" onclick="setPptMode('all')">
-          <span class="ppt-opt-label" style="font-size:12px;font-weight:700;">사진 전부</span>
-          <span class="ppt-opt-label" style="opacity:.8;" id="mode-all-sub">탭 순환 · 발표용</span>
-        </button>
-      </div>
     </div>
 
     <button class="confirm-btn" id="ppt-confirm" onclick="runExport()">
@@ -1565,7 +1548,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v68)
+          ⬇️ 최신 버전 받기 (현재 v69)
         </button>
       </div>
 
@@ -5161,7 +5144,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v68';
+var APP_VERSION = 'v69';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -6805,7 +6788,7 @@ function runImport(mode) {
 // PPT EXPORT
 // ══════════════════════════════════════════════════════
 var pptScope = 'all';
-var pptPhotoMode = 'single';  // 'single' = 대표 이미지만, 'all' = 사진 전부
+var pptPhotoMode = 'all';  // v69: 발표용·출력용 구분 없이 한 가지 (사진 전부 포함)
 
 function setPptScope(scope) {
   pptScope = scope;
@@ -6813,11 +6796,7 @@ function setPptScope(scope) {
   document.getElementById('scope-sample').classList.toggle('active', scope === 'sample');
 }
 
-function setPptMode(mode) {
-  pptPhotoMode = mode;
-  document.getElementById('mode-single').classList.toggle('active', mode === 'single');
-  document.getElementById('mode-all').classList.toggle('active', mode === 'all');
-}
+function setPptMode(mode) { /* v69: 사진 방식 선택 없음 (호환용으로 남겨둠) */ }
 
 // 이미지 데이터를 pptxgenjs 형식으로 변환 (data: 접두어 제거)
 function toPptImageData(dataUri) {
@@ -7025,220 +7004,278 @@ function pptFitRuns(runs, wIn, hIn, lineMul) {
   });
 }
 
-// ─── 제품 슬라이드 (사진 한 장당 한 슬라이드, 메인이미지 하이퍼링크로 순환) ───
-function pptAddProductSlide(pres, p, productNo, photoIdx, photoTotal, curSlideIdx, nextSlideIdx, totalSlides, photoMode) {
-  photoMode = photoMode || 'all';
-  var isSingleMode = (photoMode === 'single');
+/* ══════════════════════════════════════════════════════
+   v69: 제품 슬라이드 — 대표 사진 + 작은 사진 + 정리된 메모
+   ──────────────────────────────────────────────────────
+   · 제품당 보이는 슬라이드 1장 (발표·출력 공용)
+   · 사진이 여러 장이면 대표 사진 오른쪽에 작은 사진을 넣는다.
+     작은 사진을 누르면 → 그 사진이 크게 들어간 "숨긴 슬라이드"로 이동
+     (숨긴 슬라이드는 슬라이드쇼 순서에서 건너뛰므로, 다음으로 넘기면 바로 다음 제품)
+   · 대표 사진 크기는 사진 수와 상관없이 그대로, 작은 사진이 많으면 오른쪽 글 영역이 조금 좁아진다
+   · 메모는 핵심 스펙 / 공급 조건·리스크 / 다음 액션 으로 나눠 보여준다
+   ══════════════════════════════════════════════════════ */
+var PPT_MAIN = { x: 0.5, y: 0.95, w: 4.3, h: 5.7 };     // 대표 사진 칸 (항상 같은 크기)
+var PPT_GAP = 0.08;
+var PPT_RIGHT = SW - 0.5;                                // 글 영역 오른쪽 끝
+var PHASE_PERIOD = { '1': '20261015-19', '2': '20261023-27' };   // 슬라이드 아래 박람회 기간
+
+// 작은 사진 배치: 개수에 따라 1~3줄, 칸 크기
+function pptThumbLayout(m) {
+  if (!m) return { cols: 0, rows: 0, cw: 0, ch: 0, areaW: 0 };
+  var cols = m <= 3 ? 1 : (m <= 10 ? 2 : 3);
+  var cw = cols === 1 ? 1.4 : (cols === 2 ? 1.05 : 0.88);
+  var minRows = cols === 1 ? 3 : (cols === 2 ? 4 : 5);
+  var rows = Math.max(minRows, Math.ceil(m / cols));
+  var ch = (PPT_MAIN.h - (rows - 1) * PPT_GAP) / rows;
+  return { cols: cols, rows: rows, cw: cw, ch: ch, areaW: cols * cw + (cols - 1) * PPT_GAP };
+}
+
+// ── 사진 준비: 대표용(최대 1800px로 가볍게) · 작은 사진용(칸에 맞게 잘라 작게) ──
+var pptImgCache = {};     // fingerprint → { data, w, h }
+var pptThumbCache = {};   // fingerprint|w|h → data
+
+function pptCanvasJpeg(img, sx, sy, sw, sh, dw, dh, q) {
+  var cv = document.createElement('canvas');
+  cv.width = Math.max(1, Math.round(dw)); cv.height = Math.max(1, Math.round(dh));
+  var cx = cv.getContext('2d');
+  cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, cv.width, cv.height);
+  cx.drawImage(img, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+  return cv.toDataURL('image/jpeg', q);
+}
+
+async function pptPrepareImages(list, onProgress) {
+  var jobs = [];
+  list.forEach(function(p) {
+    var ph = (p.photos || []).filter(isValidPhoto);
+    var lay = pptThumbLayout(Math.max(0, ph.length - 1));
+    ph.forEach(function(src) { jobs.push({ src: src, lay: lay }); });
+  });
+  for (var i = 0; i < jobs.length; i++) {
+    var j = jobs[i], fp = photoFingerprint(j.src);
+    if (onProgress && i % 5 === 0) onProgress(i, jobs.length);
+    var need = !pptImgCache[fp] || (j.lay.cols && !pptThumbCache[fp + '|' + j.lay.cw + '|' + j.lay.ch.toFixed(3)]);
+    if (!need) continue;
+    var img = await loadImg(j.src);
+    if (!img) continue;
+    var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    if (!pptImgCache[fp]) {
+      var MAX = 1800, big = Math.max(w, h);
+      var data = j.src;
+      if (big > MAX) {
+        var r = MAX / big;
+        try { data = pptCanvasJpeg(img, 0, 0, w, h, w * r, h * r, 0.86); } catch (e) { data = j.src; }
+      }
+      pptImgCache[fp] = { data: data, w: w, h: h };
+      pptSizeCache[fp] = { w: w, h: h };
+    }
+    if (j.lay.cols) {
+      var key = fp + '|' + j.lay.cw + '|' + j.lay.ch.toFixed(3);
+      if (!pptThumbCache[key]) {
+        var DPI = 170, tw = j.lay.cw * DPI, th = j.lay.ch * DPI;
+        // 칸을 꽉 채우도록 가운데를 잘라낸다 (작은 사진 전용 · 대표 사진은 자르지 않음)
+        var sc = Math.max(tw / w, th / h);
+        var sw = tw / sc, sh = th / sc;
+        try { pptThumbCache[key] = pptCanvasJpeg(img, (w - sw) / 2, (h - sh) / 2, sw, sh, tw, th, 0.8); }
+        catch (e) { pptThumbCache[key] = j.src; }
+      }
+    }
+  }
+  if (onProgress) onProgress(jobs.length, jobs.length);
+}
+
+/* ── 메모를 "핵심 스펙"과 "공급 조건·리스크"로 나눈다 ──
+   공급·일정·가격·인증·문제와 관련된 말이 들어간 줄은 공급 조건·리스크로,
+   나머지는 핵심 스펙으로 보낸다. 줄 맨 앞에 ! 를 붙이면 무조건 공급 조건·리스크로 간다. */
+var PPT_RISK_WORDS = /양산|납품|공급|생산|공장|금형|MOQ|moq|리드\s?타임|납기|출고|선적|입고|인증|KC|CB|독점|계약|단가|가격|원가|\$|[0-9]\s?불|달러|비용|추가\s?(됨|금|비)|지연|소요|일정|기간|[0-9]+월|중순|월말|말부터|수정|개선|문제|리스크|위험|불량|사고|클레임|테스트|확인\s?필요|미정|업체|경험|판매|수출|바이어|OEM|ODM|준비|계획|샘플|가능\s?시기/;
+function pptSplitMemo(p) {
+  var spec = [], risk = [];
+  String(p.memo || '').split('\n').forEach(function(line) {
+    var t = line.replace(/^[\s\-–·•*□■▪︎]+/, '').trim();
+    if (!t) return;
+    if (/^!/.test(t)) { risk.push(t.replace(/^!\s*/, '')); return; }
+    (PPT_RISK_WORDS.test(t) ? risk : spec).push(t);
+  });
+  if (p.moq && p.moq.memo) risk.push('단가·MOQ: ' + p.moq.memo);
+  if (p.sample && p.sample.memo) risk.push('샘플: ' + p.sample.memo);
+  return { spec: spec, risk: risk };
+}
+
+// ─── 제품 슬라이드 한 장 ───
+//  shownIdx  = 크게 보여줄 사진 번호 (0 = 대표 사진)
+//  slideOf   = 사진 번호 → 그 사진이 크게 들어간 슬라이드 번호
+function pptAddProductSlide(pres, p, productNo, shownIdx, slideOf) {
   var s = pres.addSlide();
   s.background = { color: PT.bg };
+  var ph = (p.photos || []).filter(isValidPhoto);
+  var N = ph.length;
+  var others = [];
+  for (var oi = 0; oi < N; oi++) if (oi !== shownIdx) others.push(oi);
+  var lay = pptThumbLayout(N > 1 ? N - 1 : 0);
 
-  // ═══ 좌측 — 제품 사진 (명함은 PPT에서 제외, 엑셀에만 들어간다) ═══
-  var L_X = 0.5, L_Y = 0.95, L_W = 5.9, L_H = 5.7;
-  var L_BOTTOM = L_Y + L_H;          // 사진 칸의 아래 끝 — 메모 칸도 여기에 맞춘다
-
-  // ── 상단 라벨 ──
-  var dk = productDayKey(p);
-  var dayTag = (dk < 99999999) ? ("  ·  " + Math.floor(dk / 100 % 100) + "/" + (dk % 100)) : "";
-  s.addText("PRODUCT · " + String(productNo).padStart(2,'0') + dayTag + (p.sample ? "  ·  SAMPLE" : ""), {
-    x:0.6, y:0.42, w:6, h:0.25, fontFace:FM, fontSize:9, color:PT.muted, bold:true, charSpacing:3, margin:0
+  // ── 상단 ──
+  s.addText("PRODUCT · " + String(productNo).padStart(2, '0'), {
+    x:0.6, y:0.42, w:4, h:0.25, fontFace:FM, fontSize:9, color:PT.muted, bold:true, charSpacing:3, margin:0
   });
-  if (p.category) {
-    s.addText(p.category, {
-      x:SW-3.6, y:0.4, w:3.0, h:0.28, fontFace:FK, fontSize:11, color:PT.accent,
-      align:"right", bold:true, margin:0
+  if (p.sample) {
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, {
+      x:SW - 1.55, y:0.36, w:1.05, h:0.34, fill:{color:PT.amberSoft}, line:{type:'none'}, rectRadius:0.17
+    });
+    s.addText("샘플 신청", {
+      x:SW - 1.55, y:0.36, w:1.05, h:0.34, fontFace:FK, fontSize:10, bold:true, color:"8A5A12",
+      align:"center", valign:"middle", margin:0
     });
   }
 
-  var mainPhoto = p.photos && p.photos[photoIdx];
-  var photoBox = { x:L_X, y:L_Y, w:L_W, h:L_H };   // 배지를 붙일 기준
-  if (mainPhoto && isValidPhoto(mainPhoto)) {
-    // 원본 비율 그대로 (늘어나지 않게 직접 계산)
-    var fit = pptFitBox(mainPhoto, L_X, L_Y, L_W, L_H);
-    photoBox = fit;
-    var imgOpts = { data: toPptImageData(mainPhoto), x:fit.x, y:fit.y, w:fit.w, h:fit.h };
-    if (!isSingleMode && photoTotal > 1) imgOpts.hyperlink = { slide: nextSlideIdx };
-    s.addImage(imgOpts);
+  // ── 대표 사진 (원본 비율 그대로, 자르지 않음) ──
+  var M = PPT_MAIN;
+  var main = ph[shownIdx];
+  if (main) {
+    var mi = pptImgCache[photoFingerprint(main)] || { data: main };
+    var fit = pptFitBox(main, M.x, M.y, M.w, M.h);
+    if (N > 1) fit.x = M.x + M.w - fit.w;   // 작은 사진이 있으면 그 옆에 붙인다
+    var mOpts = { data: toPptImageData(mi.data), x: fit.x, y: fit.y, w: fit.w, h: fit.h };
+    if (N > 1) mOpts.hyperlink = { slide: slideOf[(shownIdx + 1) % N] };   // 대표 사진을 누르면 다음 사진
+    s.addImage(mOpts);
   } else {
-    // 사진이 없을 때만 빈 칸을 그린다 (사진이 있으면 배경 없이 사진만)
-    s.addShape(pres.shapes.RECTANGLE, {
-      x:L_X, y:L_Y, w:L_W, h:L_H, fill:{color:PT.paper}, line:{color:PT.line, width:0.5}
-    });
-    s.addText(mainPhoto ? "손상된 사진" : "사진 없음", {
-      x:L_X, y:L_Y, w:L_W, h:L_H, fontFace:FK, fontSize:15,
-      color:PT.muted, align:"center", valign:"middle", margin:0
+    s.addShape(pres.shapes.RECTANGLE, { x:M.x, y:M.y, w:M.w, h:M.h, fill:{color:PT.paper}, line:{color:PT.line, width:0.5} });
+    s.addText((p.photos && p.photos.length) ? "손상된 사진" : "사진 없음", {
+      x:M.x, y:M.y, w:M.w, h:M.h, fontFace:FK, fontSize:15, color:PT.muted, align:"center", valign:"middle", margin:0
     });
   }
 
-  // 사진 장수 배지 — 실제 사진 위에 붙인다
-  if (photoTotal > 1) {
-    var badgeW = isSingleMode ? 1.25 : 1.35;
-    var badgeText = isSingleMode ? ("사진 " + photoTotal + "장") : (String(photoIdx+1) + " / " + photoTotal);
-    var bx = photoBox.x + photoBox.w - badgeW - 0.12;
-    var by = photoBox.y + 0.12;
-    s.addShape(pres.shapes.RECTANGLE, {
-      x: bx, y: by, w: badgeW, h: 0.34,
-      fill: { color: PT.ink }, line: { type: 'none' }, transparency: 12
-    });
-    s.addText(badgeText, {
-      x: bx, y: by, w: badgeW, h: 0.34,
-      fontFace: FK, fontSize: 10, color: PT.paper, bold: true,
-      align: "center", valign: "middle", margin: 0
-    });
-  }
+  // ── 작은 사진 (누르면 그 사진이 크게) ──
+  var tX = M.x + M.w + 0.1;
+  others.forEach(function(idx, k) {
+    var col = k % lay.cols, row = Math.floor(k / lay.cols);   // 왼쪽→오른쪽, 위→아래
+    if (row >= lay.rows) return;
+    var x = tX + col * (lay.cw + PPT_GAP), y = M.y + row * (lay.ch + PPT_GAP);
+    var fp = photoFingerprint(ph[idx]);
+    var data = pptThumbCache[fp + '|' + lay.cw + '|' + lay.ch.toFixed(3)] || ph[idx];
+    s.addImage({ data: toPptImageData(data), x: x, y: y, w: lay.cw, h: lay.ch, hyperlink: { slide: slideOf[idx] } });
+  });
 
-  // ═══ 우측 ═══
-  var R_X = 6.85, R_W = 5.95;
+  // ═══ 오른쪽 글 영역 — 작은 사진이 많으면 조금 좁아진다 ═══
+  var R_X = tX + (lay.areaW ? lay.areaW + 0.45 : 0.35);
+  if (!lay.areaW) R_X = M.x + M.w + 0.5;
+  var R_W = PPT_RIGHT - R_X;
+  var K = Math.min(1, R_W / 5.95);   // 좁아진 만큼 글씨도 같이 줄인다
 
-  /* ── 제품명 — 사진 맨 윗부분과 높이를 맞춘다 ──
-     제목이 차지하는 줄 수만큼만 자리를 잡고, 남는 공간은 아래 메모 칸이 가져간다.
-     한글은 한 글자가 영문의 두 배쯤 넓으므로 폭을 가중치로 어림한다. */
-  function estTitleLines(text) {
+  // 제품명
+  function estTitleLines(text, perLine) {
     var units = 0;
-    for (var i = 0; i < text.length; i++) {
-      units += (text.charCodeAt(i) > 0x1100) ? 1 : 0.55;   // 한글·한자 1, 영문·숫자 0.55
-    }
-    // 한 줄에 약 19칸. 어림이 모자라도 제목 상자에 fit:"shrink"가 걸려 있어
-    // 글자가 살짝 작아질 뿐, 아래 선과 겹치지는 않는다.
-    return Math.min(3, Math.max(1, Math.ceil(units / 19)));
+    for (var i = 0; i < text.length; i++) units += (text.charCodeAt(i) > 0x1100) ? 1 : 0.55;
+    return Math.min(3, Math.max(1, Math.ceil(units / perLine)));
   }
-
   var titleText = p.name || '(이름 없음)';
-  var titleLines = estTitleLines(titleText);
-  var titleH = titleLines * 0.36 + 0.06;
-
+  var tLines = estTitleLines(titleText, 19 * R_W / 5.95);
+  var titleH = tLines * 0.38 + 0.06;
   s.addText(titleText, {
-    x:R_X, y:L_Y, w:R_W, h:titleH, fontFace:FK, fontSize:24, bold:true, color:PT.ink,
+    x:R_X, y:M.y, w:R_W, h:titleH, fontFace:FK, fontSize:24, bold:true, color:PT.ink,
     valign:"top", margin:0, fit:"shrink", lineSpacingMultiple:1.05
   });
-
-  var ruleY = L_Y + titleH + 0.08;
+  var ruleY = M.y + titleH + 0.08;
   s.addShape(pres.shapes.RECTANGLE, { x:R_X, y:ruleY, w:R_W, h:0.02, fill:{color:PT.ink}, line:{type:'none'} });
 
-  // ── 단가 · MOQ · 샘플 (한 줄에 셋) ──
-  var statY = ruleY + 0.22;
-  var gap = 0.2;
-  var colW = (R_W - gap * 2) / 3;
+  // ── 단가 · MOQ · CB · 샘플 ──
+  var statY = ruleY + 0.24;
+  var ratios = [1.4, 1.4, 1.35, 1.8], rsum = 5.95;
+  var cx = R_X;
+  function stat(i, label, runs) {
+    var w = R_W * ratios[i] / rsum;
+    s.addText(label, { x:cx, y:statY, w:w, h:0.24, fontFace:FM, fontSize:Math.round(9 * Math.max(0.8, K) * 2) / 2, color:PT.muted, bold:true, charSpacing:2 * K * K, margin:0 });
+    var scaled = runs.map(function(r) { var o = Object.assign({}, r.options); o.fontSize = Math.round(o.fontSize * K * 2) / 2; return { text: r.text, options: o }; });
+    s.addText(scaled, { x:cx, y:statY + 0.3, w:w, h:0.55, fontFace:FH, valign:"bottom", margin:0, fit:"shrink" });
+    cx += w;
+  }
   var price = (p.moq && p.moq.price && p.moq.price !== '-') ? p.moq.price : '';
   var qty   = (p.moq && p.moq.qty   && p.moq.qty   !== '-') ? p.moq.qty   : '';
-
-  function statCol(i, label, valueRuns, sub, subColor) {
-    var cx = R_X + i * (colW + gap);
-    s.addText(label, {
-      x:cx, y:statY, w:colW, h:0.24, fontFace:FM, fontSize:9, color:PT.muted,
-      bold:true, charSpacing:2, margin:0
-    });
-    s.addText(valueRuns, {
-      x:cx, y:statY+0.28, w:colW, h:0.62, fontFace:FH, valign:"bottom", margin:0, fit:"shrink"
-    });
-    // 값 아래 작은 설명 글씨는 쓰지 않는다 (v56)
-  }
-
-  // 단가
-  statCol(0, "UNIT PRICE",
-    price ? [{ text:"$", options:{fontSize:15, color:PT.muted} },
-             { text:String(price), options:{fontSize:24, color:PT.ink, bold:true} }]
-          : [{ text:"미입력", options:{fontSize:15, color:PT.muted, fontFace:FK} }],
-    null);
-
-  // MOQ
-  statCol(1, "MOQ",
-    qty ? [{ text:String(qty), options:{fontSize:24, color:PT.ink, bold:true} },
-           { text:" pcs", options:{fontSize:12, color:PT.muted} }]
-        : [{ text:"미입력", options:{fontSize:15, color:PT.muted, fontFace:FK} }],
-    null);
-
-  // 샘플 — D-day 대신 입고 예정 날짜 (예: 11/15 예정). 날짜가 지났으면 빨간색
+  var NA = function(t) { return [{ text: t, options: { fontSize: 15, color: PT.muted, fontFace: FK } }]; };
+  stat(0, "UNIT PRICE", price ? [{ text:"$", options:{fontSize:15, color:PT.muted} },
+                                 { text:String(price), options:{fontSize:24, color:PT.ink, bold:true} }] : NA("미입력"));
+  stat(1, "MOQ", qty ? [{ text:String(qty), options:{fontSize:22, color:PT.ink, bold:true} },
+                        { text:" pcs", options:{fontSize:11, color:PT.muted} }] : NA("미입력"));
+  var cbRuns;
+  if (!p.cb) cbRuns = NA("확인 필요");
+  else if (p.cb.owned) cbRuns = [{ text:"보유", options:{fontSize:18, color:PT.sage, bold:true, fontFace:FK} }];
+  else if (p.cb.date) {
+    var cd = String(p.cb.date).split('-');
+    cbRuns = [{ text:"진행 ", options:{fontSize:14, color:PT.amber, bold:true, fontFace:FK} },
+              { text:(+cd[1]) + "/" + (+cd[2]), options:{fontSize:18, color:PT.amber, bold:true} }];
+  } else cbRuns = [{ text:"미보유", options:{fontSize:16, color:PT.red, bold:true, fontFace:FK} }];
+  stat(2, "CB", cbRuns);
   var smpRuns;
   if (p.sample) {
     var ep = p.sample.expected ? String(p.sample.expected).split('-') : null;
     if (ep && ep.length === 3) {
       var dl = dLeftFromDate(p.sample.expected);
-      var smpColor = (dl !== null && dl < 0) ? PT.red : PT.blue;
-      smpRuns = [{ text:(+ep[1]) + "/" + (+ep[2]), options:{fontSize:24, color:smpColor, bold:true} },
-                 { text:" 예정", options:{fontSize:15, color:smpColor, fontFace:FK} }];
-    } else {
-      smpRuns = [{ text:"신청", options:{fontSize:20, color:PT.blue, bold:true, fontFace:FK} }];
-    }
-  } else {
-    smpRuns = [{ text:"미신청", options:{fontSize:15, color:PT.muted, fontFace:FK} }];
-  }
-  statCol(2, "SAMPLE", smpRuns, null);
+      var sc2 = (dl !== null && dl < 0) ? PT.red : PT.blue;
+      smpRuns = [{ text:(+ep[1]) + "/" + (+ep[2]), options:{fontSize:24, color:sc2, bold:true} },
+                 { text:" 예정", options:{fontSize:15, color:sc2, fontFace:FK} }];
+    } else smpRuns = [{ text:"신청", options:{fontSize:20, color:PT.blue, bold:true, fontFace:FK} }];
+  } else smpRuns = NA("미신청");
+  stat(3, "SAMPLE", smpRuns);
 
-  var thinY = statY + 1.06;
+  var thinY = statY + 1.0;
   s.addShape(pres.shapes.RECTANGLE, { x:R_X, y:thinY, w:R_W, h:0.01, fill:{color:PT.line}, line:{type:'none'} });
 
-  // ── 메모 칸 (연한 블루 패널) ──
-  // 위쪽은 제목 길이에 따라 움직이고, 아래쪽은 언제나 사진 끝에 딱 맞춘다.
-  // "NOTE · 메모" 제목은 빼고, 그만큼 메모 칸을 위로 올린다 (v56)
-  var noteY = thinY + 0.2;           // 패널 위쪽
-  var noteBottom = L_BOTTOM;         // 패널 아래쪽 = 사진 아래 끝 (항상 고정)
-  var pad = 0.22;
+  // ── 메모 칸: 핵심 스펙 / 공급 조건·리스크 / 다음 액션 ──
+  var noteY = thinY + 0.2, noteBottom = M.y + M.h, pad = 0.24;
   var textW = R_W - pad * 2;
-
   s.addShape(pres.shapes.ROUNDED_RECTANGLE, {
     x:R_X, y:noteY, w:R_W, h:noteBottom - noteY,
     fill:{color:PT.noteBg}, line:{color:PT.noteLine, width:0.75}, rectRadius:0.06
   });
 
-  // CB 상태 — 패널 안쪽 맨 위에 작게
-  var cb = getCbInfo(p.cb);
-  s.addText([
-    { text:"CB  ", options:{ fontFace:FM, fontSize:8.5, color:PT.muted, bold:true, charSpacing:2 } },
-    { text:cb.label, options:{ fontFace:FK, fontSize:10.5, color:cb.color, bold:true } },
-    cb.date ? { text:"  " + pptFmtDate(cb.date), options:{ fontFace:FK, fontSize:9.5, color:PT.muted } }
-            : { text:"", options:{ fontSize:9.5 } }
-  ], {
-    x:R_X + pad, y:noteY + 0.12, w:textW, h:0.24, valign:"middle", margin:0
-  });
-
-  s.addShape(pres.shapes.RECTANGLE, {
-    x:R_X + pad, y:noteY + 0.42, w:textW, h:0.008,
-    fill:{color:PT.noteLine}, line:{type:'none'}
-  });
-
-  // 직접 적은 메모들 (패널 안쪽은 밝으므로 원래의 진한 글자색을 그대로 쓴다)
-  var noteRuns = [];
-  if (p.memo) {
-    noteRuns.push({ text: p.memo, options:{ fontSize:14, color:PT.ink, breakLine:true } });
-  }
-  if (p.moq && p.moq.memo) {
-    noteRuns.push({ text: "단가·MOQ  ", options:{ fontSize:11, color:PT.muted, bold:true } });
-    noteRuns.push({ text: p.moq.memo, options:{ fontSize:14, color:PT.ink, breakLine:true } });
-  }
-  if (p.sample && p.sample.memo) {
-    noteRuns.push({ text: "샘플  ", options:{ fontSize:11, color:PT.muted, bold:true } });
-    noteRuns.push({ text: p.sample.memo, options:{ fontSize:14, color:PT.ink, breakLine:true } });
-  }
-
+  var memo = pptSplitMemo(p);
   var todos = Array.isArray(p.todos) ? p.todos : migrateTodos(p);
-  todos.forEach(function(t) {
-    noteRuns.push({
-      text: (t.done ? "■ " : "□ ") + t.text,
-      options: { fontSize:13, color: t.done ? PT.muted : PT.inkSoft, breakLine:true }
-    });
-  });
-
-  if (!noteRuns.length) {
-    noteRuns.push({ text:"적어둔 메모 없음", options:{ fontSize:13, color:PT.muted, italic:true } });
+  var runs = [];
+  function head(en, ko, color, first) {
+    runs.push({ text: en + "   ", options: { fontFace:FM, fontSize:9, bold:true, color:color, charSpacing:2.5,
+                                             paraSpaceBefore: first ? 0 : 9 } });
+    runs.push({ text: ko, options: { fontFace:FK, fontSize:11, bold:true, color:color, breakLine:true } });
   }
+  function bullet(t, color) {
+    runs.push({ text: t, options: { fontFace:FK, fontSize:13, color: color || PT.ink, breakLine:true,
+                                    bullet: { code:'00B7', indent: 14 } } });
+  }
+  var first = true;
+  if (memo.spec.length) { head("KEY SPEC", "핵심 스펙", PT.blue, first); first = false; memo.spec.forEach(function(t) { bullet(t); }); }
+  if (memo.risk.length) { head("SUPPLY · RISK", "공급 조건·리스크", PT.red, first); first = false; memo.risk.forEach(function(t) { bullet(t); }); }
+  if (todos.length) {
+    head("NEXT ACTION", "다음 액션", PT.inkSoft, first); first = false;
+    todos.forEach(function(t) {
+      runs.push({ text: (t.done ? "■  " : "□  ") + t.text,
+                  options: { fontFace:FK, fontSize:13, color: t.done ? PT.muted : PT.ink, breakLine:true } });
+    });
+  }
+  if (!runs.length) runs.push({ text:"적어둔 메모 없음", options:{ fontFace:FK, fontSize:13, color:PT.muted, italic:true } });
 
-  var bodyY = noteY + 0.56;
-  var bodyH = noteBottom - bodyY - 0.14;
-  // 메모가 칸을 넘치면 글씨 크기를 미리 줄여서 넣는다
-  // (PowerPoint의 '자동 맞춤'은 파일을 연 뒤 글을 고쳐야 적용되므로 직접 계산)
-  noteRuns = pptFitRuns(noteRuns, textW, bodyH, 1.3);
-  s.addText(noteRuns, {
-    x:R_X + pad, y:bodyY, w:textW, h:bodyH,
-    fontFace:FK, valign:"top", margin:0, lineSpacingMultiple:1.3, fit:"shrink"
-  });
+  var bodyY = noteY + 0.2, bodyH = noteBottom - bodyY - 0.16;
+  runs = pptFitRuns(runs, textW, bodyH, 1.25);
+  s.addText(runs, { x:R_X + pad, y:bodyY, w:textW, h:bodyH, valign:"top", margin:0, lineSpacingMultiple:1.25, fit:"shrink" });
 
-  // ── 푸터 ──
-  s.addText(String(curSlideIdx).padStart(2,'0') + " / " + String(totalSlides).padStart(2,'0'), {
-    x:SW-1.5, y:SH-0.35, w:1.0, h:0.22, fontFace:FM, fontSize:8, color:PT.muted, align:"right", charSpacing:3, margin:0
+  // ── 아래 ──
+  s.addText("CANTON FAIR", { x:0.5, y:SH-0.35, w:3, h:0.22, fontFace:FM, fontSize:8, color:PT.muted, charSpacing:3, margin:0 });
+  s.addText(PHASE_PERIOD[productPhase(p)] || '', {
+    x:SW-3.5, y:SH-0.35, w:3.0, h:0.22, fontFace:FM, fontSize:8, color:PT.muted, align:"right", charSpacing:3, margin:0
   });
-  s.addText("CANTON FAIR", {
-    x:0.5, y:SH-0.35, w:3, h:0.22, fontFace:FM, fontSize:8, color:PT.muted, charSpacing:3, margin:0
+  return s;
+}
+
+// 제품 슬라이드 전체: 제품마다 보이는 1장 + (사진 수 - 1)장의 숨긴 슬라이드
+function pptAddAllProducts(pres, list, firstSlideNo) {
+  var no = firstSlideNo;
+  list.forEach(function(p, pi) {
+    var N = Math.max(1, (p.photos || []).filter(isValidPhoto).length);
+    var base = no, slideOf = [];
+    for (var k = 0; k < N; k++) slideOf.push(base + k);
+    for (var k2 = 0; k2 < N; k2++) {
+      var sl = pptAddProductSlide(pres, p, pi + 1, k2, slideOf);
+      if (k2 > 0) sl.hidden = true;
+    }
+    no += N;
   });
+  return no;   // 다음 슬라이드 번호
 }
 
 // ─── 마무리 슬라이드 ───────────────────────────────
@@ -7297,18 +7334,12 @@ function setExpFormat(f) {
   document.getElementById('fmt-pdf').className = 'ppt-opt-btn' + (f === 'pdf' ? ' active' : '');
 
   var isPdf = (f === 'pdf');
-  document.getElementById('exp-photo-label').textContent = isPdf ? '사진 포함' : '사진 슬라이드';
-  document.getElementById('mode-single-sub').textContent = isPdf ? '제품당 큰 사진 1장' : '제품당 1장 · 출력용';
-  document.getElementById('mode-all-sub').textContent = isPdf ? '작은 썸네일도 함께' : '탭 순환 · 발표용';
 
   document.getElementById('exp-info').innerHTML = isPdf
     ? '제품 발굴 리포트를 A4 문서로 만듭니다. <b>인터넷 없어도 됩니다.</b><br>' +
       '· 버튼을 누르면 <b>인쇄 화면</b>이 뜨고, 거기서 <b>“PDF로 저장”</b>을 고르세요<br>' +
       '· 아이폰: 프린터 미리보기 화면에서 공유 → 파일에 저장'
-    : '제품 발굴 리포트를 PowerPoint 파일로 저장합니다.<br>' +
-      '· 사진은 원본 비율 그대로 배치됩니다<br>' +
-      '· <b>대표 이미지만</b>: 제품당 1장 (출력·공유용)<br>' +
-      '· <b>사진 전부</b>: 메인 이미지 탭하면 다음 사진으로 순환 (발표모드)';
+    : '제품 발굴 리포트를 PowerPoint 파일로 저장합니다.<br>· 제품당 1장 · 사진이 여러 장이면 대표 사진 옆에 작은 사진이 함께 들어갑니다<br>· 발표 중 <b>작은 사진을 누르면</b> 대표 사진 자리에 크게 바뀝니다<br>· 인쇄할 때는 PDF 버튼을 쓰거나, PowerPoint 인쇄에서 <b>"숨겨진 슬라이드 인쇄" 체크 해제</b>';
 
   var b = document.getElementById('ppt-confirm');
   b.innerHTML = isPdf ? '🖨 PDF 만들기 (인쇄 → PDF로 저장)' : '✓ PPT 파일 생성 &amp; 다운로드';
@@ -7342,7 +7373,7 @@ function confirmExportSize(list, photoMode, kind) {
       '\u26A0\uFE0F 사진이 너무 많습니다\n\n' +
       '제품 ' + list.length + '개 · 사진 ' + photos + '장 → 약 ' + Math.round(mb) + 'MB\n\n' +
       '이 크기는 폰에서 만들다가 멈출 가능성이 높습니다.\n' +
-      '"대표 이미지만"으로 바꾸거나, 범위를 "샘플 신청만"으로 줄이시길 권합니다.\n\n' +
+      '범위를 "샘플 신청만"이나 1기·2기로 나누거나, PC에서 만드시길 권합니다.\n\n' +
       '그래도 진행할까요?');
   }
   return window.confirm(
@@ -7506,14 +7537,14 @@ function exportToPdf() {
     showToast(pptScope === 'sample' ? '샘플 신청한 제품이 없어요' : '등록된 제품이 없어요');
     return;
   }
-  if (!confirmExportSize(list, pptPhotoMode, 'PDF')) return;
+  if (!confirmExportSize(list, 'all', 'PDF')) return;
 
   var btn = document.getElementById('ppt-confirm');
   btn.disabled = true;
   btn.innerHTML = '<span class="ppt-spinner"></span> PDF 준비 중...';
 
   try {
-    buildPrintReport(list, pptPhotoMode);
+    buildPrintReport(list, 'all');
     closeOverlay('ppt');
     showToast('인쇄 화면에서 “PDF로 저장”을 선택하세요');
 
@@ -7583,7 +7614,7 @@ async function exportToPpt() {
     return;
   }
 
-  if (!confirmExportSize(list, pptPhotoMode, 'PPT')) return;
+  if (!confirmExportSize(list, 'all', 'PPT')) return;
 
   var btn = document.getElementById('ppt-confirm');
   btn.disabled = true;
@@ -7602,40 +7633,14 @@ async function exportToPpt() {
     pres.author = "MD Team";
     pres.title = "Canton Fair · Product Discovery";
 
-    // 슬라이드 번호 계산: cover(1) + overview(2) + 제품슬라이드들 + closing
-    // photoMode가 'single'이면 제품당 1장, 'all'이면 사진 수만큼
-    var slidesPerProduct = list.map(function(p){
-      if (pptPhotoMode === 'single') return 1;
-      return Math.max(1, (p.photos && p.photos.length) || 1);
+    // 사진 준비 (대표 사진은 가볍게, 작은 사진은 칸에 맞게)
+    await pptPrepareImages(list, function(i, n) {
+      btn.innerHTML = '<span class="ppt-spinner"></span> 사진 준비 중 ' + i + '/' + n;
     });
-    var productStartIdx = 2;  // 표지(요약 포함)=1 → 제품은 2번 슬라이드부터
-    var productStartIdxs = [];
-    slidesPerProduct.forEach(function(n) {
-      productStartIdxs.push(productStartIdx);
-      productStartIdx += n;
-    });
-    var totalSlides = 1 + slidesPerProduct.reduce(function(a,b){return a+b;}, 0) + 1;
-
-    // 사진이 늘어나지 않도록 원본 비율을 미리 재어 둔다
-    btn.innerHTML = '<span class="ppt-spinner"></span> 사진 확인 중...';
-    await pptPreloadSizes(list, pptPhotoMode);
     btn.innerHTML = '<span class="ppt-spinner"></span> PPT 생성 중...';
 
-    pptAddCoverSummary(pres, list, totalSlides);
-
-    list.forEach(function(p, pi) {
-      var actualPhotos = (p.photos && p.photos.length) || 0;
-      var slideCount = slidesPerProduct[pi];
-      var startIdx = productStartIdxs[pi];
-      for (var i = 0; i < slideCount; i++) {
-        var curSlide = startIdx + i;
-        var nextSlide = (i === slideCount - 1) ? startIdx : curSlide + 1;
-        // single 모드일 때는 actualPhotos 값을 총 사진 수로 전달 (배지에 "3장" 같은 정보용이지만 하이퍼링크는 안 걸림)
-        var photoTotalForBadge = (pptPhotoMode === 'single') ? actualPhotos : slideCount;
-        pptAddProductSlide(pres, p, pi+1, i, photoTotalForBadge, curSlide, nextSlide, totalSlides, pptPhotoMode);
-      }
-    });
-
+    pptAddCoverSummary(pres, list, list.length + 2);   // 표지 번호는 보이는 슬라이드 기준
+    pptAddAllProducts(pres, list, 2);
     pptAddClosing(pres, list);
 
     var fname = '광저우박람회_' + phaseFileTag() + pptDateStr().replace(/\./g,'') + '.pptx';
