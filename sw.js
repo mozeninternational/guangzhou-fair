@@ -6,7 +6,7 @@
       (예: v45 → v46) 숫자를 안 올리면 폰이 예전 화면을 계속 보여준다.
    ══════════════════════════════════════════════════════ */
 
-var CACHE = 'gz-fair-v69';
+var CACHE = 'gz-fair-v70';
 var SHARE_INBOX = 'gz-share-inbox';   // 안드로이드 공유창으로 받은 파일 임시 보관
 
 var PRECACHE = [

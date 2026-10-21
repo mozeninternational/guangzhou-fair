@@ -1015,7 +1015,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v69</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v70</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1548,7 +1548,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v69)
+          ⬇️ 최신 버전 받기 (현재 v70)
         </button>
       </div>
 
@@ -5144,7 +5144,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v69';
+var APP_VERSION = 'v70';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -7059,11 +7059,15 @@ async function pptPrepareImages(list, onProgress) {
     if (!img) continue;
     var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
     if (!pptImgCache[fp]) {
-      var MAX = 1800, big = Math.max(w, h);
+      // 대표 사진: 긴 변 1600px · 350KB 이하로 가볍게 (화면·인쇄 품질은 충분, 파일 용량은 1/3 수준)
+      var MAX = 1600, big = Math.max(w, h);
       var data = j.src;
-      if (big > MAX) {
-        var r = MAX / big;
-        try { data = pptCanvasJpeg(img, 0, 0, w, h, w * r, h * r, 0.86); } catch (e) { data = j.src; }
+      if (big > MAX || j.src.length * 0.75 > 350000) {
+        var r = Math.min(1, MAX / big);
+        try {
+          var d2 = pptCanvasJpeg(img, 0, 0, w, h, w * r, h * r, 0.82);
+          if (d2.length < j.src.length) data = d2;
+        } catch (e) { data = j.src; }
       }
       pptImgCache[fp] = { data: data, w: w, h: h };
       pptSizeCache[fp] = { w: w, h: h };
