@@ -1015,7 +1015,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v70</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v71</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1548,7 +1548,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v70)
+          ⬇️ 최신 버전 받기 (현재 v71)
         </button>
       </div>
 
@@ -5144,7 +5144,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v70';
+var APP_VERSION = 'v71';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -7019,15 +7019,28 @@ var PPT_GAP = 0.08;
 var PPT_RIGHT = SW - 0.5;                                // 글 영역 오른쪽 끝
 var PHASE_PERIOD = { '1': '20261015-19', '2': '20261023-27' };   // 슬라이드 아래 박람회 기간
 
-// 작은 사진 배치: 개수에 따라 1~3줄, 칸 크기
+// 작은 사진 배치 (v71): 위·아래 끝을 대표 사진과 똑같이 맞춘다.
+//  1~3열 중 칸 비율이 자연스러운(세로/가로 0.7~1.8) 가장 적은 열 수를 고른다.
+//  사진이 1~2장뿐이면 3칸 자리에 위에서부터 채운다.
 function pptThumbLayout(m) {
   if (!m) return { cols: 0, rows: 0, cw: 0, ch: 0, areaW: 0 };
-  var cols = m <= 3 ? 1 : (m <= 10 ? 2 : 3);
-  var cw = cols === 1 ? 1.4 : (cols === 2 ? 1.05 : 0.88);
-  var minRows = cols === 1 ? 3 : (cols === 2 ? 4 : 5);
-  var rows = Math.max(minRows, Math.ceil(m / cols));
-  var ch = (PPT_MAIN.h - (rows - 1) * PPT_GAP) / rows;
-  return { cols: cols, rows: rows, cw: cw, ch: ch, areaW: cols * cw + (cols - 1) * PPT_GAP };
+  var CW = [0, 1.4, 1.05, 0.88];
+  var pick = null;
+  if (m >= 3) {
+    for (var c = 1; c <= 3; c++) {
+      var r = Math.ceil(m / c);
+      var h = (PPT_MAIN.h - (r - 1) * PPT_GAP) / r;
+      var ratio = h / CW[c];
+      if (ratio >= 0.7 && ratio <= 1.8) { pick = { cols: c, rows: r, ch: h }; break; }
+    }
+  }
+  if (!pick) {
+    if (m <= 3) pick = { cols: 1, rows: 3 };
+    else { var c3 = 3, r3 = Math.ceil(m / 3); pick = { cols: c3, rows: r3 }; }
+    pick.ch = (PPT_MAIN.h - (pick.rows - 1) * PPT_GAP) / pick.rows;
+  }
+  var cw = CW[pick.cols];
+  return { cols: pick.cols, rows: pick.rows, cw: cw, ch: pick.ch, areaW: pick.cols * cw + (pick.cols - 1) * PPT_GAP, fillTiles: m >= 3 };
 }
 
 // ── 사진 준비: 대표용(최대 1800px로 가볍게) · 작은 사진용(칸에 맞게 잘라 작게) ──
@@ -7104,6 +7117,14 @@ function pptSplitMemo(p) {
   return { spec: spec, risk: risk };
 }
 
+// 제품명 앞의 부스 번호(예: "3.1C 35-36", "3.1I29-30,J13-14")를 떼어 낸다
+function pptSplitBooth(name) {
+  var t = String(name || '').trim();
+  var m = /^(\d+\.\d+\s?[A-Z]?\s?[0-9A-Z]*\d+(?:-\d+)?(?:\s?[,/]\s?[A-Z]?\s?\d+(?:-\d+)?)*)\s+(.+)$/.exec(t);
+  if (!m) return { booth: '', title: t.replace(/\s{2,}/g, ' ') };
+  return { booth: m[1].replace(/\s+/g, ' '), title: m[2].replace(/\s{2,}/g, ' ').trim() };
+}
+
 // ─── 제품 슬라이드 한 장 ───
 //  shownIdx  = 크게 보여줄 사진 번호 (0 = 대표 사진)
 //  slideOf   = 사진 번호 → 그 사진이 크게 들어간 슬라이드 번호
@@ -7116,16 +7137,20 @@ function pptAddProductSlide(pres, p, productNo, shownIdx, slideOf) {
   for (var oi = 0; oi < N; oi++) if (oi !== shownIdx) others.push(oi);
   var lay = pptThumbLayout(N > 1 ? N - 1 : 0);
 
+  // 차분한 배색 (v71): 검정·회색 + 남색 하나, 빨강은 경고에만
+  var C_INK = PT.ink, C_SOFT = PT.inkSoft, C_MUTED = PT.muted, C_ACC = PT.brand, C_WARN = PT.red;
+  var C_LINE = "E4DED3";
+
   // ── 상단 ──
   s.addText("PRODUCT · " + String(productNo).padStart(2, '0'), {
-    x:0.6, y:0.42, w:4, h:0.25, fontFace:FM, fontSize:9, color:PT.muted, bold:true, charSpacing:3, margin:0
+    x:0.5, y:0.42, w:4, h:0.25, fontFace:FM, fontSize:9, color:C_MUTED, bold:true, charSpacing:3, margin:0
   });
   if (p.sample) {
     s.addShape(pres.shapes.ROUNDED_RECTANGLE, {
-      x:SW - 1.55, y:0.36, w:1.05, h:0.34, fill:{color:PT.amberSoft}, line:{type:'none'}, rectRadius:0.17
+      x:SW - 1.5, y:0.37, w:1.0, h:0.32, fill:{color:"FFFFFF"}, line:{color:C_ACC, width:0.75}, rectRadius:0.16
     });
     s.addText("샘플 신청", {
-      x:SW - 1.55, y:0.36, w:1.05, h:0.34, fontFace:FK, fontSize:10, bold:true, color:"8A5A12",
+      x:SW - 1.5, y:0.37, w:1.0, h:0.32, fontFace:FK, fontSize:9.5, bold:true, color:C_ACC,
       align:"center", valign:"middle", margin:0
     });
   }
@@ -7141,127 +7166,127 @@ function pptAddProductSlide(pres, p, productNo, shownIdx, slideOf) {
     if (N > 1) mOpts.hyperlink = { slide: slideOf[(shownIdx + 1) % N] };   // 대표 사진을 누르면 다음 사진
     s.addImage(mOpts);
   } else {
-    s.addShape(pres.shapes.RECTANGLE, { x:M.x, y:M.y, w:M.w, h:M.h, fill:{color:PT.paper}, line:{color:PT.line, width:0.5} });
+    s.addShape(pres.shapes.RECTANGLE, { x:M.x, y:M.y, w:M.w, h:M.h, fill:{color:"F4F2EE"}, line:{type:'none'} });
     s.addText((p.photos && p.photos.length) ? "손상된 사진" : "사진 없음", {
-      x:M.x, y:M.y, w:M.w, h:M.h, fontFace:FK, fontSize:15, color:PT.muted, align:"center", valign:"middle", margin:0
+      x:M.x, y:M.y, w:M.w, h:M.h, fontFace:FK, fontSize:14, color:C_MUTED, align:"center", valign:"middle", margin:0
     });
   }
 
-  // ── 작은 사진 (누르면 그 사진이 크게) ──
+  // ── 작은 사진: 칸마다 연한 테두리, 빈 칸은 연한 바탕으로 채워 묶음 모양을 고르게 ──
   var tX = M.x + M.w + 0.1;
-  others.forEach(function(idx, k) {
-    var col = k % lay.cols, row = Math.floor(k / lay.cols);   // 왼쪽→오른쪽, 위→아래
-    if (row >= lay.rows) return;
+  var slots = lay.cols * lay.rows;
+  for (var k = 0; k < slots; k++) {
+    var col = k % lay.cols, row = Math.floor(k / lay.cols);
     var x = tX + col * (lay.cw + PPT_GAP), y = M.y + row * (lay.ch + PPT_GAP);
-    var fp = photoFingerprint(ph[idx]);
-    var data = pptThumbCache[fp + '|' + lay.cw + '|' + lay.ch.toFixed(3)] || ph[idx];
-    s.addImage({ data: toPptImageData(data), x: x, y: y, w: lay.cw, h: lay.ch, hyperlink: { slide: slideOf[idx] } });
-  });
+    if (k < others.length) {
+      var idx = others[k];
+      var fp = photoFingerprint(ph[idx]);
+      var data = pptThumbCache[fp + '|' + lay.cw + '|' + lay.ch.toFixed(3)] || ph[idx];
+      s.addImage({ data: toPptImageData(data), x: x, y: y, w: lay.cw, h: lay.ch, hyperlink: { slide: slideOf[idx] } });
+      s.addShape(pres.shapes.RECTANGLE, { x:x, y:y, w:lay.cw, h:lay.ch, fill:{type:'none'}, line:{color:C_LINE, width:0.5} });
+    } else if (lay.fillTiles) {
+      s.addShape(pres.shapes.RECTANGLE, { x:x, y:y, w:lay.cw, h:lay.ch, fill:{color:"F4F2EE"}, line:{type:'none'} });
+    }
+  }
 
   // ═══ 오른쪽 글 영역 — 작은 사진이 많으면 조금 좁아진다 ═══
-  var R_X = tX + (lay.areaW ? lay.areaW + 0.45 : 0.35);
-  if (!lay.areaW) R_X = M.x + M.w + 0.5;
+  var R_X = lay.areaW ? tX + lay.areaW + 0.45 : M.x + M.w + 0.5;
   var R_W = PPT_RIGHT - R_X;
-  var K = Math.min(1, R_W / 5.95);   // 좁아진 만큼 글씨도 같이 줄인다
+  var K = Math.min(1, R_W / 5.95);
 
-  // 제품명
-  function estTitleLines(text, perLine) {
+  // ── 제품명 — 앞의 부스 번호는 떼고, 대표 사진 윗선에 맞춘다 ──
+  var nm = pptSplitBooth(p.name || '(이름 없음)');
+  var y0 = M.y;
+  function estLines(text, perLine) {
     var units = 0;
     for (var i = 0; i < text.length; i++) units += (text.charCodeAt(i) > 0x1100) ? 1 : 0.55;
-    return Math.min(3, Math.max(1, Math.ceil(units / perLine)));
+    return Math.min(2, Math.max(1, Math.ceil(units / perLine)));
   }
-  var titleText = p.name || '(이름 없음)';
-  var tLines = estTitleLines(titleText, 19 * R_W / 5.95);
-  var titleH = tLines * 0.38 + 0.06;
-  s.addText(titleText, {
-    x:R_X, y:M.y, w:R_W, h:titleH, fontFace:FK, fontSize:24, bold:true, color:PT.ink,
+  var tFs = 22;
+  var tLines = estLines(nm.title, 21 * R_W / 5.95);
+  if (tLines > 1) tFs = 20;
+  var titleH = tLines * (tFs / 72) * 1.25 + 0.04;
+  s.addText(nm.title, {
+    x:R_X, y:y0, w:R_W, h:titleH, fontFace:FK, fontSize:tFs, bold:true, color:C_INK,
     valign:"top", margin:0, fit:"shrink", lineSpacingMultiple:1.05
   });
-  var ruleY = M.y + titleH + 0.08;
-  s.addShape(pres.shapes.RECTANGLE, { x:R_X, y:ruleY, w:R_W, h:0.02, fill:{color:PT.ink}, line:{type:'none'} });
+  var ruleY = y0 + titleH + 0.1;
+  s.addShape(pres.shapes.RECTANGLE, { x:R_X, y:ruleY, w:R_W, h:0.015, fill:{color:C_INK}, line:{type:'none'} });
 
-  // ── 단가 · MOQ · CB · 샘플 ──
-  var statY = ruleY + 0.24;
+  // ── 단가 · MOQ · CB · 샘플 — 모두 같은 글꼴·같은 크기 ──
+  var statY = ruleY + 0.22;
   var ratios = [1.4, 1.4, 1.35, 1.8], rsum = 5.95;
   var cx = R_X;
+  var VFS = Math.round(17 * Math.max(0.82, K) * 2) / 2;
+  var SFS = Math.round(11 * Math.max(0.82, K) * 2) / 2;
+  function val(t, color, bold) { return { text: t, options: { fontFace:FK, fontSize:VFS, color: color || C_INK, bold: bold !== false } }; }
+  function unit(t) { return { text: t, options: { fontFace:FK, fontSize:SFS, color:C_MUTED } }; }
+  function na(t) { return [{ text: t, options: { fontFace:FK, fontSize:SFS + 1, color:C_MUTED } }]; }
   function stat(i, label, runs) {
     var w = R_W * ratios[i] / rsum;
-    s.addText(label, { x:cx, y:statY, w:w, h:0.24, fontFace:FM, fontSize:Math.round(9 * Math.max(0.8, K) * 2) / 2, color:PT.muted, bold:true, charSpacing:2 * K * K, margin:0 });
-    var scaled = runs.map(function(r) { var o = Object.assign({}, r.options); o.fontSize = Math.round(o.fontSize * K * 2) / 2; return { text: r.text, options: o }; });
-    s.addText(scaled, { x:cx, y:statY + 0.3, w:w, h:0.55, fontFace:FH, valign:"bottom", margin:0, fit:"shrink" });
+    s.addText(label, { x:cx, y:statY, w:w, h:0.22, fontFace:FM, fontSize:Math.round(8.5 * Math.max(0.85, K) * 2) / 2, color:C_MUTED, bold:true, charSpacing:1.8 * K, margin:0 });
+    s.addText(runs, { x:cx, y:statY + 0.28, w:w, h:0.42, valign:"bottom", margin:0, fit:"shrink" });
     cx += w;
   }
   var price = (p.moq && p.moq.price && p.moq.price !== '-') ? p.moq.price : '';
   var qty   = (p.moq && p.moq.qty   && p.moq.qty   !== '-') ? p.moq.qty   : '';
-  var NA = function(t) { return [{ text: t, options: { fontSize: 15, color: PT.muted, fontFace: FK } }]; };
-  stat(0, "UNIT PRICE", price ? [{ text:"$", options:{fontSize:15, color:PT.muted} },
-                                 { text:String(price), options:{fontSize:24, color:PT.ink, bold:true} }] : NA("미입력"));
-  stat(1, "MOQ", qty ? [{ text:String(qty), options:{fontSize:22, color:PT.ink, bold:true} },
-                        { text:" pcs", options:{fontSize:11, color:PT.muted} }] : NA("미입력"));
+  stat(0, "UNIT PRICE", price ? [unit("$ "), val(String(price))] : na("미입력"));
+  stat(1, "MOQ", qty ? [val(String(qty)), unit(" pcs")] : na("미입력"));
   var cbRuns;
-  if (!p.cb) cbRuns = NA("확인 필요");
-  else if (p.cb.owned) cbRuns = [{ text:"보유", options:{fontSize:18, color:PT.sage, bold:true, fontFace:FK} }];
-  else if (p.cb.date) {
-    var cd = String(p.cb.date).split('-');
-    cbRuns = [{ text:"진행 ", options:{fontSize:14, color:PT.amber, bold:true, fontFace:FK} },
-              { text:(+cd[1]) + "/" + (+cd[2]), options:{fontSize:18, color:PT.amber, bold:true} }];
-  } else cbRuns = [{ text:"미보유", options:{fontSize:16, color:PT.red, bold:true, fontFace:FK} }];
+  if (!p.cb) cbRuns = na("확인 필요");
+  else if (p.cb.owned) cbRuns = [val("보유", C_ACC)];
+  else if (p.cb.date) { var cd = String(p.cb.date).split('-'); cbRuns = [unit("진행 "), val((+cd[1]) + "/" + (+cd[2]))]; }
+  else cbRuns = [val("미보유", C_WARN)];
   stat(2, "CB", cbRuns);
   var smpRuns;
   if (p.sample) {
     var ep = p.sample.expected ? String(p.sample.expected).split('-') : null;
     if (ep && ep.length === 3) {
       var dl = dLeftFromDate(p.sample.expected);
-      var sc2 = (dl !== null && dl < 0) ? PT.red : PT.blue;
-      smpRuns = [{ text:(+ep[1]) + "/" + (+ep[2]), options:{fontSize:24, color:sc2, bold:true} },
-                 { text:" 예정", options:{fontSize:15, color:sc2, fontFace:FK} }];
-    } else smpRuns = [{ text:"신청", options:{fontSize:20, color:PT.blue, bold:true, fontFace:FK} }];
-  } else smpRuns = NA("미신청");
+      var late = (dl !== null && dl < 0);
+      smpRuns = [val((+ep[1]) + "/" + (+ep[2]), late ? C_WARN : C_ACC), unit(late ? " 지연" : " 예정")];
+    } else smpRuns = [val("신청", C_ACC)];
+  } else smpRuns = na("미신청");
   stat(3, "SAMPLE", smpRuns);
 
-  var thinY = statY + 1.0;
-  s.addShape(pres.shapes.RECTANGLE, { x:R_X, y:thinY, w:R_W, h:0.01, fill:{color:PT.line}, line:{type:'none'} });
+  var thinY = statY + 0.86;
+  s.addShape(pres.shapes.RECTANGLE, { x:R_X, y:thinY, w:R_W, h:0.01, fill:{color:C_LINE}, line:{type:'none'} });
 
-  // ── 메모 칸: 핵심 스펙 / 공급 조건·리스크 / 다음 액션 ──
-  var noteY = thinY + 0.2, noteBottom = M.y + M.h, pad = 0.24;
+  // ── 메모: 흰 바탕 + 연한 선, 제목은 한글만 같은 색 ──
+  var noteY = thinY + 0.22, noteBottom = M.y + M.h, pad = 0.26;
   var textW = R_W - pad * 2;
-  s.addShape(pres.shapes.ROUNDED_RECTANGLE, {
-    x:R_X, y:noteY, w:R_W, h:noteBottom - noteY,
-    fill:{color:PT.noteBg}, line:{color:PT.noteLine, width:0.75}, rectRadius:0.06
+  s.addShape(pres.shapes.RECTANGLE, {
+    x:R_X, y:noteY, w:R_W, h:noteBottom - noteY, fill:{color:"FFFFFF"}, line:{color:C_LINE, width:0.75}
   });
+  s.addShape(pres.shapes.RECTANGLE, { x:R_X, y:noteY, w:0.05, h:noteBottom - noteY, fill:{color:C_ACC}, line:{type:'none'} });
 
   var memo = pptSplitMemo(p);
   var todos = Array.isArray(p.todos) ? p.todos : migrateTodos(p);
   var runs = [];
-  function head(en, ko, color, first) {
-    runs.push({ text: en + "   ", options: { fontFace:FM, fontSize:9, bold:true, color:color, charSpacing:2.5,
-                                             paraSpaceBefore: first ? 0 : 9 } });
-    runs.push({ text: ko, options: { fontFace:FK, fontSize:11, bold:true, color:color, breakLine:true } });
+  function head(ko, first) {
+    runs.push({ text: ko, options: { fontFace:FK, fontSize:11, bold:true, color:C_ACC, breakLine:true, paraSpaceBefore: first ? 0 : 10 } });
   }
-  function bullet(t, color) {
-    runs.push({ text: t, options: { fontFace:FK, fontSize:13, color: color || PT.ink, breakLine:true,
-                                    bullet: { code:'00B7', indent: 14 } } });
+  function item(t, code, color) {
+    runs.push({ text: t, options: { fontFace:FK, fontSize:12.5, color: color || C_INK, breakLine:true,
+                                    bullet: { code: code, indent: 13 }, paraSpaceBefore: 2 } });
   }
   var first = true;
-  if (memo.spec.length) { head("KEY SPEC", "핵심 스펙", PT.blue, first); first = false; memo.spec.forEach(function(t) { bullet(t); }); }
-  if (memo.risk.length) { head("SUPPLY · RISK", "공급 조건·리스크", PT.red, first); first = false; memo.risk.forEach(function(t) { bullet(t); }); }
+  if (memo.spec.length) { head("핵심 스펙", first); first = false; memo.spec.forEach(function(t) { item(t, '00B7'); }); }
+  if (memo.risk.length) { head("공급 조건 · 리스크", first); first = false; memo.risk.forEach(function(t) { item(t, '00B7'); }); }
   if (todos.length) {
-    head("NEXT ACTION", "다음 액션", PT.inkSoft, first); first = false;
-    todos.forEach(function(t) {
-      runs.push({ text: (t.done ? "■  " : "□  ") + t.text,
-                  options: { fontFace:FK, fontSize:13, color: t.done ? PT.muted : PT.ink, breakLine:true } });
-    });
+    head("다음 액션", first); first = false;
+    todos.forEach(function(t) { item(t.text, t.done ? '25A0' : '25A1', t.done ? C_MUTED : C_INK); });
   }
-  if (!runs.length) runs.push({ text:"적어둔 메모 없음", options:{ fontFace:FK, fontSize:13, color:PT.muted, italic:true } });
+  if (!runs.length) runs.push({ text:"적어둔 메모 없음", options:{ fontFace:FK, fontSize:12, color:C_MUTED } });
 
-  var bodyY = noteY + 0.2, bodyH = noteBottom - bodyY - 0.16;
-  runs = pptFitRuns(runs, textW, bodyH, 1.25);
-  s.addText(runs, { x:R_X + pad, y:bodyY, w:textW, h:bodyH, valign:"top", margin:0, lineSpacingMultiple:1.25, fit:"shrink" });
+  var bodyY = noteY + 0.22, bodyH = noteBottom - bodyY - 0.18;
+  runs = pptFitRuns(runs, textW - 0.15, bodyH, 1.22);
+  s.addText(runs, { x:R_X + pad, y:bodyY, w:textW, h:bodyH, valign:"top", margin:0, lineSpacingMultiple:1.22, fit:"shrink" });
 
   // ── 아래 ──
-  s.addText("CANTON FAIR", { x:0.5, y:SH-0.35, w:3, h:0.22, fontFace:FM, fontSize:8, color:PT.muted, charSpacing:3, margin:0 });
+  s.addText("CANTON FAIR", { x:0.5, y:SH-0.35, w:3, h:0.22, fontFace:FM, fontSize:8, color:C_MUTED, charSpacing:3, margin:0 });
   s.addText(PHASE_PERIOD[productPhase(p)] || '', {
-    x:SW-3.5, y:SH-0.35, w:3.0, h:0.22, fontFace:FM, fontSize:8, color:PT.muted, align:"right", charSpacing:3, margin:0
+    x:SW-3.5, y:SH-0.35, w:3.0, h:0.22, fontFace:FM, fontSize:8, color:C_MUTED, align:"right", charSpacing:3, margin:0
   });
   return s;
 }
