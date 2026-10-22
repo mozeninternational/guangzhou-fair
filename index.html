@@ -816,6 +816,9 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .photo-scroll { grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .photo-thumb-wrap::before { top: 4px; left: 4px; padding: 2px 6px; font-size: 8px; }
 .photo-del { top: 4px; right: 4px; width: 22px; height: 22px; font-size: 14px; }
+/* v73: 사진 지우기 × 를 어떤 사진 위에서도 잘 보이게 (흰 테두리 + 그림자) */
+.photo-del { width: 26px; height: 26px; top: 3px; right: 3px; font-size: 16px; font-weight: 700;
+  background: rgba(20,20,20,.78); border: 1.5px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
 .ps-album { display: none !important; }      /* 불러오기 버튼 제거 → 빈칸 길게 누르기로 대체 */
 .ps-count { right: 2px; }
 .add-photo-btn { flex-direction: column; gap: 2px; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
@@ -1015,7 +1018,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v71</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v73</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1548,7 +1551,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v71)
+          ⬇️ 최신 버전 받기 (현재 v73)
         </button>
       </div>
 
@@ -5144,7 +5147,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v71';
+var APP_VERSION = 'v73';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -7146,11 +7149,12 @@ function pptAddProductSlide(pres, p, productNo, shownIdx, slideOf) {
     x:0.5, y:0.42, w:4, h:0.25, fontFace:FM, fontSize:9, color:C_MUTED, bold:true, charSpacing:3, margin:0
   });
   if (p.sample) {
+    // v72: 사용자 수정안 — 파란 바탕 + 흰 글씨
     s.addShape(pres.shapes.ROUNDED_RECTANGLE, {
-      x:SW - 1.5, y:0.37, w:1.0, h:0.32, fill:{color:"FFFFFF"}, line:{color:C_ACC, width:0.75}, rectRadius:0.16
+      x:SW - 1.55, y:0.36, w:1.05, h:0.34, fill:{color:"0070C0"}, line:{type:'none'}, rectRadius:0.17
     });
     s.addText("샘플 신청", {
-      x:SW - 1.5, y:0.37, w:1.0, h:0.32, fontFace:FK, fontSize:9.5, bold:true, color:C_ACC,
+      x:SW - 1.55, y:0.36, w:1.05, h:0.34, fontFace:FK, fontSize:10, bold:true, color:"FFFFFF",
       align:"center", valign:"middle", margin:0
     });
   }
