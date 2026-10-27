@@ -1084,6 +1084,13 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 
 /* 목록 맨 아래 제품이 + 버튼에 가리지 않게 */
 #main-page { padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)); }
+/* v75: 기존 제품으로 옮기기 */
+.split-go.alt { background: transparent; color: var(--blue); border: 1px solid var(--blue); }
+.mv-item { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.mv-item:active { background: rgba(255,255,255,.05); }
+.mv-item img, .mv-noimg { width: 46px; height: 46px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: #111827; }
+.mv-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mv-sub { font-size: 11.5px; color: var(--t2); font-weight: 500; }
 /* 작은 사진 불러오는 중 */
 img.th-wait { background: rgba(255,255,255,.06); }
 </style>
@@ -1095,7 +1102,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v74</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v75</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1276,6 +1283,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
     <div class="split-bar" id="split-bar">
       <span class="split-msg" id="split-msg">옮길 사진을 고르세요</span>
       <button class="split-go" id="split-go" type="button" onclick="doSplit()" disabled>새 제품으로</button>
+      <button class="split-go alt" id="split-move" type="button" onclick="openMoveTarget()" disabled>기존 제품으로</button>
       <button class="split-no" type="button" onclick="cancelSplit()">취소</button>
     </div>
 
@@ -1549,6 +1557,16 @@ img.th-wait { background: rgba(255,255,255,.06); }
   </div>
 </div>
 
+<!-- v75: 사진을 기존 제품으로 옮기기 -->
+<div class="overlay" id="move-overlay" onclick="overlayClick(event,'move')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📦 어느 제품으로 옮길까요?</div>
+    <input class="fi" id="move-q" type="search" placeholder="제품명 검색" oninput="renderMoveTargets()" style="margin-bottom:10px;">
+    <div id="move-list" style="max-height:55dvh; overflow-y:auto;"></div>
+  </div>
+</div>
+
 <!-- 휴지통 -->
 <div class="overlay" id="trash-overlay" onclick="overlayClick(event,'trash')">
   <div class="sheet">
@@ -1641,7 +1659,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v74)
+          ⬇️ 최신 버전 받기 (현재 v75)
         </button>
       </div>
 
@@ -5262,7 +5280,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v74';
+var APP_VERSION = 'v75';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5807,6 +5825,56 @@ function updateSplitBar() {
   var msg = document.getElementById('split-msg'), go = document.getElementById('split-go');
   if (msg) msg.textContent = n ? n + '장 선택됨' : '옮길 사진을 고르세요';
   if (go) go.disabled = !n || (cur.photos && n >= cur.photos.length);
+  var mv = document.getElementById('split-move');
+  if (mv) mv.disabled = !n;
+}
+
+/* ── v75: 고른 사진을 이미 있는 다른 제품으로 옮기기 ──
+   옮긴 사진은 그 제품의 맨 뒤에 붙고, 지금 제품에서는 빠진다. (사진을 전부 옮기는 것도 가능) */
+function openMoveTarget() {
+  if (!splitSel.size) return;
+  var q = document.getElementById('move-q'); if (q) q.value = '';
+  renderMoveTargets();
+  openOverlay('move');
+}
+function renderMoveTargets() {
+  var box = document.getElementById('move-list');
+  if (!box) return;
+  var q = (document.getElementById('move-q').value || '').trim().toLowerCase();
+  var me = products.find(function(x) { return x.id === editingId; });
+  var myPhase = me ? productPhase(me) : null;
+  var list = products.filter(function(x) { return x.id !== editingId && x.id !== draftingId; })
+    .filter(function(x) { return !q || String(x.name || '').toLowerCase().indexOf(q) !== -1; })
+    .sort(function(a, b) {   // 같은 기수 먼저, 그 안에서는 목록 순서
+      return (productPhase(a) === myPhase ? 0 : 1) - (productPhase(b) === myPhase ? 0 : 1);
+    });
+  if (!list.length) { box.innerHTML = '<div class="tr-empty">찾는 제품이 없어요</div>'; return; }
+  box.innerHTML = list.map(function(x) {
+    var ph = (x.photos || []).filter(isValidPhoto);
+    var img = ph.length ? thumbHtml(ph[0], '', '') : '<div class="mv-noimg"></div>';
+    return '<div class="mv-item" onclick="movePhotosTo(' + x.id + ')">' + img +
+      '<div class="mv-name">' + escapeHtmlLite(x.name || '(이름 없음)') +
+      '<div class="mv-sub">' + productPhase(x) + '기 · ' + (x.date || '') + ' · 사진 ' + (x.photos || []).length + '장</div></div></div>';
+  }).join('');
+  watchThumbs(box);
+}
+function movePhotosTo(targetId) {
+  var target = products.find(function(x) { return x.id === targetId; });
+  if (!target || !splitSel.size) return;
+  var moved = [], keep = [];
+  cur.photos.forEach(function(src, i) { (splitSel.has(i) ? moved : keep).push(src); });
+  if (!confirm('사진 ' + moved.length + '장을\n"' + (target.name || '(이름 없음)') + '"(으)로 옮길까요?')) return;
+  closeOverlay('move');
+  cur.photos = keep;
+  performAutoSave();                                   // 지금 제품에서 빼기
+  target.photos = (target.photos || []).concat(moved); // 대상 제품 맨 뒤에 붙이기
+  splitMode = false; splitSel.clear();
+  var ca = document.querySelector('.cur-area'); if (ca) ca.classList.remove('split-mode');
+  renderPhotos(); updateSplitBar();
+  persistSafe().then(function(ok) {
+    if (!ok) { showToast('🚨 저장 실패 — 다시 시도해주세요'); return; }
+    showToast('✓ 사진 ' + moved.length + '장을 "' + (target.name || '') + '"(으)로 옮겼어요');
+  });
 }
 function doSplit() {
   var n = splitSel.size;
