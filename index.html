@@ -1091,6 +1091,25 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .mv-item img, .mv-noimg { width: 46px; height: 46px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: #111827; }
 .mv-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mv-sub { font-size: 11.5px; color: var(--t2); font-weight: 500; }
+/* v77: 기능 칩 한 줄 · 아이콘 없음 */
+.fn-row { flex-wrap: nowrap !important; gap: 6px; }
+.fn-row .fn-chip { flex: 0 1 auto; min-width: 0; padding: 7px 10px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; justify-content: center; }
+.fn-row .fn-chip > span { overflow: hidden; text-overflow: ellipsis; }
+/* v77: 제품명 오른쪽 샘플 별 */
+.smp-star {
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 40px; height: 40px; padding: 0 4px; border-radius: 10px; margin-top: 1px;
+  background: transparent; border: 1px solid var(--border); color: var(--t2);
+  font-family: inherit; cursor: pointer; -webkit-appearance: none; touch-action: manipulation; line-height: 1;
+}
+.smp-star span { font-size: 18px; }
+.smp-star small { font-size: 9.5px; font-weight: 700; margin-top: 2px; }
+.smp-star.on { border-color: #3fa87a; background: rgba(46,125,91,.18); color: #6ee7b7; }
+.smp-star.holding { background: rgba(245,165,0,.22); border-color: var(--orange); }
+/* v77: PC에서는 카드에 휴지통 버튼 (폰은 지금처럼 왼쪽으로 밀기) */
+.p-del { display: none; background: none; border: none; padding: 0 2px 6px 6px; margin-top: -2px; font-size: 14px; line-height: 1; color: var(--t2); cursor: pointer; font-family: inherit; }
+@media (hover: hover) and (pointer: fine) { .p-del { display: inline-block; } .p-del:hover { color: #f3a9a4; } }
+.p-card { cursor: pointer; }
 /* 작은 사진 불러오는 중 */
 img.th-wait { background: rgba(255,255,255,.06); }
 </style>
@@ -1102,7 +1121,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v76</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v77</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1204,6 +1223,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
       <textarea class="nm-ta" id="name-ta" rows="1"
         placeholder="제품명" oninput="onNameInput()"></textarea>
       <span class="cat-tag-pill" id="cat-tag-pill" style="display:none;"></span>
+      <button class="smp-star" id="fn-sample" type="button" title="샘플 신청 · 길게 누르면 일정"><span id="fn-sample-t">☆</span><small id="fn-sample-sub">샘플</small></button>
       <button class="mic-btn" id="mic-name" type="button" onclick="toggleVoice('name-ta','mic-name')" title="제품명 음성입력">🎤</button>
       <button class="save-btn" id="save-btn" onclick="saveProduct()" disabled>저장</button>
       <button class="edit-x" id="edit-x" type="button" onclick="cancelEdit()" title="편집 끝내기" style="display:none;">✕</button>
@@ -1211,12 +1231,11 @@ img.th-wait { background: rgba(255,255,255,.06); }
 
     <!-- 기능 칩 -->
     <div class="fn-row">
-      <button class="fn-chip" id="fn-price" type="button"><span class="fn-chip-ico">$</span><span id="fn-price-t">단가</span></button>
+      <button class="fn-chip" id="fn-price" type="button"><span id="fn-price-t">단가</span></button>
       <button class="fn-chip" id="fn-moq" type="button"><span id="fn-moq-t">MOQ</span></button>
-      <button class="fn-chip" id="fn-cb" type="button"><span class="fn-chip-ico">📋</span><span id="fn-cb-t">CB 미입력</span></button>
-      <button class="fn-chip" id="fn-sample" type="button"><span class="fn-chip-ico">📅</span><span id="fn-sample-t">샘플 신청</span></button>
-      <button class="fn-chip" id="fn-card" type="button"><span class="fn-chip-ico">📇</span><span id="fn-card-t">명함</span></button>
-      <button class="fn-chip" id="fn-cat" type="button" onclick="openCatPicker()"><span class="fn-chip-ico">🏷</span><span id="fn-cat-t">카테고리</span></button>
+      <button class="fn-chip" id="fn-cb" type="button"><span id="fn-cb-t">CB</span></button>
+      <button class="fn-chip" id="fn-card" type="button"><span id="fn-card-t">명함</span></button>
+      <span id="fn-cat" style="display:none;"><span id="fn-cat-t"></span></span>
       <button class="fn-chip" id="fn-phase" type="button" onclick="togglePhaseChip()" title="탭하면 1기 가전 ⇄ 2기 주방"><span id="fn-phase-t">1기 가전</span></button>
     </div>
 
@@ -1279,6 +1298,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
       <button class="ed-btn" id="ed-same" type="button" onclick="newSameFactory()">＋ 같은 업체 새 제품<small>지금 카드를 저장하고, 명함·카테고리를 이어받은 새 카드를 열어요</small></button>
       <button class="ed-btn" type="button" onclick="openVideoCamera()">🎥 동영상 촬영<small>앱에는 저장하지 않고 휴대폰에 바로 저장</small></button>
       <button class="ed-btn danger" id="ed-discard" type="button" onclick="discardDraft()">작성 취소 (휴지통으로)</button>
+      <button class="ed-btn danger" id="ed-delete" type="button" onclick="deleteFromEditor()">🗑 이 제품 삭제 (휴지통으로)</button>
     </div>
     <div class="split-bar" id="split-bar">
       <span class="split-msg" id="split-msg">옮길 사진을 고르세요</span>
@@ -1659,7 +1679,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v76)
+          ⬇️ 최신 버전 받기 (현재 v77)
         </button>
       </div>
 
@@ -2151,6 +2171,7 @@ function resumeDraftIfAny() {
 // ── 자동 업데이트 확인 (새 버전 배포 시 재설치 없이 자동 반영) ──
 // 서버의 index.html을 캐시 없이 새로 받아와 내용이 달라지면 자동으로 새로고침한다.
 var lastUpdateCheck = 0;
+var updatePending = false;
 function checkForAppUpdate() {
   if (Date.now() - lastUpdateCheck < 5 * 60 * 1000) return;   // 5분에 한 번만
   lastUpdateCheck = Date.now();
@@ -2165,6 +2186,12 @@ function checkForAppUpdate() {
         var saved = localStorage.getItem('gz_app_hash');
         if (saved && saved !== hash) {
           localStorage.setItem('gz_app_hash', hash);
+          if (typeof editorOpen !== 'undefined' && editorOpen) {
+            // v77: 카드를 고치는 중이면 화면을 바꾸지 않고, 카드를 닫을 때 적용한다
+            updatePending = true;
+            showToast('🔄 새 버전이 있어요 · 카드를 닫으면 적용돼요');
+            return;
+          }
           showToast('🔄 새 버전으로 업데이트합니다...');
           setTimeout(function() { location.reload(); }, 1200);
           return;
@@ -2393,7 +2420,7 @@ function fmtNum(v) {
 function renderFnChips() {
   // 단가
   var price = (cur.moq && cur.moq.price && cur.moq.price !== '-') ? cur.moq.price : '';
-  if (price) fnSet('fn-price', 'fn-price-t', fmtNum(price), 'on-orange');
+  if (price) fnSet('fn-price', 'fn-price-t', '$' + fmtNum(price), 'on-orange');
   else fnSet('fn-price', 'fn-price-t', '단가', '');
 
   // MOQ
@@ -2402,25 +2429,22 @@ function renderFnChips() {
   else fnSet('fn-moq', 'fn-moq-t', 'MOQ', '');
 
   // CB
-  if (!cur.cb) fnSet('fn-cb', 'fn-cb-t', 'CB 미입력', '');
+  if (!cur.cb) fnSet('fn-cb', 'fn-cb-t', 'CB', '');
   else if (cur.cb.owned) fnSet('fn-cb', 'fn-cb-t', 'CB 보유', 'on-green');
-  else if (cur.cb.date) fnSet('fn-cb', 'fn-cb-t', 'CB 진행중', 'on-amber', pptFmtDate(cur.cb.date));
+  else if (cur.cb.date) { var cbd = String(cur.cb.date).split('-'); fnSet('fn-cb', 'fn-cb-t', 'CB ' + (+cbd[1]) + '/' + (+cbd[2]), 'on-amber'); }
   else fnSet('fn-cb', 'fn-cb-t', 'CB 없음', 'on-red');
 
-  // 샘플
-  if (!cur.sample) {
-    fnSet('fn-sample', 'fn-sample-t', '샘플 신청', '');
-  } else {
-    var sub = '';
-    if (cur.sample.expected) {
-      var d = dLeftFromDate(cur.sample.expected);
-      sub = (d === null) ? '' : (d < 0 ? '지연 ' + (-d) + '일' : 'D-' + d);
-    } else if (cur.sample.days) {
-      sub = cur.sample.days + '일';
-    } else if (cur.sample.requested) {
-      sub = fmtDate(cur.sample.requested) + ' 신청';
+  // 샘플 — v77: 제품명 오른쪽 별 (☆ 미신청 / ★ 신청)
+  var sb = document.getElementById('fn-sample');
+  if (sb) {
+    var sub = '샘플';
+    if (cur.sample) {
+      if (cur.sample.expected) { var ed = String(cur.sample.expected).split('-'); if (ed.length === 3) sub = (+ed[1]) + '/' + (+ed[2]); }
+      else if (cur.sample.requested) sub = '신청';
     }
-    fnSet('fn-sample', 'fn-sample-t', '샘플 신청', 'on-green', sub);
+    sb.classList.toggle('on', !!cur.sample);
+    var st = document.getElementById('fn-sample-t'); if (st) st.textContent = cur.sample ? '★' : '☆';
+    var ss = document.getElementById('fn-sample-sub'); if (ss) ss.textContent = sub;
   }
 
   // 명함
@@ -2435,8 +2459,11 @@ function renderFnChips() {
     fnSet('fn-phase', 'fn-phase-t', PHASE_NAMES[eph], eph === '2' ? 'on-blue' : 'on-orange');
   }
 
-  if (cur.category) fnSet('fn-cat', 'fn-cat-t', cur.category, 'on-orange');
-  else fnSet('fn-cat', 'fn-cat-t', '카테고리', '');
+  // 카테고리 칩은 v77에서 화면에서 뺐다 (기존 데이터는 그대로 보관)
+
+  // 별 버튼 폭이 바뀌면 제품명 칸 폭도 바뀌므로 높이를 다시 맞춘다
+  var nta = document.getElementById('name-ta');
+  if (nta && nta.value) { autoGrow(nta); requestAnimationFrame(function() { autoGrow(nta); }); }
 }
 
 // 예정일 기준 남은 일수 (오늘 기준)
@@ -3204,7 +3231,11 @@ function toggleVoice(targetId, btnId) {
 
 function toggleSampleQuick() {
   if (cur.sample) {
+    // v77: 별을 한 번 더 누르면 해제 — 입고 예정일·메모가 있으면 지워도 되는지 확인
+    var hasInfo = cur.sample.expected || cur.sample.days || (cur.sample.memo && String(cur.sample.memo).trim());
+    if (hasInfo && !confirm('샘플 신청 표시를 해제할까요?\n\n입력해 둔 입고 예정일·메모도 함께 지워집니다.')) return;
     cur.sample = null;
+    showToast('샘플 신청 표시를 해제했어요');
   } else {
     cur.sample = { requested: todayISO(), days: null, expected: null, memo: '' };
     showToast('샘플 신청 표시 · ' + fmtDate(todayISO()));
@@ -3798,6 +3829,7 @@ function renderList() {
       '<div class="p-head"><div class="p-name' + (p.star ? ' starred' : '') + '">' + escapeHtmlLite(p.name) + '</div>' +
         '<div class="p-head-r"><span class="p-phase ph' + productPhase(p) + '">' + productPhase(p) + '기</span><div class="p-date">' + p.date + '</div>' +
         '<button class="p-share" type="button" title="공유" onclick="event.stopPropagation(); openShare(' + p.id + ')">📤</button>' +
+        '<button class="p-del" type="button" title="휴지통으로" onclick="event.stopPropagation(); confirmDeleteProduct(' + p.id + ')">🗑</button>' +
         '<button class="p-star' + (p.star ? ' on' : '') + '" type="button" title="주목 제품 표시" onclick="event.stopPropagation(); toggleStar(' + p.id + ')">' + (p.star ? '★' : '☆') + '</button></div></div>' +
       (catBadge ? '<div class="p-cat-row">' + catBadge + '</div>' : '') +
       photos +
@@ -3966,18 +3998,25 @@ function setupListReorder() {
     draggable: '.p-row',
     animation: 180,
     delay: 400,
-    delayOnTouchOnly: false,
+    delayOnTouchOnly: true,      // v77: PC(마우스)는 누르고 바로 끌면 된다. 폰은 지금처럼 0.4초 누른 뒤
     touchStartThreshold: 8,
-    filter: '.p-star, .p-share, .p-row-del, .p-photo',
+    filter: '.p-star, .p-share, .p-row-del, .p-photo, .p-del',
     preventOnFilter: false,
     forceFallback: true,
     fallbackTolerance: 4,
     scroll: true, scrollSensitivity: 80, scrollSpeed: 12, bubbleScroll: true,
-    onChoose: function() {
-      listReorderActive = true;
+    onChoose: function(evt) {
+      /* v77: 폰은 0.4초 눌러 카드가 들렸을 때부터 "끌기 중"으로 본다(그 뒤 손을 떼도 카드가 열리지 않게).
+         PC(마우스)는 누르자마자 이 신호가 오므로, 실제로 움직였을 때(onStart)만 끌기로 본다 → 그냥 클릭하면 카드가 열린다 */
+      var oe = evt && evt.originalEvent;
+      var isTouch = !!(oe && ((oe.type && oe.type.indexOf('touch') === 0) || oe.pointerType === 'touch'));
+      if (isTouch) {
+        listReorderActive = true;
+        try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
+      }
       closeSwipeRow();
-      try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
     },
+    onStart: function() { listReorderActive = true; },
     onUnchoose: function() {
       // 짧은 탭에도 이 신호가 오므로, 실제로 들어올렸을 때만 직후 탭을 막는다
       if (listReorderActive) listReorderEndedAt = Date.now();
@@ -5280,7 +5319,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v76';
+var APP_VERSION = 'v77';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5715,7 +5754,13 @@ function openEditor() {
   if (ca) { ca.style.display = ''; ca.scrollTop = 0; }
   updateEdActions();
   updateFab();
+  requestAnimationFrame(function() {   // 화면이 그려진 뒤 제품명·메모 칸 높이를 다시 맞춘다
+    ['name-ta', 'memo-ta'].forEach(function(id) { var t = document.getElementById(id); if (t && t.value) autoGrow(t); });
+  });
 }
+window.addEventListener('resize', function() {
+  ['name-ta', 'memo-ta'].forEach(function(id) { var t = document.getElementById(id); if (t && t.value) autoGrow(t); });
+});
 
 function closeEditor() {
   if (splitMode) { splitMode = false; splitSel.clear(); var ca = document.querySelector('.cur-area'); if (ca) ca.classList.remove('split-mode'); }
@@ -5724,6 +5769,11 @@ function closeEditor() {
   if (app) app.classList.remove('editor-open');
   var navId = curNavPage === 'samples' ? 'bnav-samples' : curNavPage === 'photos' ? 'bnav-photos' : 'bnav-list';
   switchNav(document.getElementById(navId), curNavPage || 'products');
+  if (updatePending) {            // 고치는 동안 미뤄 둔 새 버전 적용 (데이터는 그대로)
+    updatePending = false;
+    showToast('🔄 새 버전으로 업데이트합니다...');
+    setTimeout(function() { location.reload(); }, 900);
+  }
 }
 
 // + 버튼: 작성 중이던 카드가 있으면 이어서, 없으면 새 카드
@@ -5752,6 +5802,24 @@ function updateEdActions() {
   if (sp) sp.style.display = (isEditingExisting && cur.photos && cur.photos.length >= 1) ? '' : 'none';   // v76: 1장이어도 옮길 수 있게
   var dc = document.getElementById('ed-discard');
   if (dc) dc.style.display = isEditingExisting ? 'none' : '';
+  var dl = document.getElementById('ed-delete');
+  if (dl) dl.style.display = isEditingExisting ? '' : 'none';
+}
+
+// v77: 수정 화면에서 제품 삭제 (PC·폰 공통)
+function deleteFromEditor() {
+  if (!editingId) return;
+  var id = editingId;
+  var p = products.find(function(x) { return x.id === id; });
+  var name = p ? (p.name || '이 제품') : '이 제품';
+  if (!confirm('"' + name + '"\n\n휴지통으로 이동됩니다.\n(30일 동안 휴지통에서 복구할 수 있어요)')) return;
+  var tids = trashProducts([id]);
+  resetCur();
+  persistSafe().then(function(ok) {
+    closeEditor();
+    if (!ok) { showToast('🚨 삭제 실패 — 다시 시도해주세요'); return; }
+    showUndo('🗑 "' + name + '" 휴지통으로 옮겼어요', function() { restoreTrashItems(tids); });
+  });
 }
 
 // 저장이 끝난 뒤: "같은 업체 새 제품"이면 새 카드를 이어서 열고, 아니면 목록으로
