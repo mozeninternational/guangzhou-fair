@@ -1102,7 +1102,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v75</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v76</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1275,7 +1275,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
     <!-- v74: 카드 아래 버튼 -->
     <div class="split-tip">✂ 새 제품으로 옮길 사진을 눌러 고르세요 (여러 장 가능)</div>
     <div class="ed-actions" id="ed-actions">
-      <button class="ed-btn" id="ed-split" type="button" onclick="startSplit()">✂ 사진 나누기<small>한 카드에 섞여 찍힌 다른 제품 사진을 새 제품으로 옮겨요</small></button>
+      <button class="ed-btn" id="ed-split" type="button" onclick="startSplit()">✂ 사진 나누기 · 옮기기<small>섞여 찍힌 사진을 새 제품이나 이미 있는 다른 제품으로 옮겨요</small></button>
       <button class="ed-btn" id="ed-same" type="button" onclick="newSameFactory()">＋ 같은 업체 새 제품<small>지금 카드를 저장하고, 명함·카테고리를 이어받은 새 카드를 열어요</small></button>
       <button class="ed-btn" type="button" onclick="openVideoCamera()">🎥 동영상 촬영<small>앱에는 저장하지 않고 휴대폰에 바로 저장</small></button>
       <button class="ed-btn danger" id="ed-discard" type="button" onclick="discardDraft()">작성 취소 (휴지통으로)</button>
@@ -1659,7 +1659,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v75)
+          ⬇️ 최신 버전 받기 (현재 v76)
         </button>
       </div>
 
@@ -5280,7 +5280,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v75';
+var APP_VERSION = 'v76';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5749,7 +5749,7 @@ function updateFab() {
 
 function updateEdActions() {
   var sp = document.getElementById('ed-split');
-  if (sp) sp.style.display = (isEditingExisting && cur.photos && cur.photos.length >= 2) ? '' : 'none';
+  if (sp) sp.style.display = (isEditingExisting && cur.photos && cur.photos.length >= 1) ? '' : 'none';   // v76: 1장이어도 옮길 수 있게
   var dc = document.getElementById('ed-discard');
   if (dc) dc.style.display = isEditingExisting ? 'none' : '';
 }
@@ -5800,7 +5800,7 @@ function discardDraft() {
 var splitMode = false, splitSel = new Set();
 function startSplit() {
   if (!isEditingExisting || !editingId) { showToast('저장된 제품에서 쓸 수 있어요'); return; }
-  if (!cur.photos || cur.photos.length < 2) { showToast('사진이 2장 이상일 때 나눌 수 있어요'); return; }
+  if (!cur.photos || cur.photos.length < 1) { showToast('옮길 사진이 없어요'); return; }
   splitMode = true; splitSel.clear();
   document.querySelector('.cur-area').classList.add('split-mode');
   renderPhotos(); updateSplitBar();
@@ -5874,6 +5874,21 @@ function movePhotosTo(targetId) {
   persistSafe().then(function(ok) {
     if (!ok) { showToast('🚨 저장 실패 — 다시 시도해주세요'); return; }
     showToast('✓ 사진 ' + moved.length + '장을 "' + (target.name || '') + '"(으)로 옮겼어요');
+    // 사진을 전부 옮겨 원래 제품에 사진이 하나도 없으면 → 원래 제품을 지울지 묻는다
+    if (!keep.length) {
+      var me = products.find(function(x) { return x.id === editingId; });
+      var nm = me ? (me.name || '(이름 없음)') : '이 제품';
+      setTimeout(function() {
+        if (!confirm('"' + nm + '"에 사진이 하나도 남지 않았어요.\n\n이 제품을 휴지통으로 옮길까요?\n(메모 등 남길 내용이 있으면 "취소"를 누르세요)')) return;
+        var delId = editingId;
+        var tids = trashProducts([delId]);
+        resetCur();
+        persistSafe().then(function() {
+          closeEditor();
+          showUndo('🗑 "' + nm + '" 휴지통으로 옮겼어요', function() { restoreTrashItems(tids); });
+        });
+      }, 350);
+    }
   });
 }
 function doSplit() {
