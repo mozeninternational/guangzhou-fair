@@ -1009,6 +1009,83 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .toast { font-size: 13px; }
 .undo-msg { font-size: 13.5px; }
 .lightbox-info-name { font-size: 16px; }
+
+/* ═══ v74 ════════════════════════════════════════════════
+   · 시작 화면 = 제품 목록 (하단 메뉴: 제품목록 · 샘플관리 · 사진)
+   · 새 기록·수정 = 화면 전체를 채우는 카드 (목록은 숨김)
+   · 목록 오른쪽 아래 + 버튼                                      */
+.app.editor-open .hdr, .app.editor-open .phase-bar, .app.editor-open .bnav,
+.app.editor-open #main-page, .app.editor-open .sample-page, .app.editor-open #photos-page,
+.app.editor-open .rc-banner, .app.editor-open #fab-new, .app.editor-open .storage-bar { display: none !important; }
+.app.editor-open .cur-area {
+  display: block !important; flex: 1 1 auto; max-height: none; min-height: 0;
+  margin: 0; border-radius: 0; border: none; box-shadow: none;
+  padding: 0 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.app.editor-open .cur-area.editing { box-shadow: inset 0 3px 0 rgba(74,158,255,.85); }
+.app.editor-open .cur-area:not(.editing) { box-shadow: inset 0 3px 0 rgba(245,165,0,.85); }
+.app.editor-open .nm-row {
+  position: sticky; top: 0; z-index: 6; background: var(--card);
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 10px; margin: 0 -16px;
+}
+.app.editor-open #edit-x { display: flex !important; }
+.app.editor-open .memo-ta { max-height: 220px; }
+.app.editor-open .dropzone .photo-scroll { max-height: none; }
+
+/* + 버튼 (새 제품 기록) */
+.fab-new {
+  position: fixed; z-index: 210; width: 60px; height: 60px; border-radius: 50%;
+  right: max(18px, calc(50% - 215px + 18px)); bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  background: var(--orange); color: #fff; border: none; font-size: 34px; font-weight: 300; line-height: 1;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(245,165,0,.45), 0 2px 6px rgba(0,0,0,.35);
+  -webkit-appearance: none; touch-action: manipulation; font-family: inherit;
+}
+.fab-new:active { transform: scale(.93); }
+.fab-new .fab-draft {
+  display: none; position: absolute; top: -8px; right: -6px; white-space: nowrap;
+  background: var(--blue); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 9px;
+}
+.fab-new.has-draft .fab-draft { display: block; }
+
+/* 카드 아래 버튼들 */
+.ed-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.ed-btn {
+  width: 100%; text-align: left; padding: 11px 14px; border-radius: 12px;
+  background: rgba(255,255,255,.04); border: 1px solid var(--border); color: var(--t1);
+  font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; -webkit-appearance: none; touch-action: manipulation;
+}
+.ed-btn small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 500; color: var(--t2); }
+.ed-btn:active { background: rgba(255,255,255,.09); }
+.ed-btn.danger { color: #f3a9a4; text-align: center; background: transparent; border-style: dashed; }
+
+/* 사진 나누기 */
+.cur-area.split-mode .photo-del, .cur-area.split-mode .add-photo-btn { display: none !important; }
+.cur-area.split-mode .photo-thumb-wrap::before { display: none !important; }
+.photo-thumb-wrap.split-sel .photo-thumb { outline: 3px solid var(--blue); outline-offset: -3px; opacity: .85; }
+.photo-thumb-wrap.split-sel::after {
+  content: '✓'; position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--blue); color: #fff; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; z-index: 4;
+}
+.split-bar {
+  display: none; position: sticky; bottom: calc(-28px - env(safe-area-inset-bottom, 0px)); z-index: 7;
+  margin: 14px -16px 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: #16213a; border-top: 1px solid var(--blue); gap: 8px; align-items: center;
+}
+.cur-area.split-mode .split-bar { display: flex; }
+.cur-area.split-mode .ed-actions { display: none; }
+.split-msg { flex: 1; font-size: 13px; color: var(--t1); }
+.split-go { background: var(--blue); color: #fff; border: none; border-radius: 10px; padding: 9px 13px; font-family: inherit; font-size: 13px; font-weight: 800; }
+.split-go:disabled { opacity: .4; }
+.split-no { background: transparent; color: var(--t2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; font-family: inherit; font-size: 13px; }
+.split-tip { display: none; font-size: 12px; color: var(--blue); margin: 8px 0 2px; }
+.cur-area.split-mode .split-tip { display: block; }
+
+/* 목록 맨 아래 제품이 + 버튼에 가리지 않게 */
+#main-page { padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)); }
+/* 작은 사진 불러오는 중 */
+img.th-wait { background: rgba(255,255,255,.06); }
 </style>
 </head>
 <body>
@@ -1018,7 +1095,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v73</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v74</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1188,6 +1265,20 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       </div>
     </div>
 
+    <!-- v74: 카드 아래 버튼 -->
+    <div class="split-tip">✂ 새 제품으로 옮길 사진을 눌러 고르세요 (여러 장 가능)</div>
+    <div class="ed-actions" id="ed-actions">
+      <button class="ed-btn" id="ed-split" type="button" onclick="startSplit()">✂ 사진 나누기<small>한 카드에 섞여 찍힌 다른 제품 사진을 새 제품으로 옮겨요</small></button>
+      <button class="ed-btn" id="ed-same" type="button" onclick="newSameFactory()">＋ 같은 업체 새 제품<small>지금 카드를 저장하고, 명함·카테고리를 이어받은 새 카드를 열어요</small></button>
+      <button class="ed-btn" type="button" onclick="openVideoCamera()">🎥 동영상 촬영<small>앱에는 저장하지 않고 휴대폰에 바로 저장</small></button>
+      <button class="ed-btn danger" id="ed-discard" type="button" onclick="discardDraft()">작성 취소 (휴지통으로)</button>
+    </div>
+    <div class="split-bar" id="split-bar">
+      <span class="split-msg" id="split-msg">옮길 사진을 고르세요</span>
+      <button class="split-go" id="split-go" type="button" onclick="doSplit()" disabled>새 제품으로</button>
+      <button class="split-no" type="button" onclick="cancelSplit()">취소</button>
+    </div>
+
   </div>
 
 
@@ -1197,7 +1288,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
     <div class="empty" id="empty-state">
       <div class="empty-icon">📋</div>
       <div class="empty-title">등록된 제품이 없어요</div>
-      <div class="empty-sub">위 버튼으로 정보를 입력하고 저장해보세요</div>
+      <div class="empty-sub">오른쪽 아래 + 버튼으로 새 제품을 기록해보세요</div>
     </div>
     <div class="p-list" id="p-list" style="display:none;"></div>
     <button class="trash-link" id="trash-link" type="button" onclick="openTrash()" style="display:none;">🗑 휴지통</button>
@@ -1209,7 +1300,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
       <div class="sm-label" id="sm-count">샘플 신청 제품</div>
       <div style="display:flex; gap:6px;">
         <button class="excel-btn" onclick="exportExcel('sample', this)">⬇ 샘플만</button>
-        <button class="excel-btn" style="background:#2563a8;" onclick="exportExcel('all', this)">⬇ 전체(사진포함)</button>
+        <button class="excel-btn" style="background:#2563a8;" onclick="exportExcel('all', this)">⬇ 전체</button>
       </div>
     </div>
     <div class="empty" id="sm-empty" style="display:none;">
@@ -1238,23 +1329,22 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 
   <!-- BOTTOM NAV -->
   <nav class="bnav">
-    <button class="bnav-item active" id="bnav-write" onclick="switchNav(this,'write')">
-      <span class="bnav-icon">✏️</span>
-      <span class="bnav-label">기록</span>
-    </button>
-    <button class="bnav-item" id="bnav-list" onclick="switchNav(this,'products')">
+    <button class="bnav-item active" id="bnav-list" onclick="switchNav(this,'products')">
       <span class="bnav-icon">📦</span>
       <span class="bnav-label">제품목록</span>
     </button>
-    <button class="bnav-item" onclick="switchNav(this,'samples')">
+    <button class="bnav-item" id="bnav-samples" onclick="switchNav(this,'samples')">
       <span class="bnav-icon">🗂️</span>
       <span class="bnav-label">샘플관리</span>
     </button>
-    <button class="bnav-item" onclick="switchNav(this,'photos')">
+    <button class="bnav-item" id="bnav-photos" onclick="switchNav(this,'photos')">
       <span class="bnav-icon">🖼️</span>
       <span class="bnav-label">사진</span>
     </button>
   </nav>
+
+  <!-- v74: 새 제품 기록 -->
+  <button class="fab-new" id="fab-new" type="button" onclick="openNewEditor()" aria-label="새 제품 기록">+<span class="fab-draft">작성 중</span></button>
 </div>
 
 <!-- 사진 원본보기 라이트박스 (스와이프 갤러리 + 제품 정보) -->
@@ -1551,7 +1641,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v73)
+          ⬇️ 최신 버전 받기 (현재 v74)
         </button>
       </div>
 
@@ -1965,7 +2055,7 @@ function resumeDraftIfAny() {
   if (exists) {
     // 이름·사진·정보를 그대로 불러와 이어서 입력할 수 있게 복원.
     // 단 이건 "새로 쓰다 만 것"이므로 수정 중 배너는 띄우지 않는다.
-    editProduct(id, true);
+    editProduct(id, true, { silent: true });   // v74: 시작 화면은 목록. + 버튼을 누르면 이어서 쓴다
     renderList();   // 작성 중 항목을 목록에서 감추기 위해 다시 그린다
   } else {
     clearDraftId(); // 대상이 없으면(삭제됨 등) 기록만 정리
@@ -2020,11 +2110,15 @@ function resumeDraftIfAny() {
 
   // IndexedDB에서 데이터를 불러온 뒤 목록 렌더링
   loadProducts().then(function() {
-    renderList();
+    return preloadThumbs().catch(function() {});
+  }).then(function() {
+    switchNav(document.getElementById('bnav-list'), 'products');   // v74: 시작 화면은 언제나 제품 목록
+    setupListScrollMemory();
     checkAndShowRecoveryBanner();
     checkBackupReminder();
     updateStorageBar();
-    resumeDraftIfAny(); // 이전에 저장/취소하지 않고 중단된 작성 중 항목이 있으면 이어서 열기
+    resumeDraftIfAny(); // 이전에 저장/취소하지 않고 중단된 작성 중 항목이 있으면 + 버튼으로 이어서
+    updateFab();
     setTimeout(checkSharedInbox, 300);   // 안드로이드 공유창으로 받은 제품 파일 처리
 
     // 하루 한 번, 사진을 뺀 상태를 폰 안에 조용히 저장 (실수 삭제·손상 대비)
@@ -2038,14 +2132,18 @@ function resumeDraftIfAny() {
 
 // ── 자동 업데이트 확인 (새 버전 배포 시 재설치 없이 자동 반영) ──
 // 서버의 index.html을 캐시 없이 새로 받아와 내용이 달라지면 자동으로 새로고침한다.
+var lastUpdateCheck = 0;
 function checkForAppUpdate() {
+  if (Date.now() - lastUpdateCheck < 5 * 60 * 1000) return;   // 5분에 한 번만
+  lastUpdateCheck = Date.now();
   try {
     fetch(location.pathname + '?_v=' + Date.now(), { cache: 'no-store' })
       .then(function(res) { return res.text(); })
       .then(function(text) {
-        var hash = String(text.length) + ':' + text.split('').reduce(function(a, c) {
-          return (a * 31 + c.charCodeAt(0)) >>> 0;
-        }, 0);
+        // v74: 42만 자를 배열로 쪼개던 방식 → 글자를 바로 읽는 방식 (앱을 열 때마다 멈칫하던 원인)
+        var h = 0;
+        for (var ci = 0; ci < text.length; ci++) h = (h * 31 + text.charCodeAt(ci)) >>> 0;
+        var hash = String(text.length) + ':' + h;
         var saved = localStorage.getItem('gz_app_hash');
         if (saved && saved !== hash) {
           localStorage.setItem('gz_app_hash', hash);
@@ -2656,8 +2754,8 @@ function renderPhotos() {
     var isBroken = !isValidPhoto(src);
     var imgHtml = isBroken
       ? '<div class="photo-thumb" style="display:flex;align-items:center;justify-content:center;background:rgba(224,85,85,.15);color:var(--red);font-size:24px;gap:8px;font-weight:700;"><span>⚠️</span><span style="font-size:11px;">손상된 사진</span></div>'
-      : '<img class="photo-thumb" draggable="false" src="' + src + '" onclick="event.stopPropagation(); viewProductPhoto(' + i + ')">';
-    return '<div class="photo-thumb-wrap" data-idx="' + i + '">' +
+      : thumbHtml(src, 'photo-thumb', 'onclick="event.stopPropagation(); onEditorPhotoTap(' + i + ')"');
+    return '<div class="photo-thumb-wrap' + (splitMode && splitSel.has(i) ? ' split-sel' : '') + '" data-idx="' + i + '">' +
       imgHtml +
       '<button class="photo-del" onclick="event.stopPropagation(); delPhoto(' + i + ')">×</button>' +
       '</div>';
@@ -2668,9 +2766,11 @@ function renderPhotos() {
     : '';
   bindPhotoEntryPoints();
   setupPhotoSwipe();
-  scroll.scrollTop = scroll.scrollHeight;
+  if (!splitMode) scroll.scrollTop = scroll.scrollHeight;
   initPhotoSortable();
   revealNextPhotoSlot();
+  watchThumbs(scroll);
+  updateEdActions();
 }
 
 // ── 제품 사진 원본 보기 (스와이프 갤러리) ─────────────────
@@ -2876,6 +2976,7 @@ function initPhotoSortable() {
   var el = document.getElementById('photo-scroll');
   if (!el || !window.Sortable) return;
   if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
+  if (typeof splitMode !== 'undefined' && splitMode) return;   // 사진 나누기 중에는 순서 변경 끔
   sortableInstance = Sortable.create(el, {
     animation: 200,
     filter: '.add-photo-btn, .photo-del, .dropzone-empty',
@@ -3321,8 +3422,9 @@ function performAutoSave() {
     if (!cur.name) showToast('✏️ 새 제품 기록을 시작했어요');
   }
   persist();
-  renderList();
+  if (!editorOpen) renderList();   // v74: 전체 화면 카드에서는 목록을 다시 그리지 않는다 (입력이 버벅이던 원인)
   updateStorageBar();
+  updateFab();
 }
 
 function saveProduct() {
@@ -3358,6 +3460,7 @@ function saveProduct() {
         if (!ok) {
           // 저장 실패 → 되돌리기 (여기서 되돌리지 않으면 화면과 실제 저장 내용이 어긋난다)
           products[idx] = backup;
+          carryNext = null;
           renderList();
           showToast('🚨 수정 실패 - 저장공간이 부족해요. 사진을 줄여주세요');
           return;
@@ -3366,10 +3469,9 @@ function saveProduct() {
            입력창을 비우고 목록으로 초점을 옮겨, 이어서 잘못 입력하는 일을 막는다. */
         draftingId = null;
         resetCur();
-        renderList();
         updateStorageBar();
-        scrollToList();
         showToast('✓ 수정되었어요!');
+        afterSaveDone();
       });
       return;
     } else {
@@ -3400,6 +3502,7 @@ function saveProduct() {
       if (!ok) {
         // 저장 실패 → 되돌리기
         products.shift();
+        carryNext = null;
         renderList();
         showToast('🚨 저장 실패 - 저장공간이 부족해요. 사진을 줄여주세요');
         return;
@@ -3410,10 +3513,10 @@ function saveProduct() {
         setPhase(productPhase(p));   // 다른 기수를 보고 있었으면 저장한 제품이 보이도록 전환
         showToast('✓ 저장했어요 · ' + PHASE_NAMES[productPhase(p)] + ' 목록으로 전환');
       } else {
-        renderList();
         showToast('✓ 제품이 저장되었어요!');
       }
       updateStorageBar();
+      afterSaveDone();
     });
   }
 }
@@ -3439,10 +3542,11 @@ var isEditingExisting = false;
 var draftingId = null;
 
 // asDraft=true 이면 "작성 중이던 것 이어쓰기"로 보고 수정 중 배너를 띄우지 않는다.
-function editProduct(id, asDraft) {
+function editProduct(id, asDraft, opts) {
   var p = products.find(function(x){ return x.id === id; });
   if (!p) return;
-  ensureWriteMode();
+  if (!(opts && opts.silent)) openEditor();   // v74: 전체 화면 카드로 연다 (앱 시작 때 이어쓰기 복원은 조용히)
+  if (splitMode) { splitMode = false; splitSel.clear(); var ca0 = document.querySelector('.cur-area'); if (ca0) ca0.classList.remove('split-mode'); }
 
   editingId = id;
   isEditingExisting = !asDraft;
@@ -3485,13 +3589,20 @@ function editProduct(id, asDraft) {
 
   // 상단으로 스크롤
   document.querySelector('.app').scrollTop = 0;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  var caT = document.querySelector('.cur-area'); if (caT) caT.scrollTop = 0;
+  updateEdActions();
+  updateFab();
 }
 
+/* v74: ✕ 버튼
+   · 기존 제품 수정 중 → 저장하고 닫기 (입력 내용은 이미 자동 저장되어 있음)
+   · 새 제품 작성 중   → 닫기만. 작성 중인 내용은 + 버튼을 누르면 이어서 쓸 수 있다 */
 function cancelEdit() {
-  var wasEditing = isEditingExisting;
-  resetCur();
-  showToast(wasEditing ? '수정을 취소했어요' : '작성을 취소했어요');
+  if (splitMode) { cancelSplit(); return; }
+  if (isEditingExisting) { saveProduct(); return; }
+  closeEditor();
+  var hasDraft = draftingId && products.some(function(p) { return p.id === draftingId; });
+  showToast(hasDraft ? '작성 중인 내용은 + 버튼으로 이어서 쓸 수 있어요' : '닫았어요');
 }
 
 // 저장 후 목록이 보이도록 스크롤
@@ -3645,7 +3756,7 @@ function renderList() {
     var photos = p.photos && p.photos.length ?
       '<div class="p-photos">' + p.photos.map(function(src, pIdx){
         return isValidPhoto(src)
-          ? '<img class="p-photo" draggable="false" src="' + src + '" onclick="event.stopPropagation(); openProductPhotoLightbox(' + p.id + ',' + pIdx + ')">'
+          ? thumbHtml(src, 'p-photo', 'onclick="event.stopPropagation(); openProductPhotoLightbox(' + p.id + ',' + pIdx + ')"')
           : '<div class="p-photo" style="display:flex;align-items:center;justify-content:center;background:rgba(224,85,85,.1);color:var(--red);font-size:14px;">⚠️</div>';
       }).join('') + '</div>' : '';
 
@@ -3678,6 +3789,7 @@ function renderList() {
       '</div></div>';
   });
   list.innerHTML = html;
+  watchThumbs(list);
   setupSwipeDelete();
   setupListReorder();
 }
@@ -4100,9 +4212,13 @@ function revealNextPhotoSlot() {
   }, 60);
 }
 
+var curNavPage = 'products';
 function switchNav(el, page) {
+  if (page === 'write') { openNewEditor(); return; }   // (호환용) 예전 '기록' 탭
+  if (curNavPage === 'products' && page !== 'products') saveListScroll();
+  curNavPage = page;
   document.querySelectorAll('.bnav-item').forEach(function(n){ n.classList.remove('active'); });
-  el.classList.add('active');
+  if (el) el.classList.add('active');
   var main = document.getElementById('main-page');
   var sp = document.getElementById('sample-page');
   var pp = document.getElementById('photos-page');
@@ -4119,26 +4235,18 @@ function switchNav(el, page) {
     pp.style.display = '';
     if (curArea) curArea.style.display = 'none';
     renderPhotosPage();
-  } else if (page === 'products') {
-    // 제품목록 탭 — 기록한 제품만 보여준다 (입력창 숨김)
+  } else {
+    // 제품목록 탭 — 기록한 제품만 보여준다 (입력창은 + 버튼으로 전체 화면에서)
     main.style.display = '';
     if (curArea) curArea.style.display = 'none';
     renderList();
-  } else {
-    // 기록 탭 — 입력창 + 목록 (기존 화면)
-    main.style.display = '';
-    if (curArea) curArea.style.display = '';
+    restoreListScroll();
   }
+  updateFab();
 }
 
-// 제품을 고칠 때는 입력창이 있는 '기록' 탭으로 자동 이동
-function ensureWriteMode() {
-  var area = document.querySelector('.cur-area');
-  if (area && area.style.display === 'none') {
-    var b = document.getElementById('bnav-write');
-    if (b) switchNav(b, 'write');
-  }
-}
+// (호환용) 예전 '기록' 탭으로 가던 곳 → 전체 화면 카드
+function ensureWriteMode() { openEditor(); }
 
 // ── 사진 모아보기 페이지 ────────────────────────────────
 function renderPhotosPage() {
@@ -4165,10 +4273,11 @@ function renderPhotosPage() {
   grid.style.display = 'grid';
   grid.innerHTML = items.map(function(it) {
     return '<div class="ph-thumb-wrap">' +
-      '<img class="ph-thumb" src="' + it.src + '" onclick="openProductPhotoLightbox(' + it.pid + ',' + it.idx + ')">' +
+      thumbHtml(it.src, 'ph-thumb', 'onclick="openProductPhotoLightbox(' + it.pid + ',' + it.idx + ')"') +
       '<div class="ph-thumb-name">' + it.name + '</div>' +
       '</div>';
   }).join('');
+  watchThumbs(document.getElementById('ph-grid'));
 }
 
 // ── 상단 타이틀 클릭 → 메인 화면으로 정돈 ─────────────────
@@ -4608,9 +4717,10 @@ function countLines(text, charsPerLine) {
 }
 
 // 회사 샘플관리 양식에 채워서 내보내기
-async function exportSampleSheet(list, btn) {
+async function exportSampleSheet(list, btn, opt) {
   var wb = new ExcelJS.Workbook();
   await wb.xlsx.load(b64ToArrayBuffer(SAMPLE_TPL_B64));
+  var allMode = !!(opt && opt.title);
 
   // 대시보드 수식이 파일을 열 때 반드시 다시 계산되도록 한다
   wb.calcProperties = wb.calcProperties || {};
@@ -4618,6 +4728,10 @@ async function exportSampleSheet(list, btn) {
 
   var ws = wb.getWorksheet(TPL_SHEET);
   if (!ws) throw new Error('샘플현황 시트를 찾지 못했습니다');
+  if (allMode) {
+    try { ws.getCell('A1').value = opt.title; } catch (e) {}
+    try { var dsh = wb.getWorksheet('대시보드'); if (dsh && opt.dash) dsh.getCell('A1').value = opt.dash; } catch (e) {}
+  }
 
   /* 드롭다운·달력은 범위 단위로 다시 지정한다.
      (칸마다 따로 저장되면 범위가 겹쳐 엑셀이 통째로 무시하는 일이 있다)
@@ -4673,7 +4787,7 @@ async function exportSampleSheet(list, btn) {
       var pr = String(p.sample.requested).split('-');
       if (pr.length === 3) { reqY = +pr[0]; reqM = +pr[1]; reqD = +pr[2]; }
     }
-    if (reqY === null) {
+    if (reqY === null && p.sample) {      // 샘플을 신청한 제품만 기록한 날로 채운다 (전체 목록에서 미신청 제품은 비움)
       var t = Number(p.id);
       if (isFinite(t) && t > 1000000000000) {
         var d0 = new Date(t);
@@ -4768,18 +4882,19 @@ async function exportExcel(scope, btnEl) {
       if (btn) btn.textContent = '⏳ 생성 중...';
     }
 
-    // ── 샘플만 내보내기 → 회사 샘플관리 양식에 채워서 ──
-    if (scope === 'sample') {
-      var wbS = await exportSampleSheet(list, btn);
+    // ── 샘플만 / 전체 모두 → 회사 샘플관리 양식에 채워서 (v74: 전체도 같은 양식) ──
+    if (scope === 'sample' || scope === 'all') {
+      var isAll = scope === 'all';
+      var wbS = await exportSampleSheet(list, btn, isAll ? { title: '제품 목록 및 검토 현황', dash: '제품 현황 대시보드' } : null);
       var bufS = await wbS.xlsx.writeBuffer();
       var blobS = new Blob([bufS], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       var urlS = URL.createObjectURL(blobS);
       var aS = document.createElement('a');
       aS.href = urlS;
-      aS.download = '샘플관리_' + phaseFileTag() + pptDateStr().replace(/\./g, '') + '.xlsx';
+      aS.download = (isAll ? '제품목록_' : '샘플관리_') + phaseFileTag() + pptDateStr().replace(/\./g, '') + '.xlsx';
       aS.click();
       URL.revokeObjectURL(urlS);
-      showToast('✓ 샘플관리 시트 ' + list.length + '건 내려받았어요');
+      showToast('✓ ' + (isAll ? '제품 목록 ' : '샘플관리 시트 ') + list.length + '건 내려받았어요');
       return;
     }
 
@@ -5147,7 +5262,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v73';
+var APP_VERSION = 'v74';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5433,6 +5548,301 @@ function cleanupOrphanPhotos() {
 
 
 
+
+
+/* ══════════════════════════════════════════════════════
+   v74: 작은 사진(썸네일)
+   ──────────────────────────────────────────────────────
+   목록·사진 탭·카드의 작은 사진에 원본(장당 수백 KB)을 그대로 쓰던 것이 느려지는 원인이었다.
+   긴 변 280px 작은 사진을 한 번 만들어 폰에 저장해 두고, 화면에 보일 때만 불러온다.
+   원본은 크게 볼 때·PPT·엑셀에만 쓴다.
+   ══════════════════════════════════════════════════════ */
+var TH_PREFIX = 'th:';
+var thumbMem = new Map();      // 지문 → 작은 사진
+var thumbSrc = new Map();      // 지문 → 원본 (만들 때 필요)
+var thumbQueue = [], thumbQueued = new Set(), thumbBusy = false, thumbIO = null;
+var thumbPuts = {}, thumbPutTimer = null;
+var TH_BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+function thumbHtml(src, cls, attrs) {
+  var fp = photoFingerprint(src);
+  var t = thumbMem.get(fp);
+  if (t) return '<img class="' + cls + '" draggable="false" src="' + t + '" ' + (attrs || '') + '>';
+  thumbSrc.set(fp, src);
+  return '<img class="' + cls + ' th-wait" draggable="false" data-fp="' + fp + '" src="' + TH_BLANK + '" ' + (attrs || '') + '>';
+}
+
+function preloadThumbs() {
+  var keys = [];
+  products.forEach(function(p) {
+    (p.photos || []).forEach(function(src) { if (isValidPhoto(src)) keys.push(TH_PREFIX + photoFingerprint(src)); });
+  });
+  if (!keys.length) return Promise.resolve();
+  return idbGetMany(keys).then(function(got) {
+    Object.keys(got).forEach(function(k) { if (typeof got[k] === 'string') thumbMem.set(k.slice(TH_PREFIX.length), got[k]); });
+  });
+}
+
+function watchThumbs(root) {
+  if (!root) return;
+  var imgs = root.querySelectorAll('img.th-wait');
+  if (!imgs.length) return;
+  if (!('IntersectionObserver' in window)) { imgs.forEach(function(im) { queueThumb(im.getAttribute('data-fp')); }); return; }
+  if (!thumbIO) {
+    thumbIO = new IntersectionObserver(function(entries) {
+      entries.forEach(function(en) {
+        if (!en.isIntersecting) return;
+        thumbIO.unobserve(en.target);
+        queueThumb(en.target.getAttribute('data-fp'));
+      });
+    }, { rootMargin: '600px 0px' });
+  }
+  imgs.forEach(function(im) { thumbIO.observe(im); });
+}
+
+function queueThumb(fp) {
+  if (!fp) return;
+  if (thumbMem.has(fp)) { applyThumb(fp); return; }
+  if (thumbQueued.has(fp)) return;
+  thumbQueued.add(fp);
+  thumbQueue.push(fp);
+  runThumbQueue();
+}
+
+function applyThumb(fp) {
+  var t = fp && thumbMem.get(fp);
+  if (!t) return;
+  document.querySelectorAll('img.th-wait').forEach(function(im) {
+    if (im.getAttribute('data-fp') === fp) { im.src = t; im.classList.remove('th-wait'); }
+  });
+}
+
+async function runThumbQueue() {
+  if (thumbBusy) return;
+  thumbBusy = true;
+  try {
+    while (thumbQueue.length) {
+      var fp = thumbQueue.shift();
+      if (!thumbMem.has(fp)) {
+        var src = thumbSrc.get(fp);
+        if (src) {
+          var img = await loadImg(src);
+          if (img) {
+            try {
+              var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+              var r = Math.min(1, 280 / Math.max(w, h));
+              var cv = document.createElement('canvas');
+              cv.width = Math.max(1, Math.round(w * r)); cv.height = Math.max(1, Math.round(h * r));
+              var cx = cv.getContext('2d');
+              cx.imageSmoothingQuality = 'high';
+              cx.drawImage(img, 0, 0, cv.width, cv.height);
+              var data = cv.toDataURL('image/jpeg', 0.72);
+              thumbMem.set(fp, data);
+              thumbPuts[TH_PREFIX + fp] = data;
+              clearTimeout(thumbPutTimer);
+              thumbPutTimer = setTimeout(flushThumbPuts, 800);
+            } catch (e) { thumbMem.set(fp, src); }
+          } else {
+            thumbMem.set(fp, src);   // 읽지 못한 사진은 원본 그대로
+          }
+        }
+      }
+      thumbQueued.delete(fp);
+      applyThumb(fp);
+      await new Promise(function(res) { setTimeout(res, 0); });   // 화면이 멈추지 않도록 한 장씩
+    }
+  } finally { thumbBusy = false; }
+}
+
+function flushThumbPuts() {
+  var puts = thumbPuts; thumbPuts = {};
+  if (Object.keys(puts).length) idbBulk(puts, null).catch(function() {});
+}
+
+/* ══════════════════════════════════════════════════════
+   v74: 전체 화면 카드 · 목록 스크롤 기억 · + 버튼
+   ══════════════════════════════════════════════════════ */
+var editorOpen = false;
+var LIST_SCROLL_KEY = 'gz_list_scroll';
+
+function saveListScroll() {
+  var m = document.getElementById('main-page');
+  if (!m || m.style.display === 'none' || editorOpen) return;
+  try { localStorage.setItem(LIST_SCROLL_KEY, String(Math.round(m.scrollTop))); } catch (e) {}
+}
+function restoreListScroll() {
+  var y = 0;
+  try { y = parseInt(localStorage.getItem(LIST_SCROLL_KEY) || '0', 10) || 0; } catch (e) {}
+  var m = document.getElementById('main-page');
+  if (!m) return;
+  m.scrollTop = y;
+  requestAnimationFrame(function() { m.scrollTop = y; });
+}
+function setupListScrollMemory() {
+  var m = document.getElementById('main-page');
+  if (!m || m._scrollMem) return;
+  m._scrollMem = true;
+  var t = null;
+  m.addEventListener('scroll', function() { clearTimeout(t); t = setTimeout(saveListScroll, 250); }, { passive: true });
+  document.addEventListener('visibilitychange', function() { if (document.hidden) saveListScroll(); });
+  window.addEventListener('pagehide', saveListScroll);
+}
+
+function openEditor() {
+  if (!editorOpen && curNavPage === 'products') saveListScroll();
+  editorOpen = true;
+  var app = document.querySelector('.app');
+  if (app) app.classList.add('editor-open');
+  var ca = document.querySelector('.cur-area');
+  if (ca) { ca.style.display = ''; ca.scrollTop = 0; }
+  updateEdActions();
+  updateFab();
+}
+
+function closeEditor() {
+  if (splitMode) { splitMode = false; splitSel.clear(); var ca = document.querySelector('.cur-area'); if (ca) ca.classList.remove('split-mode'); }
+  editorOpen = false;
+  var app = document.querySelector('.app');
+  if (app) app.classList.remove('editor-open');
+  var navId = curNavPage === 'samples' ? 'bnav-samples' : curNavPage === 'photos' ? 'bnav-photos' : 'bnav-list';
+  switchNav(document.getElementById(navId), curNavPage || 'products');
+}
+
+// + 버튼: 작성 중이던 카드가 있으면 이어서, 없으면 새 카드
+function openNewEditor() {
+  var hasDraft = draftingId && products.some(function(p) { return p.id === draftingId; });
+  if (hasDraft) {
+    if (editingId !== draftingId) editProduct(draftingId, true);
+    else openEditor();
+    return;
+  }
+  if (editingId) resetCur();
+  openEditor();
+  setTimeout(function() { try { document.getElementById('name-ta').focus(); } catch (e) {} }, 250);
+}
+
+function updateFab() {
+  var f = document.getElementById('fab-new');
+  if (!f) return;
+  f.style.display = (!editorOpen && curNavPage === 'products') ? 'flex' : 'none';
+  var hasDraft = draftingId && products.some(function(p) { return p.id === draftingId; });
+  f.classList.toggle('has-draft', !!hasDraft);
+}
+
+function updateEdActions() {
+  var sp = document.getElementById('ed-split');
+  if (sp) sp.style.display = (isEditingExisting && cur.photos && cur.photos.length >= 2) ? '' : 'none';
+  var dc = document.getElementById('ed-discard');
+  if (dc) dc.style.display = isEditingExisting ? 'none' : '';
+}
+
+// 저장이 끝난 뒤: "같은 업체 새 제품"이면 새 카드를 이어서 열고, 아니면 목록으로
+var carryNext = null;
+function afterSaveDone() {
+  if (carryNext) { var c = carryNext; carryNext = null; applyCarry(c); return; }
+  closeEditor();
+}
+
+// ── 같은 업체 새 제품 ──
+function newSameFactory() {
+  var carry = { bizCards: (cur.bizCards || []).slice(), category: cur.category || null, phase: curEffectivePhase() };
+  var has = cur.name || cur.memo || (cur.todos && cur.todos.length) || cur.photos.length || cur.moq || cur.cb || cur.sample;
+  if (has) { carryNext = carry; saveProduct(); }
+  else applyCarry(carry);
+}
+function applyCarry(c) {
+  resetCur();
+  cur.bizCards = c.bizCards || [];
+  cur.category = c.category || null;
+  cur.phase = c.phase || null;
+  syncUIFromCur();
+  openEditor();
+  var bits = [];
+  if (cur.bizCards.length) bits.push('명함');
+  if (cur.category) bits.push('카테고리');
+  showToast('＋ 같은 업체 새 제품' + (bits.length ? ' · ' + bits.join('·') + ' 이어받음' : ''));
+  setTimeout(function() { try { document.getElementById('name-ta').focus(); } catch (e) {} }, 250);
+}
+
+// ── 작성 취소 (새 카드) ──
+function discardDraft() {
+  var hasDraft = draftingId && products.some(function(p) { return p.id === draftingId; });
+  if (!hasDraft) { resetCur(); closeEditor(); return; }
+  if (!confirm('작성 중인 제품을 지울까요?\n\n휴지통으로 이동됩니다.\n(30일 동안 휴지통에서 복구할 수 있어요)')) return;
+  trashProducts([draftingId]);
+  resetCur();
+  persistSafe();
+  closeEditor();
+  showToast('작성을 취소했어요 · 휴지통에서 복구할 수 있어요');
+}
+
+/* ── 사진 나누기 ──
+   한 카드에 다른 제품 사진이 섞여 있을 때, 고른 사진을 새 제품으로 옮긴다.
+   새 제품은 원래 제품과 같은 날짜·기수로 바로 뒤에 들어가고, 명함·카테고리를 이어받는다. */
+var splitMode = false, splitSel = new Set();
+function startSplit() {
+  if (!isEditingExisting || !editingId) { showToast('저장된 제품에서 쓸 수 있어요'); return; }
+  if (!cur.photos || cur.photos.length < 2) { showToast('사진이 2장 이상일 때 나눌 수 있어요'); return; }
+  splitMode = true; splitSel.clear();
+  document.querySelector('.cur-area').classList.add('split-mode');
+  renderPhotos(); updateSplitBar();
+  var ps = document.querySelector('.cur-area .photo-section');
+  if (ps) setTimeout(function() { try { ps.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) {} }, 60);
+}
+function cancelSplit() {
+  splitMode = false; splitSel.clear();
+  var ca = document.querySelector('.cur-area'); if (ca) ca.classList.remove('split-mode');
+  renderPhotos(); updateSplitBar();
+}
+function onEditorPhotoTap(i) {
+  if (splitMode) {
+    if (splitSel.has(i)) splitSel.delete(i); else splitSel.add(i);
+    renderPhotos(); updateSplitBar();
+    return;
+  }
+  viewProductPhoto(i);
+}
+function updateSplitBar() {
+  var n = splitSel.size;
+  var msg = document.getElementById('split-msg'), go = document.getElementById('split-go');
+  if (msg) msg.textContent = n ? n + '장 선택됨' : '옮길 사진을 고르세요';
+  if (go) go.disabled = !n || (cur.photos && n >= cur.photos.length);
+}
+function doSplit() {
+  var n = splitSel.size;
+  if (!n) return;
+  if (n >= cur.photos.length) { showToast('원래 제품에 사진이 1장 이상 남아야 해요'); return; }
+  var moved = [], keep = [];
+  cur.photos.forEach(function(src, i) { (splitSel.has(i) ? moved : keep).push(src); });
+  cur.photos = keep;
+  performAutoSave();                       // 원래 제품에서 고른 사진을 뺀다
+  var idx = products.findIndex(function(x) { return x.id === editingId; });
+  if (idx < 0) return;
+  var orig = products[idx];
+  var nid = orig.id + 1;                   // 같은 날짜로 남도록 원래 번호 바로 다음
+  var taken = function(id) {
+    return products.some(function(x) { return x.id === id; }) ||
+           trash.some(function(t) { return t.product && t.product.id === id; });
+  };
+  while (taken(nid)) nid++;
+  var np = {
+    id: nid, name: (orig.name && orig.name !== '(이름 없음)' ? orig.name : '제품') + ' (나눔)',
+    memo: '', date: orig.date, star: false,
+    photos: moved, bizCards: (orig.bizCards || []).slice(), category: orig.category || null,
+    todos: [], moq: null, cb: null, sample: null, phase: productPhase(orig)
+  };
+  products.splice(idx + 1, 0, np);
+  splitMode = false; splitSel.clear();
+  var ca = document.querySelector('.cur-area'); if (ca) ca.classList.remove('split-mode');
+  persistSafe().then(function(ok) {
+    if (!ok) { showToast('🚨 저장 실패 — 다시 시도해주세요'); return; }
+    editProduct(nid);
+    showToast('✂ 사진 ' + moved.length + '장을 새 제품으로 나눴어요 · 제품명을 바꿔 주세요');
+    setTimeout(function() {
+      try { var ta = document.getElementById('name-ta'); ta.focus(); ta.select(); } catch (e) {}
+    }, 300);
+  });
+}
 
 /* ══════════════════════════════════════════════════════
    v66: 박람회 기수 나누기
