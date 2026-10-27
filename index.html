@@ -1095,6 +1095,13 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .fn-row { flex-wrap: nowrap !important; gap: 6px; }
 .fn-row .fn-chip { flex: 0 1 auto; min-width: 0; padding: 7px 10px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; justify-content: center; }
 .fn-row .fn-chip > span { overflow: hidden; text-overflow: ellipsis; }
+.smp-2col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; }
+/* v78: 한 줄 칩 — 넓으면 한 줄, 좁은 폰이면 자연스럽게 두 줄 (잘림 없음) */
+.fn-row { flex-wrap: wrap !important; }
+.fn-row { gap: 5px !important; }
+.fn-row .fn-chip { flex: 0 0 auto; max-width: none !important; padding: 5px 8px; font-size: 12.5px; letter-spacing: -.2px; }
+.fn-row { gap: 4px !important; } .fn-row .fn-chip { padding: 5px 6px; font-size: 12px; letter-spacing: -.3px; }
+.fn-row .fn-chip > span { overflow: visible !important; text-overflow: clip !important; white-space: nowrap; }
 /* v77: 제품명 오른쪽 샘플 별 */
 .smp-star {
   flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -1102,7 +1109,7 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
   background: transparent; border: 1px solid var(--border); color: var(--t2);
   font-family: inherit; cursor: pointer; -webkit-appearance: none; touch-action: manipulation; line-height: 1;
 }
-.smp-star span { font-size: 18px; }
+.smp-star span { font-size: 22px; line-height: 1; }
 .smp-star small { font-size: 9.5px; font-weight: 700; margin-top: 2px; }
 .smp-star.on { border-color: #3fa87a; background: rgba(46,125,91,.18); color: #6ee7b7; }
 .smp-star.holding { background: rgba(245,165,0,.22); border-color: var(--orange); }
@@ -1121,7 +1128,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v77</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v78</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1223,7 +1230,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
       <textarea class="nm-ta" id="name-ta" rows="1"
         placeholder="제품명" oninput="onNameInput()"></textarea>
       <span class="cat-tag-pill" id="cat-tag-pill" style="display:none;"></span>
-      <button class="smp-star" id="fn-sample" type="button" title="샘플 신청 · 길게 누르면 일정"><span id="fn-sample-t">☆</span><small id="fn-sample-sub">샘플</small></button>
+      <button class="smp-star" id="fn-sample" type="button" title="샘플 신청 · 길게 누르면 일정"><span id="fn-sample-t">☆</span><small id="fn-sample-sub" style="display:none"></small></button>
       <button class="mic-btn" id="mic-name" type="button" onclick="toggleVoice('name-ta','mic-name')" title="제품명 음성입력">🎤</button>
       <button class="save-btn" id="save-btn" onclick="saveProduct()" disabled>저장</button>
       <button class="edit-x" id="edit-x" type="button" onclick="cancelEdit()" title="편집 끝내기" style="display:none;">✕</button>
@@ -1234,6 +1241,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
       <button class="fn-chip" id="fn-price" type="button"><span id="fn-price-t">단가</span></button>
       <button class="fn-chip" id="fn-moq" type="button"><span id="fn-moq-t">MOQ</span></button>
       <button class="fn-chip" id="fn-cb" type="button"><span id="fn-cb-t">CB</span></button>
+      <button class="fn-chip" id="fn-smp" type="button"><span id="fn-smp-t">샘플</span></button>
       <button class="fn-chip" id="fn-card" type="button"><span id="fn-card-t">명함</span></button>
       <span id="fn-cat" style="display:none;"><span id="fn-cat-t"></span></span>
       <button class="fn-chip" id="fn-phase" type="button" onclick="togglePhaseChip()" title="탭하면 1기 가전 ⇄ 2기 주방"><span id="fn-phase-t">1기 가전</span></button>
@@ -1446,19 +1454,25 @@ img.th-wait { background: rgba(255,255,255,.06); }
 <div class="overlay" id="sample-overlay" onclick="overlayClick(event,'sample')">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">📅 샘플 신청</div>
-    <div class="info-box">신청일은 기록한 날로 자동 입력됩니다<br>소요일만 넣으면 완성 예정일이 정해집니다</div>
+    <div class="sheet-title">샘플 신청</div>
+    <div class="info-box">날짜를 눌러 달력에서 고르세요. 소요일을 넣으면 입고 예정일이 자동으로 계산됩니다.</div>
     <div class="fg">
-      <div class="fl">샘플 신청일 (자동)</div>
-      <div class="ro-val" id="sample-req-view">—</div>
-      <input type="hidden" id="sample-req">
+      <div class="fl">샘플 신청일</div>
+      <input class="fi" id="sample-req" type="date" onchange="onSampleReqChange()">
+      <span id="sample-req-view" style="display:none;"></span>
     </div>
-    <div class="fg">
-      <div class="fl">샘플 제작 소요일 (일)</div>
-      <input class="fi" id="sample-days" type="number" placeholder="예) 14" inputmode="numeric" oninput="calcExpected()">
+    <div class="fg smp-2col">
+      <div>
+        <div class="fl">입고 예정일</div>
+        <input class="fi" id="sample-exp" type="date" onchange="onSampleExpChange()">
+      </div>
+      <div>
+        <div class="fl">소요일 (선택)</div>
+        <input class="fi" id="sample-days" type="number" placeholder="예) 14" inputmode="numeric" oninput="calcExpected()">
+      </div>
     </div>
     <div class="edd" id="edd" style="display:none;">
-      <div class="edd-label">샘플 완성 예정일</div>
+      <div class="edd-label">샘플 입고 예정일</div>
       <div class="edd-date" id="edd-date"></div>
       <div class="edd-sub" id="edd-sub"></div>
     </div>
@@ -1469,8 +1483,8 @@ img.th-wait { background: rgba(255,255,255,.06); }
         <button class="mic-btn" id="mic-sample-memo" type="button" onclick="toggleVoice('sample-memo','mic-sample-memo')" title="음성으로 입력">🎤</button>
       </div>
     </div>
-    <button class="confirm-btn g" onclick="saveSample()">✓ 샘플 신청 완료</button>
-    <button class="clear-btn" onclick="clearSample()">초기화</button>
+    <button class="confirm-btn g" onclick="saveSample()">✓ 저장</button>
+    <button class="clear-btn" onclick="clearSample()">샘플 신청 해제</button>
   </div>
 </div>
 
@@ -1679,7 +1693,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v77)
+          ⬇️ 최신 버전 받기 (현재 v78)
         </button>
       </div>
 
@@ -2417,22 +2431,23 @@ function fmtNum(v) {
   return parts.join('.');
 }
 
+// v78: 칩 = 위에 작은 이름 + 아래 값 (6칸 한 줄에 고르게)
+function chipLV(id, txtId, label, value, cls) {
+  // v78: 예전처럼 한 줄 칩 (값 있으면 값 표시)
+  fnSet(id, txtId, value ? (label ? label + ' ' + value : value) : label, cls);
+}
+
 function renderFnChips() {
-  // 단가
   var price = (cur.moq && cur.moq.price && cur.moq.price !== '-') ? cur.moq.price : '';
-  if (price) fnSet('fn-price', 'fn-price-t', '$' + fmtNum(price), 'on-orange');
-  else fnSet('fn-price', 'fn-price-t', '단가', '');
+  fnSet('fn-price', 'fn-price-t', price ? '$' + fmtNum(price) : '단가', price ? 'on-orange' : '');
 
-  // MOQ
   var qty = (cur.moq && cur.moq.qty && cur.moq.qty !== '-') ? cur.moq.qty : '';
-  if (qty) fnSet('fn-moq', 'fn-moq-t', 'MOQ ' + fmtNum(qty), 'on-orange');
-  else fnSet('fn-moq', 'fn-moq-t', 'MOQ', '');
+  chipLV('fn-moq', 'fn-moq-t', 'MOQ', qty ? fmtNum(qty) : '', qty ? 'on-orange' : '');
 
-  // CB
-  if (!cur.cb) fnSet('fn-cb', 'fn-cb-t', 'CB', '');
-  else if (cur.cb.owned) fnSet('fn-cb', 'fn-cb-t', 'CB 보유', 'on-green');
-  else if (cur.cb.date) { var cbd = String(cur.cb.date).split('-'); fnSet('fn-cb', 'fn-cb-t', 'CB ' + (+cbd[1]) + '/' + (+cbd[2]), 'on-amber'); }
-  else fnSet('fn-cb', 'fn-cb-t', 'CB 없음', 'on-red');
+  if (!cur.cb) chipLV('fn-cb', 'fn-cb-t', 'CB', '', '');
+  else if (cur.cb.owned) chipLV('fn-cb', 'fn-cb-t', 'CB', '보유', 'on-green');
+  else if (cur.cb.date) { var cbd = String(cur.cb.date).split('-'); chipLV('fn-cb', 'fn-cb-t', 'CB', (+cbd[1]) + '/' + (+cbd[2]), 'on-amber'); }
+  else chipLV('fn-cb', 'fn-cb-t', 'CB', '없음', 'on-red');
 
   // 샘플 — v77: 제품명 오른쪽 별 (☆ 미신청 / ★ 신청)
   var sb = document.getElementById('fn-sample');
@@ -2447,16 +2462,23 @@ function renderFnChips() {
     var ss = document.getElementById('fn-sample-sub'); if (ss) ss.textContent = sub;
   }
 
+  // 샘플 칩 (v78) — 누르면 날짜 창
+  if (!cur.sample) chipLV('fn-smp', 'fn-smp-t', '샘플', '', '');
+  else if (cur.sample.expected) {
+    var sx = String(cur.sample.expected).split('-');
+    var late = (dLeftFromDate(cur.sample.expected) || 0) < 0;
+    chipLV('fn-smp', 'fn-smp-t', late ? '샘플 지연' : '샘플', (+sx[1]) + '/' + (+sx[2]), late ? 'on-red' : 'on-green');
+  } else chipLV('fn-smp', 'fn-smp-t', '샘플 신청', '', 'on-green');
+
   // 명함
   var nc = (cur.bizCards || []).length;
-  if (nc) fnSet('fn-card', 'fn-card-t', '명함 ' + nc, 'on-orange');
-  else fnSet('fn-card', 'fn-card-t', '명함', '');
+  fnSet('fn-card', 'fn-card-t', nc ? '명함 ' + nc : '명함', nc ? 'on-orange' : '');
 
   // 카테고리
   // 기수 (v67) — 탭하면 1기 가전 ⇄ 2기 주방
   if (typeof PHASE_NAMES !== 'undefined' && PHASE_NAMES) {   // 앱 시작 직후(설정 읽기 전)에는 건너뛴다
     var eph = curEffectivePhase();
-    fnSet('fn-phase', 'fn-phase-t', PHASE_NAMES[eph], eph === '2' ? 'on-blue' : 'on-orange');
+    fnSet('fn-phase', 'fn-phase-t', eph === '2' ? '2기 주방' : '1기 가전', eph === '2' ? 'on-blue' : 'on-orange');
   }
 
   // 카테고리 칩은 v77에서 화면에서 뺐다 (기존 데이터는 그대로 보관)
@@ -2526,6 +2548,9 @@ function setupFnChips() {
 
   // 샘플 — 짧게: 신청 표시 / 꾹: 상세(소요일·메모)
   bindChip('fn-sample', function() { quickToggleSample(); }, function() { openOverlay('sample'); });
+
+  // 샘플 칩 — 누르면 날짜 고르는 창 (v78)
+  bindChip('fn-smp', function() { openOverlay('sample'); });
 
   // 명함 — 탭하면 바로 촬영
   bindChip('fn-card', openBizCamera);
@@ -3286,15 +3311,13 @@ function openOverlay(name) {
     document.getElementById('moq-memo').value = cur.moq.memo || '';
   }
   if (name === 'sample') {
-    if (!cur.sample) cur.sample = { days: null, expected: null, memo: '', checklist: defaultChecklist() };
-    // 신청일은 고르는 게 아니라 "기록한 날"로 자동 입력된다
-    if (!cur.sample.requested) cur.sample.requested = todayISO();
-    document.getElementById('sample-req').value = cur.sample.requested;
-    document.getElementById('sample-req-view').textContent = fmtDate(cur.sample.requested);
-    document.getElementById('sample-days').value = cur.sample.days || '';
-    document.getElementById('sample-memo').value = cur.sample.memo || '';
+    // v78: 창을 열기만 해서는 신청으로 바뀌지 않는다 (저장을 눌러야 반영)
+    var sm = cur.sample || {};
+    document.getElementById('sample-req').value = sm.requested || todayISO();
+    document.getElementById('sample-exp').value = sm.expected || '';
+    document.getElementById('sample-days').value = sm.days || '';
+    document.getElementById('sample-memo').value = sm.memo || '';
     calcExpected();
-    renderChecklist();
   }
   if (name === 'ppt') {
     // refresh counts
@@ -3362,17 +3385,40 @@ function clearCb() {
 }
 
 // ── SAMPLE ────────────────────────────────────────────
+function daysBetweenISO(a, b) {
+  var pa = String(a).split('-'), pb = String(b).split('-');
+  var da = new Date(+pa[0], +pa[1] - 1, +pa[2]), db = new Date(+pb[0], +pb[1] - 1, +pb[2]);
+  return Math.round((db - da) / 86400000);
+}
+function updateEddBox() {
+  var edd = document.getElementById('edd');
+  var req = document.getElementById('sample-req').value || todayISO();
+  var exp = document.getElementById('sample-exp').value;
+  if (!exp) { edd.style.display = 'none'; return; }
+  var n = daysBetweenISO(req, exp);
+  edd.style.display = 'block';
+  document.getElementById('edd-date').textContent = fmtDate(exp);
+  document.getElementById('edd-sub').textContent = fmtDate(req) + ' 신청 기준 ' + n + '일 후';
+}
+// 소요일을 넣으면 → 입고 예정일 자동
 function calcExpected() {
   var days = parseInt(document.getElementById('sample-days').value);
-  var edd = document.getElementById('edd');
-  if (!days || days < 1) { edd.style.display = 'none'; return; }
-  var d = new Date();
-  var reqEl = document.getElementById('sample-req');
-  var req = (reqEl && reqEl.value) || todayISO();
-  var dateStr = addDaysISO(req, days);
-  edd.style.display = 'block';
-  document.getElementById('edd-date').textContent = fmtDate(dateStr);
-  document.getElementById('edd-sub').textContent = fmtDate(req) + ' 신청 기준 ' + days + '일 후';
+  var req = document.getElementById('sample-req').value || todayISO();
+  if (days && days > 0) document.getElementById('sample-exp').value = addDaysISO(req, days);
+  updateEddBox();
+}
+// 입고 예정일을 달력에서 고르면 → 소요일 자동
+function onSampleExpChange() {
+  var req = document.getElementById('sample-req').value || todayISO();
+  var exp = document.getElementById('sample-exp').value;
+  var n = exp ? daysBetweenISO(req, exp) : 0;
+  document.getElementById('sample-days').value = (exp && n > 0) ? n : '';
+  updateEddBox();
+}
+// 신청일을 바꾸면 → 소요일이 있으면 예정일을 다시 계산
+function onSampleReqChange() {
+  var days = parseInt(document.getElementById('sample-days').value);
+  if (days && days > 0) calcExpected(); else onSampleExpChange();
 }
 
 // 오늘 날짜 (YYYY-MM-DD) — 시간대에 영향받지 않게 직접 만든다
@@ -3390,27 +3436,27 @@ function addDaysISO(iso, days) {
 }
 function saveSample() {
   var req = document.getElementById('sample-req').value || todayISO();
+  var exp = document.getElementById('sample-exp').value || null;
   var days = parseInt(document.getElementById('sample-days').value);
-  if (!days || days < 1) { showToast('소요일을 입력해주세요'); return; }
-  var expected = addDaysISO(req, days);
+  if (exp && daysBetweenISO(req, exp) < 0) { showToast('입고 예정일이 신청일보다 빨라요'); return; }
   var checklist = (cur.sample && cur.sample.checklist) ? cur.sample.checklist : defaultChecklist();
-  cur.sample = { requested: req, days: days, expected: expected,
+  cur.sample = { requested: req, days: (exp && days > 0) ? days : null, expected: exp,
                  memo: document.getElementById('sample-memo').value, checklist: checklist };
   closeOverlay('sample');
-  renderChips(); updateSaveBtn();
-  showToast('샘플 신청 완료!');
+  renderFnChips(); renderChips(); updateSaveBtn(); scheduleAutoSave();
+  showToast('✓ 샘플 신청' + (exp ? ' · ' + fmtDate(exp) + ' 입고 예정' : ''));
 }
 function clearSample() {
+  if (cur.sample && !confirm('샘플 신청 표시를 해제할까요?\n\n입력한 날짜·메모도 함께 지워집니다.')) return;
   cur.sample = null;
   document.getElementById('sample-req').value = todayISO();
-  var rv = document.getElementById('sample-req-view');
-  if (rv) rv.textContent = fmtDate(todayISO());
+  document.getElementById('sample-exp').value = '';
   document.getElementById('sample-days').value = '';
   document.getElementById('sample-memo').value = '';
-  document.getElementById('cl-new-item').value = '';
+  var cl = document.getElementById('cl-new-item'); if (cl) cl.value = '';
   document.getElementById('edd').style.display = 'none';
   closeOverlay('sample');
-  renderChips(); updateSaveBtn();
+  renderFnChips(); renderChips(); updateSaveBtn(); scheduleAutoSave();
 }
 
 // ── SAVE PRODUCT ──────────────────────────────────────
@@ -5319,7 +5365,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v77';
+var APP_VERSION = 'v78';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -8011,7 +8057,7 @@ function prCard(p, no, photoMode) {
   if (!p.cb) { cbCls = ''; cbTxt = 'CB 미입력'; }
   else if (p.cb.owned) { cbCls = 'cb-y'; cbTxt = 'CB 보유'; }
   else if (p.cb.date) { cbCls = 'cb-w'; cbTxt = 'CB 진행중'; }
-  tags += '<span class="pr-tag ' + cbCls + '">' + cbTxt + '</span>';
+  if (p.cb) tags += '<span class="pr-tag ' + cbCls + '">' + cbTxt + '</span>';
   if (p.sample) tags += '<span class="pr-tag smp">샘플 신청</span>';
 
   // 정보 표
