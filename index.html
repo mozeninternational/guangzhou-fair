@@ -934,6 +934,31 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .ph-btn.active { background: rgba(245,165,0,.15); border-color: var(--orange); color: var(--orange); }
 .ph-btn.active[data-ph="2"] { background: rgba(74,158,255,.14); border-color: var(--blue); color: var(--blue); }
 
+/* v79: 검색 — 기수 칩 줄 오른쪽 🔍. 누르면 같은 줄이 검색창으로 바뀐다 (높이 그대로) */
+.phase-bar .ph-btn, .ph-sbtn, .ph-search { box-sizing: border-box; height: 31px; }
+.ph-sbtn {
+  flex: 0 0 38px; width: 38px; padding: 0; border-radius: 10px; border: 1px solid var(--border);
+  background: transparent; color: var(--t2); font-family: inherit; font-size: 15px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; -webkit-appearance: none; touch-action: manipulation;
+}
+.ph-sbtn.on { border-color: var(--orange); color: var(--orange); background: rgba(245,165,0,.15); font-size: 14px; font-weight: 700; }
+.ph-search {
+  display: none; flex: 1; min-width: 0; align-items: center; gap: 6px;
+  padding: 0 10px; border-radius: 10px; border: 1px solid var(--orange); background: rgba(245,165,0,.06);
+}
+.ph-search-ic { font-size: 13px; opacity: .75; flex-shrink: 0; }
+.ph-search input {
+  flex: 1; min-width: 0; height: 100%; border: none; outline: none; background: transparent;
+  color: var(--t1); font-family: inherit; font-size: 16px; padding: 0; -webkit-appearance: none;
+}
+.ph-search input::placeholder { color: var(--t3); font-size: 13.5px; }
+.ph-search input::-webkit-search-cancel-button { display: none; }
+.ph-search-n { flex-shrink: 0; font-size: 11.5px; font-weight: 700; color: var(--orange); white-space: nowrap; }
+.phase-bar.searching .ph-btn { display: none; }
+.phase-bar.searching .ph-search { display: flex; }
+mark.sq-hl { background: rgba(245,165,0,.35); color: inherit; border-radius: 3px; padding: 0 1px; }
+
 /* v64: 상단 동영상 촬영 버튼 */
 .fab-inline.video-btn { font-size: 14px; background: #c0392b; box-shadow: 0 2px 8px rgba(192,57,43,.35); }
 .fab-inline.video-btn:active { background: #a93226; }
@@ -1128,7 +1153,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v78</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v79</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1149,6 +1174,13 @@ img.th-wait { background: rgba(255,255,255,.06); }
     <button class="ph-btn" type="button" data-ph="all" onclick="setPhase('all')">전체 <b id="ph-n-all"></b></button>
     <button class="ph-btn" type="button" data-ph="1" onclick="setPhase('1')">1기 가전 <b id="ph-n-1"></b></button>
     <button class="ph-btn" type="button" data-ph="2" onclick="setPhase('2')">2기 주방 <b id="ph-n-2"></b></button>
+    <label class="ph-search" id="ph-search">
+      <span class="ph-search-ic">🔍</span>
+      <input type="search" id="search-input" placeholder="제품명·메모·카테고리·단가" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"
+             oninput="onSearchInput()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();} else if(event.key==='Escape'){closeSearch();}">
+      <span class="ph-search-n" id="search-count"></span>
+    </label>
+    <button class="ph-sbtn" id="search-btn" type="button" title="검색" aria-label="검색" onclick="toggleSearch()">🔍</button>
   </div>
 
   <!-- 백업 리마인드 배너 -->
@@ -1693,7 +1725,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v78)
+          ⬇️ 최신 버전 받기 (현재 v79)
         </button>
       </div>
 
@@ -3808,6 +3840,107 @@ function visibleProducts() {
   return products.filter(function(p) { return p.id !== draftingId; });
 }
 
+/* ══════════════════════════════════════════════════════
+   v79: 검색
+   ──────────────────────────────────────────────────────
+   기수 칩 줄 오른쪽 🔍 → 같은 줄이 검색창으로 바뀐다.
+   제품명·메모·카테고리·확인할 것·단가·MOQ에서 찾는다 (인터넷 불필요).
+   보고 있는 기수 안에서만 찾고, 제품목록·샘플관리·사진 탭에 모두 적용.
+   검색 중에는 카드 순서 바꾸기를 잠근다 (일부만 보일 때 옮기면 순서가 꼬임).
+   PPT·엑셀·백업에는 영향 없음.
+   ══════════════════════════════════════════════════════ */
+var searchQ = '';
+function searchTerms() {
+  return searchQ.toLowerCase().split(/\s+/).filter(function(w) { return w; });
+}
+function searchHaystack(p) {
+  var todos = Array.isArray(p.todos) ? p.todos : [];
+  return [
+    p.name, p.memo, p.category,
+    todos.map(function(t) { return t && t.text; }).join(' '),
+    p.moq ? ('$' + p.moq.price + ' ' + p.moq.price + ' moq ' + p.moq.qty) : '',
+    p.sample && p.sample.memo, p.cb && p.cb.memo
+  ].filter(function(x) { return x; }).join(' ').toLowerCase();
+}
+function matchesSearch(p) {
+  var terms = searchTerms();
+  if (!terms.length) return true;
+  var hay = searchHaystack(p);
+  return terms.every(function(w) { return hay.indexOf(w) >= 0; });   // 여러 단어는 모두 포함
+}
+// 글자를 안전하게 바꾼 뒤 검색어 부분만 노랗게 표시
+function hlText(s) {
+  s = String(s == null ? '' : s);
+  var terms = searchTerms();
+  if (!terms.length) return escapeHtmlLite(s);
+  var low = s.toLowerCase(), marks = [];
+  terms.forEach(function(w) {
+    var i = low.indexOf(w);
+    while (i >= 0) { marks.push([i, i + w.length]); i = low.indexOf(w, i + w.length); }
+  });
+  if (!marks.length) return escapeHtmlLite(s);
+  marks.sort(function(a, b) { return a[0] - b[0]; });
+  var out = '', pos = 0;
+  marks.forEach(function(m) {
+    if (m[1] <= pos) return;
+    var st = Math.max(m[0], pos);
+    out += escapeHtmlLite(s.slice(pos, st)) + '<mark class="sq-hl">' + escapeHtmlLite(s.slice(st, m[1])) + '</mark>';
+    pos = m[1];
+  });
+  return out + escapeHtmlLite(s.slice(pos));
+}
+function isSearching() { return searchTerms().length > 0; }
+function rerenderForSearch() {
+  if (curNavPage === 'samples') renderSamplePage();
+  else if (curNavPage === 'photos') renderPhotosPage();
+  else renderList();
+}
+var _searchTimer = null;
+function onSearchInput() {
+  var el = document.getElementById('search-input');
+  searchQ = el ? el.value.trim() : '';
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(rerenderForSearch, 120);   // 한 글자씩 칠 때 버벅이지 않게
+}
+function openSearch() {
+  var bar = document.getElementById('phase-bar');
+  if (!bar) return;
+  bar.classList.add('searching');
+  var b = document.getElementById('search-btn');
+  if (b) { b.classList.add('on'); b.textContent = '✕'; b.title = '검색 닫기'; b.setAttribute('aria-label', '검색 닫기'); }
+  var el = document.getElementById('search-input');
+  if (el) el.focus();
+}
+function closeSearch() {
+  var bar = document.getElementById('phase-bar');
+  if (bar) bar.classList.remove('searching');
+  var b = document.getElementById('search-btn');
+  if (b) { b.classList.remove('on'); b.textContent = '🔍'; b.title = '검색'; b.setAttribute('aria-label', '검색'); }
+  var el = document.getElementById('search-input');
+  if (el) { el.value = ''; el.blur(); }
+  var had = isSearching();
+  searchQ = '';
+  var n = document.getElementById('search-count'); if (n) n.textContent = '';
+  if (had) rerenderForSearch();
+}
+function toggleSearch() {
+  var bar = document.getElementById('phase-bar');
+  if (bar && bar.classList.contains('searching')) closeSearch(); else openSearch();
+}
+function setSearchCount(n) {
+  var el = document.getElementById('search-count');
+  if (el) el.textContent = isSearching() ? (n + '건') : '';
+}
+// 결과가 없을 때 빈 화면 문구를 검색용으로 바꾼다
+function setEmptyText(box, title, sub) {
+  if (!box) return;
+  var t = box.querySelector('.empty-title'), s2 = box.querySelector('.empty-sub');
+  if (t) { if (t.getAttribute('data-orig') === null) t.setAttribute('data-orig', t.textContent); t.textContent = title != null ? title : t.getAttribute('data-orig'); }
+  if (s2) { if (s2.getAttribute('data-orig') === null) s2.setAttribute('data-orig', s2.textContent); s2.textContent = sub != null ? sub : s2.getAttribute('data-orig'); }
+}
+function searchEmptyTitle() { return '‘' + searchQ + '’ 검색 결과가 없어요'; }
+var SEARCH_EMPTY_SUB = '다른 단어로 찾거나, 오른쪽 ✕로 검색을 닫아주세요';
+
 function renderList() {
   updateTrashCount();
   renderPhaseBar();
@@ -3816,11 +3949,16 @@ function renderList() {
     vis.filter(function(p){ return curTab === 'sample' ? p.sample : !p.sample; });
   var filtered = curCat === 'all' ? base :
     base.filter(function(p){ return p.category === curCat; });
+  var searching = isSearching();
+  if (searching) filtered = filtered.filter(matchesSearch);
+  setSearchCount(filtered.length);
 
   var empty = document.getElementById('empty-state');
   var list = document.getElementById('p-list');
+  setEmptyText(empty, searching ? searchEmptyTitle() : null, searching ? SEARCH_EMPTY_SUB : null);
 
   if (filtered.length === 0) {
+    if (listSortable) { listSortable.destroy(); listSortable = null; }
     empty.style.display = 'flex';
     list.style.display = 'none';
     list.innerHTML = '';   // 남아있던 카드를 확실히 지운다
@@ -3846,7 +3984,7 @@ function renderList() {
     if (p.bizCards && p.bizCards.length > 0) badges.push('<span class="badge" style="background:rgba(74,158,255,.15);color:var(--blue);">📇 명함 ' + p.bizCards.length + '장</span>');
     if (!p.moq && !p.cb && !p.sample) badges.push('<span class="badge grey">정보 없음</span>');
 
-    var catBadge = p.category ? '<span class="badge grey">' + p.category + '</span>' : '';
+    var catBadge = p.category ? '<span class="badge grey">' + hlText(p.category) + '</span>' : '';
 
     var photos = p.photos && p.photos.length ?
       '<div class="p-photos">' + p.photos.map(function(src, pIdx){
@@ -3862,7 +4000,7 @@ function renderList() {
     if (undone.length) {
       todoHtml = '<div class="p-todo">' +
         undone.slice(0, 3).map(function(t) {
-          return '<div class="p-todo-item">☐ ' + escapeHtmlLite(t.text) + '</div>';
+          return '<div class="p-todo-item">☐ ' + hlText(t.text) + '</div>';
         }).join('') +
         (undone.length > 3 ? '<div class="p-todo-more">외 ' + (undone.length - 3) + '건</div>' : '') +
         '</div>';
@@ -3872,7 +4010,7 @@ function renderList() {
       '<button class="p-row-del" type="button" onclick="event.stopPropagation(); confirmDeleteProduct(' + p.id + ')">' +
         '<span>🗑️</span>삭제</button>' +
       '<div class="p-card" onclick="onCardTap(event, ' + p.id + ')">' +
-      '<div class="p-head"><div class="p-name' + (p.star ? ' starred' : '') + '">' + escapeHtmlLite(p.name) + '</div>' +
+      '<div class="p-head"><div class="p-name' + (p.star ? ' starred' : '') + '">' + hlText(p.name) + '</div>' +
         '<div class="p-head-r"><span class="p-phase ph' + productPhase(p) + '">' + productPhase(p) + '기</span><div class="p-date">' + p.date + '</div>' +
         '<button class="p-share" type="button" title="공유" onclick="event.stopPropagation(); openShare(' + p.id + ')">📤</button>' +
         '<button class="p-del" type="button" title="휴지통으로" onclick="event.stopPropagation(); confirmDeleteProduct(' + p.id + ')">🗑</button>' +
@@ -3880,14 +4018,15 @@ function renderList() {
       (catBadge ? '<div class="p-cat-row">' + catBadge + '</div>' : '') +
       photos +
       '<div class="p-badges">' + badges.join('') + '</div>' +
-      (p.memo ? '<div class="p-memo">' + escapeHtmlLite(p.memo) + '</div>' : '') +
+      (p.memo ? '<div class="p-memo">' + hlText(p.memo) + '</div>' : '') +
       todoHtml +
       '</div></div>';
   });
   list.innerHTML = html;
   watchThumbs(list);
   setupSwipeDelete();
-  setupListReorder();
+  if (searching) { if (listSortable) { listSortable.destroy(); listSortable = null; } }   // v79: 검색 중 순서 바꾸기 잠금
+  else setupListReorder();
 }
 
 /* ══════════════════════════════════════════════════════
@@ -4358,13 +4497,15 @@ function renderPhotosPage() {
   var countEl = document.getElementById('ph-count');
 
   var items = [];
-  phaseProducts().forEach(function(p) {
+  phaseProducts().filter(matchesSearch).forEach(function(p) {
     (p.photos || []).forEach(function(src, idx) {
       if (isValidPhoto(src)) items.push({ pid: p.id, idx: idx, src: src, name: p.name || '(이름 없음)' });
     });
   });
 
-  countEl.textContent = '저장된 사진 ' + items.length + '장';
+  countEl.textContent = (isSearching() ? '검색된 사진 ' : '저장된 사진 ') + items.length + '장';
+  setSearchCount(items.length);
+  setEmptyText(empty, isSearching() ? searchEmptyTitle() : null, null);
 
   if (items.length === 0) {
     empty.style.display = 'flex';
@@ -4377,7 +4518,7 @@ function renderPhotosPage() {
   grid.innerHTML = items.map(function(it) {
     return '<div class="ph-thumb-wrap">' +
       thumbHtml(it.src, 'ph-thumb', 'onclick="openProductPhotoLightbox(' + it.pid + ',' + it.idx + ')"') +
-      '<div class="ph-thumb-name">' + it.name + '</div>' +
+      '<div class="ph-thumb-name">' + hlText(it.name) + '</div>' +
       '</div>';
   }).join('');
   watchThumbs(document.getElementById('ph-grid'));
@@ -4385,6 +4526,7 @@ function renderPhotosPage() {
 
 // ── 상단 타이틀 클릭 → 메인 화면으로 정돈 ─────────────────
 function resetToMain() {
+  closeSearch();   // v79
   // 수정 중이던 입력은 취소(자동저장된 내용은 이미 저장되어 있으므로 안전)
   if (editingId) cancelEdit();
   // 열려있는 팝업/시트 모두 닫기
@@ -4403,9 +4545,11 @@ function resetToMain() {
 
 // ── SAMPLE PAGE ───────────────────────────────────────
 function renderSamplePage() {
-  var sampled = phaseProducts().filter(function(p){ return p.sample; });
-  document.getElementById('sm-count').textContent = '샘플 신청 제품 ' + sampled.length + '개';
+  var sampled = phaseProducts().filter(function(p){ return p.sample && matchesSearch(p); });
+  document.getElementById('sm-count').textContent = (isSearching() ? '검색된 샘플 제품 ' : '샘플 신청 제품 ') + sampled.length + '개';
+  setSearchCount(sampled.length);
   var emptyEl = document.getElementById('sm-empty');
+  setEmptyText(emptyEl, isSearching() ? searchEmptyTitle() : null, null);
   var listEl = document.getElementById('sm-list');
   if (sampled.length === 0) { emptyEl.style.display = 'flex'; listEl.innerHTML = ''; return; }
   emptyEl.style.display = 'none';
@@ -4435,7 +4579,7 @@ function renderSamplePage() {
       var uc = urgClass(dl);
       var moqStr = p.moq ? '$'+p.moq.price+' · MOQ '+p.moq.qty : '';
       html += '<div class="sm-card" onclick="editProduct(' + p.id + ')" style="cursor:pointer;">' +
-        '<div class="sm-left"><div class="sm-name">' + p.name + (p.category ? ' <span style="font-size:10px;color:var(--t2);">'+p.category+'</span>' : '') + '</div>' +
+        '<div class="sm-left"><div class="sm-name">' + hlText(p.name) + (p.category ? ' <span style="font-size:10px;color:var(--t2);">'+hlText(p.category)+'</span>' : '') + '</div>' +
         '<div class="sm-meta">제작 '+p.sample.days+'일 소요' + (moqStr?' · '+moqStr:'') + '</div></div>' +
         '<div class="sm-right"><div class="sm-date">'+fmtDate(p.sample.expected)+'</div><span class="sm-badge '+uc+'">'+urgLabel(dl)+'</span></div>' +
         '</div>';
@@ -4448,7 +4592,7 @@ function renderSamplePage() {
     noDate.forEach(function(p) {
       var moqStr = p.moq ? '$'+p.moq.price+' · MOQ '+p.moq.qty : '';
       html += '<div class="sm-card" onclick="editProduct(' + p.id + ')" style="cursor:pointer;">' +
-        '<div class="sm-left"><div class="sm-name">' + p.name + (p.category ? ' <span style="font-size:10px;color:var(--t2);">'+p.category+'</span>' : '') + '</div>' +
+        '<div class="sm-left"><div class="sm-name">' + hlText(p.name) + (p.category ? ' <span style="font-size:10px;color:var(--t2);">'+hlText(p.category)+'</span>' : '') + '</div>' +
         '<div class="sm-meta">소요일 미입력' + (moqStr?' · '+moqStr:'') + '</div></div>' +
         '<div class="sm-right"><span class="sm-badge later">신청됨</span></div>' +
         '</div>';
@@ -5365,7 +5509,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v78';
+var APP_VERSION = 'v79';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5824,6 +5968,7 @@ function closeEditor() {
 
 // + 버튼: 작성 중이던 카드가 있으면 이어서, 없으면 새 카드
 function openNewEditor() {
+  closeSearch();   // v79: 새로 기록한 제품이 검색에 가려 안 보이는 일이 없게
   var hasDraft = draftingId && products.some(function(p) { return p.id === draftingId; });
   if (hasDraft) {
     if (editingId !== draftingId) editProduct(draftingId, true);
