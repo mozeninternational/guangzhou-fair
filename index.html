@@ -971,6 +971,11 @@ mark.sq-hl { background: rgba(245,165,0,.35); color: inherit; border-radius: 3px
   cursor: pointer; -webkit-appearance: none; touch-action: manipulation;
 }
 .recv-pill:active { background: rgba(46,204,113,.25); }
+/* v81: 입력 카드 맨 위 자동 저장 표시 */
+.as-status { display: none; font-size: 11.5px; font-weight: 600; color: var(--t3); padding: 10px 2px 0; }
+.app.editor-open .as-status { display: block; }
+.as-status.ok { color: #6ee7b7; }
+.as-status.fail { color: #f5c97a; }
 /* v80: 시즌(연도 + 봄·가을) 버튼 — 📥 받기 옆 빈자리 */
 .season-pill {
   display: inline-block; margin-left: 5px; padding: 1px 7px; vertical-align: 1px;
@@ -1177,7 +1182,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v80</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v81</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1212,13 +1217,13 @@ img.th-wait { background: rgba(255,255,255,.06); }
   <div class="rc-banner" id="bk-reminder-banner">
     <div class="rc-banner-top">
       <span>💾</span>
-      <span>가끔 백업해두면 안심이에요</span>
+      <span>아직 백업하지 않은 날짜가 있어요</span>
     </div>
-    <div class="rc-banner-desc">
-      용량은 넉넉하니 급하지 않아요. 다만 폰 분실에 대비해 한 번쯤 백업해두시면 좋아요.
+    <div class="rc-banner-desc" id="bk-reminder-desc">
+      백업 화면에서 주황색 날짜를 누르면 그날 기록만 가볍게 저장돼요.
     </div>
     <div class="rc-banner-actions">
-      <button class="rc-clean-btn" onclick="exportBackup()">💾 지금 백업하기</button>
+      <button class="rc-clean-btn" onclick="openBackupFromBanner()">💾 백업하러 가기</button>
       <button class="rc-dismiss-btn" onclick="document.getElementById('bk-reminder-banner').classList.remove('show')">나중에</button>
     </div>
   </div>
@@ -1282,6 +1287,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
   <div class="cur-area">
     <!-- 수정 중 배너는 v25에서 제거 (파란 테두리로 구분, 삭제는 목록 스와이프로) -->
     <div class="edit-banner" id="edit-banner" style="display:none !important;"></div>
+    <div class="as-status" id="as-status">적는 내용은 자동으로 저장돼요</div>
     <!-- 제품명 -->
     <div class="nm-row">
       <textarea class="nm-ta" id="name-ta" rows="1"
@@ -1760,7 +1766,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v80)
+          ⬇️ 최신 버전 받기 (현재 v81)
         </button>
       </div>
 
@@ -2172,10 +2178,12 @@ function resumeDraftIfAny() {
   var id = Number(savedId);
   var exists = products.some(function(p){ return p.id === id; });
   if (exists) {
-    // 이름·사진·정보를 그대로 불러와 이어서 입력할 수 있게 복원.
-    // 단 이건 "새로 쓰다 만 것"이므로 수정 중 배너는 띄우지 않는다.
-    editProduct(id, true, { silent: true });   // v74: 시작 화면은 목록. + 버튼을 누르면 이어서 쓴다
-    renderList();   // 작성 중 항목을 목록에서 감추기 위해 다시 그린다
+    // v81: 앱이 다시 열렸을 때 작성 중이던 제품은 마지막 상태로 확정한다 → 목록에 그대로 보인다.
+    //      (예전에는 목록에서 숨기고 + 버튼으로만 이어 쓸 수 있어 "제품이 사라졌다"로 보였다)
+    //      이어서 고치려면 목록에서 그 제품을 누르면 된다.
+    clearDraftId();
+    if (draftingId === id) draftingId = null;
+    setTimeout(function() { showToast('✓ 작성 중이던 내용을 저장해 두었어요'); }, 600);
   } else {
     clearDraftId(); // 대상이 없으면(삭제됨 등) 기록만 정리
   }
@@ -2231,12 +2239,16 @@ function resumeDraftIfAny() {
   loadProducts().then(function() {
     return preloadThumbs().catch(function() {});
   }).then(function() {
-    switchNav(document.getElementById('bnav-list'), 'products');   // v74: 시작 화면은 언제나 제품 목록
+    var revived = !dataLoadFailed && applyPendingEdit();   // v81: 앱이 꺼지기 직전 입력 되살리기
+    switchNav(document.getElementById('bnav-list'), 'products');
     setupListScrollMemory();
     checkAndShowRecoveryBanner();
     checkBackupReminder();
     updateStorageBar();
-    resumeDraftIfAny(); // 이전에 저장/취소하지 않고 중단된 작성 중 항목이 있으면 + 버튼으로 이어서
+    resumeDraftIfAny(); // v81: 작성 중이던 항목은 마지막 상태로 확정 (목록에 보임)
+    if (revived) setTimeout(function() { showToast('✓ 앱이 닫히기 직전 입력한 내용을 되살렸어요'); }, 900);
+    // v81: 첫 화면은 언제나 새 제품 입력 카드 (✕를 누르면 제품 목록)
+    if (!dataLoadFailed) openNewEditor({ startup: true });
     updateFab();
     setTimeout(checkSharedInbox, 300);   // 안드로이드 공유창으로 받은 제품 파일 처리
 
@@ -3533,8 +3545,79 @@ function scheduleAutoSave() {
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(performAutoSave, 800);
 }
+function editorHasData() {
+  return !!(cur.name || cur.memo || (cur.todos && cur.todos.length) || cur.photos.length || cur.bizCards.length || cur.category || cur.moq || cur.cb || cur.sample);
+}
+/* v81: 다른 앱으로 넘어가거나 카메라를 열 때, 0.8초를 기다리지 않고 바로 저장한다
+   (예전에는 입력 직후 앱을 벗어나면 마지막 글자가 사라졌다) */
+function flushAutoSave() {
+  if (!autoSaveTimer) return;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = null;
+  try { performAutoSave(); } catch (e) { console.warn('[autosave] flush 실패', e); }
+}
+document.addEventListener('visibilitychange', function() { if (document.hidden) flushAutoSave(); });
+window.addEventListener('pagehide', flushAutoSave);
+/* v81: 폰 저장소(IndexedDB)는 쓰는 데 시간이 걸려, 입력 직후 앱이 꺼지면 마지막 내용이 사라질 수 있다.
+   그래서 자동 저장 때마다 글자 정보(사진 제외)를 즉시 기록되는 곳에도 적어 두고,
+   다음에 앱을 열 때 본 저장보다 새로우면 되살린다. 본 저장이 끝나면 지운다. */
+var PENDING_KEY = 'gz_pending_edit';
+function writePendingEdit(p) {
+  if (!p) return;
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify({
+      at: Date.now(), id: p.id, name: p.name, memo: p.memo, date: p.date,
+      todos: p.todos || [], category: p.category || null, moq: p.moq || null, cb: p.cb || null,
+      sample: p.sample || null, phase: p.phase || null
+    }));
+  } catch (e) {}
+}
+function clearPendingEditIfOlder(t) {
+  try {
+    var raw = localStorage.getItem(PENDING_KEY);
+    if (!raw) return;
+    var pe = JSON.parse(raw);
+    if (!pe || !pe.at || pe.at <= t) localStorage.removeItem(PENDING_KEY);
+  } catch (e) {}
+}
+function applyPendingEdit() {
+  var pe;
+  try { pe = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null'); } catch (e) { pe = null; }
+  try { localStorage.removeItem(PENDING_KEY); } catch (e) {}
+  if (!pe || !pe.id) return false;
+  var fields = ['name', 'memo', 'todos', 'category', 'moq', 'cb', 'sample', 'phase'];
+  var p = products.find(function(x) { return x.id === pe.id; });
+  var changed = false;
+  if (p) {
+    fields.forEach(function(k) {
+      if (JSON.stringify(p[k] == null ? null : p[k]) !== JSON.stringify(pe[k] == null ? null : pe[k])) { p[k] = pe[k]; changed = true; }
+    });
+  } else {
+    p = { id: pe.id, date: pe.date, photos: [], bizCards: [], star: false };
+    fields.forEach(function(k) { p[k] = pe[k]; });
+    products.unshift(p);
+    changed = true;
+  }
+  if (changed) persistSafe();
+  return changed;
+}
+
+function setAutoSaveStatus(state) {
+  var el = document.getElementById('as-status');
+  if (!el) return;
+  el.className = 'as-status' + (state === 'fail' ? ' fail' : state === 'ok' ? ' ok' : '');
+  if (state === 'ok') {
+    var d = new Date();
+    el.textContent = '✓ 자동 저장됨 · ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  } else if (state === 'fail') {
+    el.textContent = '⚠️ 자동 저장이 잠시 안 됐어요 · 입력하면 다시 시도해요';
+  } else {
+    el.textContent = '적는 내용은 자동으로 저장돼요';
+  }
+}
 function performAutoSave() {
-  var hasData = cur.name || cur.memo || (cur.todos && cur.todos.length) || cur.photos.length || cur.bizCards.length || cur.category || cur.moq || cur.cb || cur.sample;
+  autoSaveTimer = null;
+  var hasData = editorHasData();
   if (!hasData) return;
 
   var name = document.getElementById('name-ta').value.replace(/\s*\n\s*/g, ' ').trim() || '(이름 없음)';
@@ -3583,7 +3666,12 @@ function performAutoSave() {
        배너는 띄우지 않되, 알림으로 바로 알아챌 수 있게 한다. */
     if (!cur.name) showToast('✏️ 새 제품 기록을 시작했어요');
   }
-  persist();
+  if (editingId) writePendingEdit(products.find(function(x) { return x.id === editingId; }));   // v81
+  if (dataLoadFailed) { showDataErrorBanner(); }
+  else persistSafe().then(function(ok) {
+    setAutoSaveStatus(ok ? 'ok' : 'fail');
+    if (!ok) showToast(persistFailMsg());
+  });
   if (!editorOpen) renderList();   // v74: 전체 화면 카드에서는 목록을 다시 그리지 않는다 (입력이 버벅이던 원인)
   updateStorageBar();
   updateFab();
@@ -3624,15 +3712,22 @@ function saveProduct() {
           products[idx] = backup;
           carryNext = null;
           renderList();
-          showToast('🚨 수정 실패 - 저장공간이 부족해요. 사진을 줄여주세요');
+          showToast(persistFailMsg());
           return;
         }
         /* 수정 저장 → 편집 종료 (수정 중 배너도 사라진다).
            입력창을 비우고 목록으로 초점을 옮겨, 이어서 잘못 입력하는 일을 막는다. */
+        var wasExisting = isEditingExisting;
+        var savedP = products[idx];
+        if (!wasExisting && savedP && curSeason !== 'all' && productSeason(savedP) !== curSeason) {   // v81: 새 기록은 그 시즌 목록으로
+          curSeason = productSeason(savedP); seasonAuto = false;
+          if (curPhase !== 'all' && productPhase(savedP) !== curPhase) { curPhase = 'all'; try { localStorage.setItem('gz_phase', 'all'); } catch (e) {} }
+        }
         draftingId = null;
+        clearDraftId();
         resetCur();
         updateStorageBar();
-        showToast('✓ 수정되었어요!');
+        showToast(wasExisting ? '✓ 수정되었어요!' : '✓ 제품이 저장되었어요!');
         afterSaveDone();
       });
       return;
@@ -3666,7 +3761,7 @@ function saveProduct() {
         products.shift();
         carryNext = null;
         renderList();
-        showToast('🚨 저장 실패 - 저장공간이 부족해요. 사진을 줄여주세요');
+        showToast(persistFailMsg());
         return;
       }
       draftingId = null;
@@ -3714,7 +3809,9 @@ function editProduct(id, asDraft, opts) {
   editingId = id;
   isEditingExisting = !asDraft;
   draftingId = asDraft ? id : null;
-  saveDraftId(editingId);
+  // v81: 기존 제품을 고칠 때는 "작성 중" 기록을 남기지 않는다
+  //      (예전에는 앱이 다시 열리면 고치던 제품을 새 기록으로 착각해 목록에서 숨겼다)
+  if (asDraft) saveDraftId(editingId); else clearDraftId();
   cur.name = p.name || '';
   cur.memo = p.memo || '';
   cur.todos = migrateTodos(p);
@@ -3762,10 +3859,11 @@ function editProduct(id, asDraft, opts) {
    · 새 제품 작성 중   → 닫기만. 작성 중인 내용은 + 버튼을 누르면 이어서 쓸 수 있다 */
 function cancelEdit() {
   if (splitMode) { cancelSplit(); return; }
-  if (isEditingExisting) { saveProduct(); return; }
-  closeEditor();
+  // v81: ✕로 닫아도 적은 내용은 그대로 확정 (새 기록도 목록에 보인다)
   var hasDraft = draftingId && products.some(function(p) { return p.id === draftingId; });
-  showToast(hasDraft ? '작성 중인 내용은 + 버튼으로 이어서 쓸 수 있어요' : '닫았어요');
+  if (isEditingExisting || hasDraft || editorHasData()) { saveProduct(); return; }
+  closeEditor();
+  showToast('닫았어요');
 }
 
 // 저장 후 목록이 보이도록 스크롤
@@ -3815,7 +3913,7 @@ function syncUIFromCur() {
 }
 
 function resetCur() {
-  clearTimeout(autoSaveTimer);
+  clearTimeout(autoSaveTimer); autoSaveTimer = null;
   cur.name = ''; cur.memo = ''; cur.todos = [];
   cur.photos = []; cur.bizCards = []; cur.category = null;
   cur.moq = null; cur.cb = null; cur.sample = null; cur.phase = null;
@@ -5315,14 +5413,42 @@ function scanBrokenPhotos() {
 // 로드 시 손상 데이터 감지 → 배너 표시
 // 백업 알림: IndexedDB 전환으로 용량 걱정이 없어졌으므로,
 // 폰 분실 대비 차원에서만 가끔(3일에 한 번, 제품 10개 이상) 조용히 알림
+/* v81: 백업 알림
+   예전: 3일이 지나면 무조건 알림 → "지금 백업하기"가 사진 전부를 한 파일로 묶는 전체 백업을 실행
+         → 사진이 많으면 아이폰이 메모리 부족으로 앱을 다시 시작 → 완료 기록이 안 남아 알림이 계속 뜸
+   지금: 백업 안 한 날짜(오늘 제외)가 있을 때만 알림 · 버튼은 백업 화면의 날짜별 목록으로 이동 */
+function pendingBackupDays() {
+  var today = new Date().toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+  var done = getDayBackupDone();
+  return groupProductsByDay().filter(function(g) {
+    return g.day !== today && !(done[g.day] && done[g.day].count === g.list.length);
+  });
+}
 function checkBackupReminder() {
-  if (products.length < 10) return;
+  var bn = document.getElementById('bk-reminder-banner');
+  if (!bn) return;
   var last = 0;
   try { last = parseInt(localStorage.getItem('gz_last_backup_ts') || '0'); } catch(e) {}
   var hoursPassed = (Date.now() - last) / (1000 * 60 * 60);
-  if (hoursPassed >= 72) {
-    document.getElementById('bk-reminder-banner').classList.add('show');
+  var pend = products.length ? pendingBackupDays() : [];
+  if (pend.length && hoursPassed >= 24) {
+    var d = document.getElementById('bk-reminder-desc');
+    if (d) d.textContent = pend.slice(0, 3).map(function(g) { return g.day; }).join(', ') +
+      (pend.length > 3 ? ' 외 ' + (pend.length - 3) + '일' : '') +
+      ' 기록이 아직 폰 안에만 있어요. 백업 화면에서 주황색 날짜를 누르면 그날 기록만 가볍게 저장돼요.';
+    bn.classList.add('show');
+  } else {
+    bn.classList.remove('show');
   }
+}
+function openBackupFromBanner() {
+  var bn = document.getElementById('bk-reminder-banner');
+  if (bn) bn.classList.remove('show');
+  openSheet('backup');
+  setTimeout(function() {
+    var el = document.getElementById('bk-day-list');
+    if (el) try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+  }, 250);
 }
 
 function checkAndShowRecoveryBanner() {
@@ -5485,16 +5611,54 @@ function markPersistFailed(e) {
 
 // 저장을 시도하고 "실제 성공 여부"를 Promise(true/false)로 돌려준다.
 // 저장소 읽기에 실패한 상태(dataLoadFailed)라면 아예 쓰지 않는다 — 원본 보호.
+/* v81: 저장 순서 정리 + 자동 재시도
+   · 자동 저장과 저장 버튼이 동시에 쓰면 폰 저장소가 가끔 거절했다 → 한 번에 하나씩, 밀린 요청은 하나로 합친다
+   · 실패하면 0.5초·1.5초 뒤 두 번 더 시도하고, 그래도 안 될 때만 알린다
+   · 안내는 실제 원인에 맞게 (예전에는 무조건 "저장공간 부족") */
+var lastPersistError = null;
+var _persistRunning = null, _persistQueued = null;
 function persistSafe() {
   if (dataLoadFailed) {
     showDataErrorBanner();
     return Promise.resolve(false);
   }
+  if (_persistQueued) return _persistQueued;
+  if (_persistRunning) {
+    _persistQueued = _persistRunning.then(function() { _persistQueued = null; return persistSafe(); });
+    return _persistQueued;
+  }
+  var run = persistWithRetry();
+  _persistRunning = run;
+  var done = function() { if (_persistRunning === run) _persistRunning = null; };
+  run.then(done, done);
+  return run;
+}
+function persistWithRetry() {
+  var startedAt = Date.now();
+  var wait = function(ms) { return new Promise(function(r) { setTimeout(r, ms); }); };
+  return persistOnce().then(function(ok) {
+    return ok ? true : wait(500).then(persistOnce);
+  }).then(function(ok) {
+    return ok ? true : wait(1500).then(persistOnce);
+  }).then(function(ok) {
+    if (!ok) markPersistFailed(lastPersistError);
+    else { lastPersistError = null; clearPendingEditIfOlder(startedAt); }
+    return ok;
+  });
+}
+function persistFailMsg() {
+  var e = lastPersistError || {};
+  var t = String(e.name || '') + ' ' + String(e.message || '');
+  if (/quota|space|storage full/i.test(t)) return '🚨 저장공간이 부족해요 — 백업 후 오래된 사진을 정리해주세요';
+  return '🚨 저장이 잠시 안 됐어요 — 입력한 내용은 그대로 있어요. 잠시 후 다시 눌러주세요';
+}
+function persistOnce() {
+  if (dataLoadFailed) return Promise.resolve(false);
   var built;
   try {
     built = buildMetaAndPuts();
   } catch (e) {
-    markPersistFailed(e);
+    lastPersistError = e;
     return Promise.resolve(false);
   }
 
@@ -5522,7 +5686,8 @@ function persistSafe() {
     lastUsedPhotoIds = built.used;
     return true;
   }).catch(function(e) {
-    markPersistFailed(e);
+    lastPersistError = e;
+    console.warn('[persist] 저장 실패, 다시 시도합니다:', e);
     return false;
   });
 }
@@ -5545,7 +5710,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v80';
+var APP_VERSION = 'v81';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5972,6 +6137,7 @@ function setupListScrollMemory() {
 }
 
 function openEditor() {
+  if (!editorOpen) setAutoSaveStatus('');   // v81
   if (!editorOpen && curNavPage === 'products') saveListScroll();
   editorOpen = true;
   var app = document.querySelector('.app');
@@ -6003,9 +6169,9 @@ function closeEditor() {
 }
 
 // + 버튼: 작성 중이던 카드가 있으면 이어서, 없으면 새 카드
-function openNewEditor() {
+function openNewEditor(opts) {
   closeSearch();   // v79: 새로 기록한 제품이 검색에 가려 안 보이는 일이 없게
-  followSeasonToNow();   // v80
+  if (!(opts && opts.startup)) followSeasonToNow();   // v80 (앱을 열 때는 보던 시즌을 그대로 둔다 — 저장할 때 맞춘다)
   var hasDraft = draftingId && products.some(function(p) { return p.id === draftingId; });
   if (hasDraft) {
     if (editingId !== draftingId) editProduct(draftingId, true);
@@ -6343,7 +6509,7 @@ function curEffectivePhase() {
     var ep = products.find(function(x) { return x.id === editingId; });
     if (ep) return productPhase(ep);
   }
-  if (curPhase !== 'all') return curPhase;
+  if (curPhase !== 'all' && (curSeason === 'all' || curSeason === currentSeason())) return curPhase;
   return productPhase({ id: Date.now() });
 }
 function togglePhaseChip() {
@@ -6355,6 +6521,7 @@ function togglePhaseChip() {
 // 새로 만드는 제품의 기수 (직접 고른 것 → 상단에서 보고 있는 기수 → 없으면 날짜로 자동)
 function newProductPhase() {
   if (cur.phase === '1' || cur.phase === '2') return cur.phase;
+  if (curSeason !== 'all' && curSeason !== currentSeason()) return null;   // v81: 지난 시즌 기수를 새 기록에 쓰지 않는다
   return curPhase !== 'all' ? curPhase : null;
 }
 
@@ -7109,7 +7276,7 @@ function persist() {
     return false;
   }
   persistSafe().then(function(ok) {
-    if (!ok) showToast('🚨 저장 실패! 기기 저장공간을 확인해주세요');
+    if (!ok) showToast(persistFailMsg());
   });
   return true;
 }
@@ -7184,18 +7351,22 @@ function exportBackup() {
     document.body.appendChild(a);
     a.click();
     markBackupDone();
+    // v81: 전체 백업에는 모든 날짜가 들어가므로 날짜별 백업도 완료로 표시
+    try { groupProductsByDay().forEach(function(g) { setDayBackupDone(g.day, g.list.length); }); } catch (e) {}
+    try { renderDayBackupList(); } catch (e) {}
     setTimeout(function() {
       try { document.body.removeChild(a); } catch(e) {}
       URL.revokeObjectURL(url);
     }, 800);
 
     // 다운로드가 차단되는 환경(Claude 미리보기 등)을 대비해 텍스트영역도 함께 표시
-    showBackupFallback(json);
+    // v81: 사진이 많으면 같은 내용을 한 벌 더 만드느라 아이폰이 앱을 다시 시작했다 → 작을 때만
+    if (json.length < 3000000) showBackupFallback(json);
     showToast('✓ 다운로드 시도됨 (' + products.length + '개)');
   } catch(err) {
     console.error('[export] 실패:', err);
-    // 다운로드 실패 시에도 텍스트로는 꺼낼 수 있게
-    try { showBackupFallback(buildBackupJson()); } catch(e) {}
+    // 다운로드 실패 시에도 텍스트로는 꺼낼 수 있게 (v81: 작을 때만)
+    try { if (getStorageUsageMB() < 3) showBackupFallback(buildBackupJson()); } catch(e) {}
     showToast('🚨 다운로드 실패 - 복사하기를 써주세요');
   }
 }
