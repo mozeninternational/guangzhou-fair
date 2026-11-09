@@ -971,6 +971,30 @@ mark.sq-hl { background: rgba(245,165,0,.35); color: inherit; border-radius: 3px
   cursor: pointer; -webkit-appearance: none; touch-action: manipulation;
 }
 .recv-pill:active { background: rgba(46,204,113,.25); }
+/* v80: 시즌(연도 + 봄·가을) 버튼 — 📥 받기 옆 빈자리 */
+.season-pill {
+  display: inline-block; margin-left: 5px; padding: 1px 7px; vertical-align: 1px;
+  border-radius: 6px; border: 1px solid rgba(245,165,0,.45); background: rgba(245,165,0,.12);
+  color: var(--orange); font-family: inherit; font-size: 10.5px; font-weight: 700; line-height: 16px;
+  cursor: pointer; -webkit-appearance: none; touch-action: manipulation; white-space: nowrap;
+}
+.season-pill:active { background: rgba(245,165,0,.25); }
+/* 오른쪽 버튼 줄 아래 빈자리에 둔다 → 헤더 높이가 늘지 않는다 */
+.hdr-right { position: relative; }
+.hdr-right .season-pill { position: absolute; top: calc(100% + 5px); right: 0; margin: 0; }
+.season-pill.all { border-color: var(--border); background: transparent; color: var(--t2); }
+.season-desc { font-size: 12.5px; color: var(--t2); line-height: 1.6; margin: -8px 0 14px; }
+.season-row {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 14px 14px; margin-bottom: 8px; border-radius: 12px; border: 1px solid var(--border);
+  background: transparent; color: var(--t1); font-family: inherit; font-size: 15px; font-weight: 600;
+  text-align: left; cursor: pointer; -webkit-appearance: none; touch-action: manipulation;
+}
+.season-row.on { border-color: var(--orange); background: rgba(245,165,0,.12); color: var(--orange); }
+.season-row small { font-size: 12.5px; font-weight: 600; color: var(--t2); white-space: nowrap; }
+.season-row.on small { color: var(--orange); }
+.season-now { margin-left: 6px; padding: 1px 6px; border-radius: 6px; font-size: 10.5px; font-weight: 800;
+  background: rgba(46,204,113,.15); color: #6ee7b7; vertical-align: 2px; }
 /* v62: 상단 버튼은 아이콘 없이 한 줄 고정 → 높이가 늘어나지 않는다 */
 .ppt-btn, .backup-btn { white-space: nowrap; flex-shrink: 0; padding: 6px 12px; line-height: 18px; }
 .hdr-btn-row { flex-wrap: nowrap; }
@@ -1153,7 +1177,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v79</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v80</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1166,6 +1190,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
         <button class="trash-hdr-btn" id="trash-hdr-btn" type="button" onclick="openTrash()" title="휴지통">🗑<span class="trash-badge" id="trash-badge"></span></button>
         <button class="fab-inline video-btn" id="fab-add" type="button" title="동영상 촬영" onclick="openVideoCamera()">🎥</button>
       </div>
+      <button class="season-pill" id="season-pill" type="button" onclick="openSeasonSheet()" title="연도·시즌 고르기">🗂 <span id="season-label">시즌</span> ▾</button>
     </div>
   </div>
 
@@ -1439,6 +1464,16 @@ img.th-wait { background: rgba(255,255,255,.06); }
 <input type="file" id="album-biz-input" accept="image/*" multiple style="display:none" onchange="handleBizPhoto(event)">
 <!-- v64: 동영상 촬영 (앱에는 저장하지 않고 휴대폰으로 바로 보낸다) -->
 <input type="file" id="video-input" accept="video/*" capture="environment" style="display:none" onchange="handleVideo(event)">
+
+<!-- v80: 시즌 고르기 -->
+<div class="overlay" id="season-overlay" onclick="overlayClick(event,'season')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🗂 어느 박람회 기록을 볼까요</div>
+    <div class="season-desc">기록한 날짜로 자동 분류됩니다. 1~6월 기록은 봄, 7~12월 기록은 가을 박람회로 들어가며, 기존 자료는 지우거나 옮기지 않습니다.</div>
+    <div id="season-list"></div>
+  </div>
+</div>
 
 <!-- MOQ SHEET -->
 <div class="overlay" id="moq-overlay" onclick="overlayClick(event,'moq')">
@@ -1725,7 +1760,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v79)
+          ⬇️ 최신 버전 받기 (현재 v80)
         </button>
       </div>
 
@@ -3636,6 +3671,7 @@ function saveProduct() {
       }
       draftingId = null;
       resetCur();
+      if (curSeason !== 'all' && productSeason(p) !== curSeason) { curSeason = productSeason(p); seasonAuto = false; }   // v80
       if (curPhase !== 'all' && productPhase(p) !== curPhase) {
         setPhase(productPhase(p));   // 다른 기수를 보고 있었으면 저장한 제품이 보이도록 전환
         showToast('✓ 저장했어요 · ' + PHASE_NAMES[productPhase(p)] + ' 목록으로 전환');
@@ -5509,7 +5545,7 @@ function persistSafe() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v79';
+var APP_VERSION = 'v80';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -5969,6 +6005,7 @@ function closeEditor() {
 // + 버튼: 작성 중이던 카드가 있으면 이어서, 없으면 새 카드
 function openNewEditor() {
   closeSearch();   // v79: 새로 기록한 제품이 검색에 가려 안 보이는 일이 없게
+  followSeasonToNow();   // v80
   var hasDraft = draftingId && products.some(function(p) { return p.id === draftingId; });
   if (hasDraft) {
     if (editingId !== draftingId) editProduct(draftingId, true);
@@ -6028,6 +6065,7 @@ function newSameFactory() {
   else applyCarry(carry);
 }
 function applyCarry(c) {
+  followSeasonToNow();   // v80
   resetCur();
   cur.bizCards = c.bizCards || [];
   cur.category = c.category || null;
@@ -6102,10 +6140,13 @@ function renderMoveTargets() {
   var q = (document.getElementById('move-q').value || '').trim().toLowerCase();
   var me = products.find(function(x) { return x.id === editingId; });
   var myPhase = me ? productPhase(me) : null;
+  var mySeason = me ? productSeason(me) : null;
   var list = products.filter(function(x) { return x.id !== editingId && x.id !== draftingId; })
     .filter(function(x) { return !q || String(x.name || '').toLowerCase().indexOf(q) !== -1; })
-    .sort(function(a, b) {   // 같은 기수 먼저, 그 안에서는 목록 순서
-      return (productPhase(a) === myPhase ? 0 : 1) - (productPhase(b) === myPhase ? 0 : 1);
+    .sort(function(a, b) {   // 같은 시즌·같은 기수 먼저, 그 안에서는 목록 순서 (v80)
+      var ka = (productSeason(a) === mySeason ? 0 : 2) + (productPhase(a) === myPhase ? 0 : 1);
+      var kb = (productSeason(b) === mySeason ? 0 : 2) + (productPhase(b) === myPhase ? 0 : 1);
+      return ka - kb;
     });
   if (!list.length) { box.innerHTML = '<div class="tr-empty">찾는 제품이 없어요</div>'; return; }
   box.innerHTML = list.map(function(x) {
@@ -6195,18 +6236,105 @@ function doSplit() {
    v67: 제품마다 직접 정한 기수(p.phase)가 있으면 날짜보다 우선한다.
    상단 [전체 · 1기 가전 · 2기 주방]이 목록·샘플관리·사진·리포트·엑셀에 함께 적용된다.
    ══════════════════════════════════════════════════════ */
-var PHASE2_START = 20261021;    // 2기 시작일 (YYYYMMDD) — v67: 10/21부터
+var PHASE2_START = 20261021;    // (v80부터 사용 안 함 — 시즌별 PHASE2_DAY로 대체)
 var PHASE_NAMES = { '1': '1기 가전', '2': '2기 주방' };
 var curPhase = 'all';
 try { curPhase = localStorage.getItem('gz_phase') || 'all'; } catch (e) {}
 if (!/^(all|1|2)$/.test(curPhase)) curPhase = 'all';
 
+/* ══════════════════════════════════════════════════════
+   v80: 시즌 = 연도 + 봄(4월)·가을(10월) 박람회
+   ──────────────────────────────────────────────────────
+   제품 id = 처음 기록한 시각이므로, 저장된 데이터를 바꾸지 않고 시즌을 계산한다.
+   · 1~6월 기록 → 그해 봄, 7~12월 기록 → 그해 가을
+   · 시즌마다 1기/2기를 새로 나눈다: 박람회 달(4월·10월) 21일부터 2기
+     (v79까지는 2026-10-21로 고정 → 2027년 기록이 모두 2기로 들어가던 문제 해결)
+   · 2026년 6월 이전 기록은 예전 규칙 그대로 1기 (기존 분류가 바뀌지 않게)
+   · 상단 🗂 버튼에서 고른 시즌이 목록·검색·샘플관리·사진·리포트·엑셀에 함께 적용
+   · 백업은 항상 전체 시즌
+   ══════════════════════════════════════════════════════ */
+var PHASE2_DAY = 21;               // 박람회 달의 이 날부터 2기
+var SEASON_FALLBACK = '2026-F';    // 기록 시각을 알 수 없는 항목
+function productTime(p) {
+  var t = Number(p && p.id);
+  return (isFinite(t) && t > 1000000000000) ? t : null;
+}
+function seasonKeyOfTime(t) { var d = new Date(t); return d.getFullYear() + '-' + (d.getMonth() < 6 ? 'S' : 'F'); }
+function productSeason(p) { var t = productTime(p); return t ? seasonKeyOfTime(t) : SEASON_FALLBACK; }
+function currentSeason() { return seasonKeyOfTime(Date.now()); }
+function seasonOrder(k) { var a = String(k).split('-'); return Number(a[0]) * 10 + (a[1] === 'S' ? 1 : 2); }
+function seasonName(k) {
+  if (k === 'all') return '전체 시즌';
+  var a = String(k).split('-');
+  return a[0] + ' ' + (a[1] === 'S' ? '봄' : '가을');
+}
+var curSeason = 'all';
+var seasonAuto = true;             // 직접 고르기 전에는 "기록이 있는 가장 최근 시즌"을 자동으로 보여준다
+function seasonCounts() {
+  var c = {};
+  products.forEach(function(p) { if (p.id === draftingId) return; var k = productSeason(p); c[k] = (c[k] || 0) + 1; });
+  return c;
+}
+function listSeasons() {
+  var c = seasonCounts(), keys = Object.keys(c), now = currentSeason();
+  if (keys.indexOf(now) < 0) keys.push(now);
+  keys.sort(function(a, b) { return seasonOrder(b) - seasonOrder(a); });
+  return keys.map(function(k) { return { key: k, n: c[k] || 0 }; });
+}
+function syncSeason() {
+  if (!seasonAuto) return;
+  var c = seasonCounts(), keys = Object.keys(c);
+  if (!keys.length) { curSeason = currentSeason(); return; }
+  keys.sort(function(a, b) { return seasonOrder(b) - seasonOrder(a); });
+  curSeason = keys[0];
+}
+function inSeason(p) { return curSeason === 'all' || productSeason(p) === curSeason; }
+function seasonLabel() { return curSeason === 'all' ? '' : seasonName(curSeason); }
+function renderSeasonPill() {
+  var b = document.getElementById('season-pill'), l = document.getElementById('season-label');
+  if (l) l.textContent = seasonName(curSeason);
+  if (b) b.classList.toggle('all', curSeason === 'all');
+}
+function openSeasonSheet() {
+  syncSeason();
+  var now = currentSeason(), total = 0;
+  var rows = listSeasons().map(function(s) {
+    total += s.n;
+    return '<button class="season-row' + (s.key === curSeason ? ' on' : '') + '" type="button" onclick="pickSeason(\'' + s.key + '\')">' +
+      '<span>' + seasonName(s.key) + (s.key === now ? '<span class="season-now">지금</span>' : '') + '</span><small>' + s.n + '개</small></button>';
+  }).join('');
+  rows += '<button class="season-row' + (curSeason === 'all' ? ' on' : '') + '" type="button" onclick="pickSeason(\'all\')">' +
+    '<span>전체 시즌</span><small>' + total + '개</small></button>';
+  document.getElementById('season-list').innerHTML = rows;
+  openOverlay('season');
+}
+function pickSeason(k) {
+  closeOverlay('season');
+  if (k === curSeason && !seasonAuto) return;
+  seasonAuto = false;
+  curSeason = k;
+  setPhase(curPhase);   // 목록·샘플·사진을 다시 그린다
+}
+// 새 기록은 언제나 "지금 시즌" — 지난 시즌을 보고 있었으면 지금 시즌으로 넘어간다
+function followSeasonToNow() {
+  var now = currentSeason();
+  if (curSeason === 'all' || curSeason === now) return;
+  curSeason = now; seasonAuto = false;
+  if (curPhase !== 'all') { curPhase = 'all'; try { localStorage.setItem('gz_phase', 'all'); } catch (e) {} }
+  renderPhaseBar();
+  showToast('🗂 ' + seasonName(now) + ' 기록으로 넘어왔어요');
+}
+
 function productPhase(p) {
   if (p && (p.phase === '1' || p.phase === '2')) return p.phase;   // 직접 정한 기수가 우선
-  var k = productDayKey(p);
-  return (k >= PHASE2_START && k < 99999999) ? '2' : '1';
+  var t = productTime(p);
+  if (!t) return '1';
+  var d = new Date(t), y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
+  if (y < 2026 || (y === 2026 && m <= 6)) return '1';               // 예전 규칙 유지
+  var fairMonth = m <= 6 ? 4 : 10;
+  return (m > fairMonth || (m === fairMonth && day >= PHASE2_DAY)) ? '2' : '1';
 }
-function inPhase(p) { return curPhase === 'all' || productPhase(p) === curPhase; }
+function inPhase(p) { return inSeason(p) && (curPhase === 'all' || productPhase(p) === curPhase); }
 function phaseProducts() { return products.filter(inPhase); }
 // 입력 카드의 제품이 몇 기인지: 직접 고른 것 → 기존 제품의 기수 → 상단에서 보고 있는 기수 → 오늘 날짜
 function curEffectivePhase() {
@@ -6230,11 +6358,17 @@ function newProductPhase() {
   return curPhase !== 'all' ? curPhase : null;
 }
 
-function phaseLabel() { return curPhase === 'all' ? '' : PHASE_NAMES[curPhase]; }
-function phaseFileTag() { return curPhase === 'all' ? '' : (curPhase + '기_'); }
+function phaseLabel() {
+  return [seasonLabel(), curPhase === 'all' ? '' : PHASE_NAMES[curPhase]].filter(function(x) { return x; }).join(' · ');
+}
+function phaseFileTag() {
+  return (curSeason === 'all' ? '' : seasonName(curSeason).replace(/\s/g, '') + '_') + (curPhase === 'all' ? '' : (curPhase + '기_'));
+}
 
 function renderPhaseBar() {
-  var vis = products.filter(function(p) { return p.id !== draftingId; });
+  syncSeason();
+  renderSeasonPill();
+  var vis = products.filter(function(p) { return p.id !== draftingId && inSeason(p); });
   var n1 = vis.filter(function(p) { return productPhase(p) === '1'; }).length;
   var n2 = vis.length - n1;
   var set = function(id, n) { var el = document.getElementById(id); if (el) el.textContent = n; };
