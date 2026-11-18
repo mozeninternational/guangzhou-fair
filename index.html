@@ -1182,7 +1182,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v81</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v82</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1402,6 +1402,8 @@ img.th-wait { background: rgba(255,255,255,.06); }
         <button class="excel-btn" style="background:#2563a8;" onclick="exportExcel('all', this)">⬇ 전체</button>
       </div>
     </div>
+    <!-- v82: 회사 워크스페이스 목록생성 항목에 맞춘 파일 (샘플 신청 제품만, 엑셀 + 사진 ZIP) -->
+    <button class="excel-btn" type="button" style="background:#0f3a7d; width:100%; margin:0 0 12px; padding:10px 12px;" onclick="exportWorkspace(this)">⬇ 워크스페이스 등록용 (엑셀 + 사진)</button>
     <div class="empty" id="sm-empty" style="display:none;">
       <div class="empty-icon">📦</div>
       <div class="empty-title">샘플 신청 내역이 없어요</div>
@@ -1548,6 +1550,10 @@ img.th-wait { background: rgba(255,255,255,.06); }
       <div class="edd-label">샘플 입고 예정일</div>
       <div class="edd-date" id="edd-date"></div>
       <div class="edd-sub" id="edd-sub"></div>
+    </div>
+    <div class="fg">
+      <div class="fl">샘플 수량 <span style="font-weight:500;color:var(--t2);">(기본 1개)</span></div>
+      <input class="fi" id="sample-qty" type="number" min="1" placeholder="1" inputmode="numeric">
     </div>
     <div class="fg">
       <div class="fl">메모 (선택)</div>
@@ -1766,7 +1772,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v81)
+          ⬇️ 최신 버전 받기 (현재 v82)
         </button>
       </div>
 
@@ -3341,7 +3347,7 @@ function toggleSampleQuick() {
     cur.sample = null;
     showToast('샘플 신청 표시를 해제했어요');
   } else {
-    cur.sample = { requested: todayISO(), days: null, expected: null, memo: '' };
+    cur.sample = { requested: todayISO(), days: null, expected: null, memo: '', qty: 1 };   // v82: 수량 기본 1개
     showToast('샘플 신청 표시 · ' + fmtDate(todayISO()));
   }
   renderFnChips();
@@ -3396,6 +3402,7 @@ function openOverlay(name) {
     document.getElementById('sample-exp').value = sm.expected || '';
     document.getElementById('sample-days').value = sm.days || '';
     document.getElementById('sample-memo').value = sm.memo || '';
+    document.getElementById('sample-qty').value = sampleQty(cur);   // v82
     calcExpected();
   }
   if (name === 'ppt') {
@@ -3506,6 +3513,12 @@ function todayISO() {
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
+// v82: 샘플 수량 — 예전 기록처럼 수량이 없으면 1개
+function sampleQty(p) {
+  var q = p && p.sample ? parseInt(p.sample.qty) : NaN;
+  return (q > 0) ? q : 1;
+}
+
 // 날짜에 며칠을 더한다
 function addDaysISO(iso, days) {
   var p = String(iso).split('-');
@@ -3519,8 +3532,10 @@ function saveSample() {
   var days = parseInt(document.getElementById('sample-days').value);
   if (exp && daysBetweenISO(req, exp) < 0) { showToast('입고 예정일이 신청일보다 빨라요'); return; }
   var checklist = (cur.sample && cur.sample.checklist) ? cur.sample.checklist : defaultChecklist();
+  var qty = parseInt(document.getElementById('sample-qty').value);   // v82: 비우면 1개
   cur.sample = { requested: req, days: (exp && days > 0) ? days : null, expected: exp,
-                 memo: document.getElementById('sample-memo').value, checklist: checklist };
+                 memo: document.getElementById('sample-memo').value, checklist: checklist,
+                 qty: (qty > 0) ? qty : 1 };
   closeOverlay('sample');
   renderFnChips(); renderChips(); updateSaveBtn(); scheduleAutoSave();
   showToast('✓ 샘플 신청' + (exp ? ' · ' + fmtDate(exp) + ' 입고 예정' : ''));
@@ -3532,6 +3547,7 @@ function clearSample() {
   document.getElementById('sample-exp').value = '';
   document.getElementById('sample-days').value = '';
   document.getElementById('sample-memo').value = '';
+  document.getElementById('sample-qty').value = 1;
   var cl = document.getElementById('cl-new-item'); if (cl) cl.value = '';
   document.getElementById('edd').style.display = 'none';
   closeOverlay('sample');
@@ -4925,6 +4941,187 @@ function loadZipLibrary() {
 }
 
 // 등록된 모든 제품 사진을 원본 그대로(변형 없이) zip으로 묶어서 다운로드
+/* ══════════════════════════════════════════════════════
+   v82: 워크스페이스용 내보내기
+   ──────────────────────────────────────────────────────
+   회사 워크스페이스 "목록생성 - 기본정보 입력" 항목 순서에 맞춘 데이터 파일.
+   · 샘플 신청(★) 제품만 · 한 행 = 한 제품 · 한 칸 = 한 항목
+   · ZIP 하나에 [워크스페이스등록.xlsx] + [사진/] 폴더
+   · 사진 파일 이름은 앱ID로 시작 → 엑셀의 메인이미지·기타이미지 칸과 이름이 같다
+   · 앱이 모르는 값(관리대행업체·개발유형·제조사·환율·중량)은 비워 두고 워크스페이스에서 입력
+   ══════════════════════════════════════════════════════ */
+var WS_CAT_MAP = {
+  '주방가전': '주방가전',
+  '생활가전': '생활가전', '무선청소기': '생활가전', '계절가전': '생활가전', '이미용기기': '생활가전'
+};
+var WS_COLS = [
+  // key, 머리글, 폭, 앱에서 채움(true) / 워크스페이스에서 입력(false)
+  ['id',      '앱ID',          16, true],
+  ['agency',  '관리대행업체',   12, false],
+  ['cat',     '카테고리',       10, true],
+  ['devType', '개발유형',       10, false],
+  ['model',   '기본모델명',     14, false],
+  ['name',    '제품명',         24, true],
+  ['maker',   '제조사',         16, false],
+  ['country', '제조국',          8, true],
+  ['moq',     'MOQ',            10, true],
+  ['cur',     '견적화폐',        9, true],
+  ['price',   '제품단가',       10, true],
+  ['fx',      '적용환율',        9, false],
+  ['weight',  '예상중량(kg)',   11, false],
+  ['note',    '특기사항',       44, true],
+  ['mainImg', '메인이미지',     30, true],
+  ['etcImg',  '기타이미지',     40, true],
+  ['smpReq',  '샘플신청일',     12, true],
+  ['smpQty',  '샘플수량',        9, true],
+  ['smpExp',  '입고예정일',     12, true],
+  ['fair',    '박람회',         16, true],
+  ['appCat',  '앱카테고리',     11, true]
+];
+
+function wsCbText(p) {
+  if (!p.cb) return '';
+  if (p.cb.owned) return 'CB 보유';
+  if (p.cb.date) return 'CB 진행중 (' + fmtDate(p.cb.date) + ' 예정)';
+  return 'CB 미대응';
+}
+function wsNoteText(p) {
+  var out = [];
+  if ((p.memo || '').trim()) out.push(p.memo.trim());
+  var cb = wsCbText(p); if (cb) out.push(cb);
+  if (p.moq && p.moq.memo) out.push('단가·MOQ: ' + p.moq.memo);
+  if (p.sample && p.sample.memo) out.push('샘플: ' + p.sample.memo);
+  var todos = Array.isArray(p.todos) ? p.todos : migrateTodos(p);
+  todos.forEach(function(t) { if (String(t.text || '').trim()) out.push((t.done ? '■ ' : '□ ') + t.text); });
+  return out.join('\n');
+}
+function wsNum(v) {
+  if (v === null || v === undefined || v === '-' || v === '') return '';
+  var n = parseFloat(String(v).replace(/[,\s]/g, ''));
+  return isFinite(n) ? n : String(v);
+}
+function wsISO(iso) { return iso ? String(iso) : ''; }   // 2026-11-18 형식 그대로 (시간대 영향 없음)
+
+async function exportWorkspace(btnEl) {
+  var list = phaseProducts().filter(function(p) { return p.sample; });
+  if (!list.length) { showToast('샘플 신청한 제품이 없어요'); return; }
+  list.sort(function(a, b) {
+    var ra = (a.sample && a.sample.requested) || '', rb = (b.sample && b.sample.requested) || '';
+    if (ra !== rb) return ra < rb ? -1 : 1;
+    return Number(a.id) - Number(b.id);
+  });
+
+  var btn = btnEl;
+  var originalText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 준비 중...'; }
+  try {
+    if (typeof ExcelJS === 'undefined') await loadExcelLibrary();
+    if (typeof JSZip === 'undefined') await loadZipLibrary();
+    if (btn) btn.textContent = '⏳ 만드는 중...';
+
+    var zip = new JSZip();
+    var photoDir = zip.folder('사진');
+    var photoCount = 0;
+    function addPhoto(src, base) {
+      if (!isValidPhoto(src)) return '';
+      var m = /^data:image\/(png|jpe?g);base64,(.*)$/i.exec(src);
+      if (!m) return '';
+      var ext = m[1].toLowerCase() === 'png' ? 'png' : 'jpg';
+      var fname = base + '.' + ext;
+      photoDir.file(fname, m[2], { base64: true });
+      photoCount++;
+      return fname;
+    }
+
+    var wb = new ExcelJS.Workbook();
+    var ws = wb.addWorksheet('워크스페이스등록', { views: [{ state: 'frozen', xSplit: 0, ySplit: 1 }] });
+    ws.columns = WS_COLS.map(function(c) { return { header: c[1], key: c[0], width: c[2] }; });
+    var hdr = ws.getRow(1);
+    hdr.height = 22;
+    WS_COLS.forEach(function(c, i) {
+      var cell = hdr.getCell(i + 1);
+      cell.font = { bold: true, color: { argb: c[3] ? 'FFFFFFFF' : 'FF333333' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: c[3] ? 'FF0F3A7D' : 'FFD9D9D9' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      if (!c[3]) cell.note = '앱에 없는 값 — 워크스페이스에서 입력';
+    });
+
+    list.forEach(function(p) {
+      var safe = String(p.name || '이름없음').replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 30) || '제품';
+      var base = p.id + '_' + safe;
+      var photos = (p.photos || []).filter(isValidPhoto);
+      var cards = (p.bizCards || []).filter(isValidPhoto);
+      var mainImg = photos.length ? addPhoto(photos[0], base + '_메인') : '';
+      var etc = [];
+      photos.slice(1).forEach(function(src, i) { var f = addPhoto(src, base + '_사진' + (i + 2)); if (f) etc.push(f); });
+      cards.forEach(function(src, i) { var f = addPhoto(src, base + '_명함' + (i + 1)); if (f) etc.push(f); });
+      if (etc.length > 10) etc = etc.slice(0, 10);   // 워크스페이스 기타 이미지 최대 10장 (사진 폴더에는 모두 들어 있음)
+
+      var row = ws.addRow({
+        id: String(p.id),
+        agency: '',
+        cat: WS_CAT_MAP[p.category] || '',
+        devType: '',
+        model: '',
+        name: p.name || '',
+        maker: '',
+        country: '중국',
+        moq: wsNum(p.moq && p.moq.qty),
+        cur: 'USD',
+        price: wsNum(p.moq && p.moq.price),
+        fx: '',
+        weight: '',
+        note: wsNoteText(p),
+        mainImg: mainImg,
+        etcImg: etc.join(', '),
+        smpReq: wsISO(p.sample.requested),
+        smpQty: sampleQty(p),
+        smpExp: wsISO(p.sample.expected),
+        fair: seasonName(productSeason(p)) + ' ' + (productPhase(p) === '2' ? '2기 주방' : '1기 가전'),
+        appCat: p.category || ''
+      });
+      row.alignment = { vertical: 'top', wrapText: true };
+      row.getCell('id').numFmt = '@';
+    });
+
+    var guide = wb.addWorksheet('안내');
+    guide.getColumn(1).width = 90;
+    [
+      '워크스페이스용 내보내기 (광저우 박람회 앱 ' + APP_VERSION + ')',
+      '',
+      '· 샘플 신청(★)한 제품만 들어 있습니다. 한 행이 한 제품입니다.',
+      '· 머리글이 파란색인 칸은 앱에서 채운 값, 회색인 칸은 워크스페이스에서 입력할 값입니다.',
+      '  (관리대행업체 · 개발유형 · 기본모델명 · 제조사 · 적용환율 · 예상중량)',
+      '· 앱ID는 제품마다 하나뿐인 번호입니다. 같은 파일을 두 번 올려도 이 번호로 중복을 걸러 주세요.',
+      '· 메인이미지 · 기타이미지 칸의 파일 이름은 함께 받은 [사진] 폴더 안 파일과 같습니다.',
+      '· 카테고리는 워크스페이스 기준으로 바꿔 넣었습니다. 무선청소기·계절가전·이미용기기 → 생활가전, 기타 → 빈칸.',
+      '  앱에서 고른 원래 카테고리는 맨 오른쪽 [앱카테고리] 칸에 있습니다.',
+      '· 견적화폐는 앱에 통화 구분이 없어 USD로 넣었습니다. 위안화로 받은 단가는 고쳐 주세요.',
+      '· CB 상태는 목록생성에 인증 칸이 없어 특기사항에 넣었습니다.'
+    ].forEach(function(t, i) {
+      var c = guide.getCell(i + 1, 1);
+      c.value = t;
+      if (i === 0) c.font = { bold: true, size: 13 };
+    });
+
+    var buf = await wb.xlsx.writeBuffer();
+    zip.file('워크스페이스등록.xlsx', buf);
+    var blob = await zip.generateAsync({ type: 'blob' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '워크스페이스등록_' + phaseFileTag() + pptDateStr().replace(/\./g, '') + '.zip';
+    a.click();
+    setTimeout(function() { URL.revokeObjectURL(url); }, 4000);
+    showToast('✓ 워크스페이스용 ' + list.length + '건 · 사진 ' + photoCount + '장 내려받았어요');
+  } catch (err) {
+    console.error(err);
+    showToast('🚨 내보내기 실패: ' + (err.message || '오류'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = originalText || '⬇ 워크스페이스용'; }
+  }
+}
+
 async function exportAllPhotosZip() {
   var items = [];
   phaseProducts().forEach(function(p) {
@@ -5080,6 +5277,7 @@ function buildCheckText(p) {
     else if (p.cb.date) head.push('CB 진행중 ' + fmtDate(p.cb.date));
     else head.push('CB 미대응');
   }
+  if (p.sample) head.push('샘플 ' + sampleQty(p) + '개');   // v82
   if (p.sample && p.sample.expected) head.push('입고 예정 ' + fmtDate(p.sample.expected));
   if (head.length) out.push(head.join('  ·  '));
   if (p.moq && p.moq.memo) out.push('단가·MOQ: ' + p.moq.memo);
@@ -5710,7 +5908,7 @@ function persistOnce() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v81';
+var APP_VERSION = 'v82';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
@@ -6717,7 +6915,7 @@ function buildShareText(p) {
   if (p.moq && p.moq.memo) L.push('  (' + p.moq.memo + ')');
   if (p.cb) L.push('· CB: ' + (p.cb.owned ? '보유' : p.cb.date ? '진행중 (' + fmtDate(p.cb.date) + ' 예정)' : '미대응'));
   if (p.sample) {
-    var sm = '· 샘플: ' + (p.sample.requested ? fmtDate(p.sample.requested) + ' 신청' : '신청');
+    var sm = '· 샘플: ' + (p.sample.requested ? fmtDate(p.sample.requested) + ' 신청' : '신청') + ' (' + sampleQty(p) + '개)';
     if (p.sample.expected) sm += ', ' + fmtDate(p.sample.expected) + ' 입고 예정';
     L.push(sm);
     if (p.sample.memo) L.push('  (' + p.sample.memo + ')');
