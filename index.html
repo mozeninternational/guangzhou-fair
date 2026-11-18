@@ -390,8 +390,8 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .ph-thumb { width: 100%; height: 100%; aspect-ratio: 1 / 1; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); display: block; cursor: pointer; touch-action: manipulation; }
 .ph-thumb-name { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,.75)); color: #fff; font-size: 9px; padding: 14px 5px 4px; border-radius: 0 0 8px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 .sm-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.sm-label { font-size: 13px; color: var(--t2); }
-.excel-btn { background: #1a6b3a; border: none; border-radius: 8px; padding: 7px 13px; font-size: 12px; font-weight: 600; color: #fff; cursor: pointer; font-family: inherit; }
+.sm-label { font-size: 13px; color: var(--t2); white-space: nowrap; }
+.excel-btn { white-space: nowrap; background: #1a6b3a; border: none; border-radius: 8px; padding: 7px 11px; font-size: 12px; font-weight: 600; color: #fff; cursor: pointer; font-family: inherit; }
 .excel-btn:active { background: #155430; }
 .sm-group { margin-bottom: 18px; }
 .sm-group-hd { font-size: 11px; font-weight: 700; color: var(--t2); letter-spacing: .5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
@@ -1398,12 +1398,12 @@ img.th-wait { background: rgba(255,255,255,.06); }
     <div class="sm-top">
       <div class="sm-label" id="sm-count">샘플 신청 제품</div>
       <div style="display:flex; gap:6px;">
-        <button class="excel-btn" onclick="exportExcel('sample', this)">⬇ 샘플만</button>
-        <button class="excel-btn" style="background:#2563a8;" onclick="exportExcel('all', this)">⬇ 전체</button>
+        <button class="excel-btn" onclick="exportExcel('sample', this)" title="샘플 신청 제품만 · 회사 샘플관리 양식">⬇ 샘플</button>
+        <button class="excel-btn" style="background:#2563a8;" onclick="exportExcel('all', this)" title="전체 제품 · 회사 샘플관리 양식">⬇ 전체</button>
+        <!-- v82: 회사 워크스페이스 목록생성 항목에 맞춘 파일 (샘플 신청 제품만, 엑셀 + 사진 ZIP) -->
+        <button class="excel-btn" style="background:#0f3a7d;" onclick="exportWorkspace(this)" title="워크스페이스 등록용 · 샘플 신청 제품만 (엑셀 + 사진)">⬇ 등록용</button>
       </div>
     </div>
-    <!-- v82: 회사 워크스페이스 목록생성 항목에 맞춘 파일 (샘플 신청 제품만, 엑셀 + 사진 ZIP) -->
-    <button class="excel-btn" type="button" style="background:#0f3a7d; width:100%; margin:0 0 12px; padding:10px 12px;" onclick="exportWorkspace(this)">⬇ 워크스페이스 등록용 (엑셀 + 사진)</button>
     <div class="empty" id="sm-empty" style="display:none;">
       <div class="empty-icon">📦</div>
       <div class="empty-title">샘플 신청 내역이 없어요</div>
@@ -4696,7 +4696,7 @@ function resetToMain() {
 // ── SAMPLE PAGE ───────────────────────────────────────
 function renderSamplePage() {
   var sampled = phaseProducts().filter(function(p){ return p.sample && matchesSearch(p); });
-  document.getElementById('sm-count').textContent = (isSearching() ? '검색된 샘플 제품 ' : '샘플 신청 제품 ') + sampled.length + '개';
+  document.getElementById('sm-count').textContent = (isSearching() ? '검색된 샘플 ' : '샘플 신청 ') + sampled.length + '개';
   setSearchCount(sampled.length);
   var emptyEl = document.getElementById('sm-empty');
   setEmptyText(emptyEl, isSearching() ? searchEmptyTitle() : null, null);
@@ -5013,11 +5013,11 @@ async function exportWorkspace(btnEl) {
 
   var btn = btnEl;
   var originalText = btn ? btn.textContent : '';
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ 준비 중...'; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 준비'; }
   try {
     if (typeof ExcelJS === 'undefined') await loadExcelLibrary();
     if (typeof JSZip === 'undefined') await loadZipLibrary();
-    if (btn) btn.textContent = '⏳ 만드는 중...';
+    if (btn) btn.textContent = '⏳ 생성';
 
     var zip = new JSZip();
     var photoDir = zip.folder('사진');
@@ -5118,7 +5118,7 @@ async function exportWorkspace(btnEl) {
     console.error(err);
     showToast('🚨 내보내기 실패: ' + (err.message || '오류'));
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = originalText || '⬇ 워크스페이스용'; }
+    if (btn) { btn.disabled = false; btn.textContent = originalText || '⬇ 등록용'; }
   }
 }
 
