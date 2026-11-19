@@ -1197,7 +1197,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
   <div class="hdr">
     <div>
       <div class="hdr-title" onclick="resetToMain()">🏪 광저우 박람회</div>
-      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v82</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
+      <div class="hdr-sub">📅 <span id="hdr-date"></span> <span class="ver-badge" id="ver-badge" onclick="showVersionInfo()">v83</span><button class="recv-pill" type="button" onclick="document.getElementById('backup-input').click()" title="공유받은 제품 파일 불러오기">📥 받기</button></div>
     </div>
     <div class="hdr-right">
       <div class="hdr-btn-row">
@@ -1792,7 +1792,7 @@ img.th-wait { background: rgba(255,255,255,.06); }
           (인터넷 연결 필요)
         </div>
         <button class="bk-action-btn" style="background:#2f6fb0;" onclick="forceUpdateApp()">
-          ⬇️ 최신 버전 받기 (현재 v82)
+          ⬇️ 최신 버전 받기 (현재 v83)
         </button>
       </div>
 
@@ -2266,6 +2266,10 @@ function resumeDraftIfAny(silent) {
     return preloadThumbs().catch(function() {});
   }).then(function() {
     var revived = !dataLoadFailed && applyPendingEdit();   // v81: 앱이 꺼지기 직전 입력 되살리기
+    if (!dataLoadFailed) {   // v82: 예전에 별표만 해 둔 제품 → 샘플 신청으로
+      var starConv = normalizeStars(products);
+      if (starConv) { persistSafe(); setTimeout(function() { showToast('★ 별표 제품 ' + starConv + '개를 샘플 신청으로 맞췄어요'); }, 1600); }
+    }
     switchNav(document.getElementById('bnav-list'), 'products');
     setupListScrollMemory();
     checkAndShowRecoveryBanner();
@@ -2970,7 +2974,7 @@ function openProductPhotoLightbox(pid, idx) {
   var p = products.find(function(x){ return x.id === pid; });
   if (!p || !p.photos) return;
   openLightbox(p.photos, idx, {
-    name: p.name, star: !!p.star, category: p.category, moq: p.moq, cb: p.cb, sample: p.sample,
+    name: p.name, star: !!p.sample, category: p.category, moq: p.moq, cb: p.cb, sample: p.sample,
     bizCount: (p.bizCards && p.bizCards.length) || 0
   });
 }
@@ -3546,6 +3550,28 @@ function sampleQty(p) {
   return (q > 0) ? q : 1;
 }
 
+/* v82: 별표(★) = 샘플 신청. 둘 중 하나만 눌러도 함께 바뀐다.
+   · 예전(v81까지) 목록에서 별표만 해 둔 제품은 샘플 신청으로 바꾼다 (신청일 = 그 제품을 기록한 날, 수량 1개)
+   · 저장할 때마다 p.star를 p.sample에 맞춘다 */
+function isoDateOfTime(t) {
+  var d = new Date(t);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function newSample(dateISO) { return { requested: dateISO || todayISO(), days: null, expected: null, memo: '', qty: 1 }; }
+function normalizeStars(list) {
+  var converted = 0;
+  (list || []).forEach(function(p) {
+    if (!p) return;
+    if (p.star && !p.sample) {
+      var t = productTime(p);
+      p.sample = newSample(t ? isoDateOfTime(t) : null);
+      converted++;
+    }
+    p.star = !!p.sample;
+  });
+  return converted;
+}
+
 // 날짜에 며칠을 더한다
 function addDaysISO(iso, days) {
   var p = String(iso).split('-');
@@ -3660,6 +3686,7 @@ function applyPendingEdit() {
     products.unshift(p);
     changed = true;
   }
+  p.star = !!p.sample;   // v82
   if (changed) persistSafe();
   return changed;
 }
@@ -3693,7 +3720,7 @@ function performAutoSave() {
       name: name,
       memo: memo,
       date: products[idx].date,
-      star: !!products[idx].star,
+      star: !!cur.sample,   // v82: 별표 = 샘플 신청
       photos: cur.photos.slice(),
       bizCards: cur.bizCards.slice(),
       category: cur.category,
@@ -3758,7 +3785,7 @@ function saveProduct() {
         name: name,
         memo: memo,
         date: products[idx].date,  // 원래 등록일 유지
-        star: !!products[idx].star,  // 주목 표시 유지
+        star: !!cur.sample,  // v82: 별표 = 샘플 신청
         photos: cur.photos.slice(),
         bizCards: cur.bizCards.slice(),
         category: cur.category,
@@ -4026,11 +4053,11 @@ function toggleNoSample() {
 function quickRequestSample(id) {
   var p = products.find(function(x) { return x.id === id; });
   if (!p || p.sample) return;
-  p.sample = { requested: todayISO(), days: null, expected: null, memo: '', qty: 1 };
+  p.sample = newSample(); p.star = true;
   persistSafe();
   renderList();
   showUndo('★ "' + (p.name || '제품') + '" 샘플 신청했어요', function() {
-    p.sample = null;
+    p.sample = null; p.star = false;
     persistSafe();
     renderList();
   });
@@ -4237,11 +4264,11 @@ function renderList() {
       '<button class="p-row-del" type="button" onclick="event.stopPropagation(); confirmDeleteProduct(' + p.id + ')">' +
         '<span>🗑️</span>삭제</button>' +
       '<div class="p-card" onclick="onCardTap(event, ' + p.id + ')">' +
-      '<div class="p-head"><div class="p-name' + (p.star ? ' starred' : '') + '">' + hlText(p.name) + '</div>' +
+      '<div class="p-head"><div class="p-name' + (p.sample ? ' starred' : '') + '">' + hlText(p.name) + '</div>' +
         '<div class="p-head-r"><span class="p-phase ph' + productPhase(p) + '">' + productPhase(p) + '기</span><div class="p-date">' + p.date + '</div>' +
         '<button class="p-share" type="button" title="공유" onclick="event.stopPropagation(); openShare(' + p.id + ')">📤</button>' +
         '<button class="p-del" type="button" title="휴지통으로" onclick="event.stopPropagation(); confirmDeleteProduct(' + p.id + ')">🗑</button>' +
-        '<button class="p-star' + (p.star ? ' on' : '') + '" type="button" title="주목 제품 표시" onclick="event.stopPropagation(); toggleStar(' + p.id + ')">' + (p.star ? '★' : '☆') + '</button></div></div>' +
+        '<button class="p-star' + (p.sample ? ' on' : '') + '" type="button" title="샘플 신청 (★ = 신청)" onclick="event.stopPropagation(); toggleStar(' + p.id + ')">' + (p.sample ? '★' : '☆') + '</button></div></div>' +
       (catBadge ? '<div class="p-cat-row">' + catBadge + '</div>' : '') +
       photos +
       '<div class="p-badges">' + badges.join('') + '</div>' +
@@ -4380,14 +4407,23 @@ function confirmDeleteProduct(id, quick) {   // v82: quick = 확인 창 없이 (
 /* ══════════════════════════════════════════════════════
    v7: 주목 제품 ★ 토글
    ══════════════════════════════════════════════════════ */
+// v82: 목록의 별표 = 샘플 신청 (입력 카드의 별표와 같은 것)
 function toggleStar(id) {
   var p = products.find(function(x){ return x.id === id; });
   if (!p) return;
-  p.star = !p.star;
+  if (!p.sample) { quickRequestSample(id); return; }
+  var sm = p.sample;
+  var hasInfo = sm.expected || sm.days || (sm.memo && String(sm.memo).trim()) ||
+                (Array.isArray(sm.checklist) && sm.checklist.some(function(c) { return c.done; }));
+  if (hasInfo && !confirm('"' + (p.name || '이 제품') + '"\n\n샘플 신청을 해제할까요?\n입력해 둔 입고 예정일·메모도 함께 지워집니다.')) return;
+  var before = sm;
+  p.sample = null; p.star = false;
   renderList();
   persistSafe().then(function(ok) {
-    if (!ok) { p.star = !p.star; renderList(); showToast('🚨 저장 실패 - 다시 시도해주세요'); return; }
-    showToast(p.star ? '★ 주목 제품으로 표시했어요' : '주목 표시를 해제했어요');
+    if (!ok) { p.sample = before; p.star = true; renderList(); showToast('🚨 저장 실패 - 다시 시도해주세요'); return; }
+    showUndo('☆ "' + (p.name || '제품') + '" 샘플 신청을 해제했어요', function() {
+      p.sample = before; p.star = true; persistSafe(); renderList();
+    });
   });
 }
 
@@ -5896,6 +5932,7 @@ function markPersistFailed(e) {
 var lastPersistError = null;
 var _persistRunning = null, _persistQueued = null;
 function persistSafe() {
+  try { normalizeStars(products); } catch (e) {}   // v82: 별표 = 샘플 신청
   if (dataLoadFailed) {
     showDataErrorBanner();
     return Promise.resolve(false);
@@ -5988,7 +6025,7 @@ function persistOnce() {
    저장해 둔 앱 파일(캐시)과 서비스워커를 모두 비우고 새로 받아온다.
    ⚠️ 제품·사진 데이터(IndexedDB)는 건드리지 않는다.
    ══════════════════════════════════════════════════════ */
-var APP_VERSION = 'v82';
+var APP_VERSION = 'v83';
 
 function showVersionInfo() {
   alert('광저우 박람회 앱 ' + APP_VERSION + '\n\n' +
