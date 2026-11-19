@@ -1223,23 +1223,28 @@ img.th-wait { background: rgba(255,255,255,.06); }
 .ph-album2:active { background: rgba(255,255,255,.08); }
 .cur-area .photo-section .dropzone { border: none !important; background: transparent !important; padding: 0 !important; }
 /* 정보 칩: 비어 있으면 점선 + "＋" */
-.fn-row { margin-top: 12px; gap: 6px !important; }
-.fn-row .fn-chip { padding: 6px 8px !important; font-size: 12.5px !important; border-radius: 16px; }
+.fn-row { margin-top: 12px; gap: 5px !important; flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch; }   /* 한 줄 고정 — 넘치면 옆으로 밀어 보기 */
+.fn-row::-webkit-scrollbar { display: none; }
+.fn-row .fn-chip { flex: 0 0 auto !important; padding: 6px 8px !important; font-size: 12.5px !important; border-radius: 16px; }
 .fn-row .fn-chip:not([class*="on-"]) { background: transparent; border: 1px dashed rgba(255,255,255,.22); color: var(--t2); }
 .fn-row .fn-chip:not([class*="on-"])::before { content: '+'; margin-right: 3px; font-size: 13px; opacity: .7; }
+@media (max-width: 380px) {   /* 좁은 폰: 칩 6개가 한 줄에 다 보이도록 */
+  .fn-row { gap: 4px !important; }
+  .fn-row .fn-chip { padding: 5px 6px !important; font-size: 11.5px !important; letter-spacing: -.4px; }
+}
 /* 메모·확인할 것 */
 .cur-area .memo-box { margin-top: 12px; }
 .cur-area .td-wrap.empty { border-top: none !important; padding-top: 0 !important; margin-top: 8px !important; text-align: left; }
 .td-wrap .todo-add-btn { display: block !important; align-self: flex-start; margin-left: 0 !important; margin-right: auto !important; width: auto !important; height: auto !important; border-radius: 14px !important; padding: 6px 12px !important;
   margin-top: 6px; font-size: 12.5px !important; font-weight: 600; background: transparent !important;
   border: 1px dashed rgba(63,168,122,.5) !important; color: #6ee7b7 !important; }
-/* 아래 버튼: 같은 업체 새 제품만 크게, 나머지는 한 줄에 작게 */
-.ed-actions { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px !important; margin-top: 18px !important; }
-.ed-actions > #ed-same, .ed-actions > #ed-split { grid-column: 1 / -1; }
-.ed-btn { padding: 11px 12px !important; font-size: 14px !important; }
-.ed-btn small { font-size: 11px !important; }
-.ed-actions .ed-video, .ed-actions .ed-btn.danger { text-align: center; font-size: 13px !important; }
-.ed-actions .ed-video small { display: none; }
+/* 아래 버튼: [사진 나누기][같은 업체 새 제품][동영상 촬영] 한 줄, 그 아래 작성 취소·삭제 */
+.ed-actions { display: flex !important; flex-direction: row !important; flex-wrap: wrap; gap: 8px !important; margin-top: 18px !important; }
+.ed-actions .ed-mini { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  padding: 10px 4px !important; font-size: 12px !important; font-weight: 600; letter-spacing: -.3px; text-align: center; line-height: 1.25; word-break: keep-all; }
+.ed-actions .ed-mini i { font-style: normal; font-size: 17px; line-height: 1; }
+.ed-actions .ed-btn.danger { flex: 1 0 100%; text-align: center; padding: 10px 12px !important; font-size: 13px !important; }
 </style>
 </head>
 <body>
@@ -1435,9 +1440,9 @@ img.th-wait { background: rgba(255,255,255,.06); }
     <!-- v74: 카드 아래 버튼 -->
     <div class="split-tip">✂ 새 제품으로 옮길 사진을 눌러 고르세요 (여러 장 가능)</div>
     <div class="ed-actions" id="ed-actions">
-      <button class="ed-btn" id="ed-split" type="button" onclick="startSplit()">✂ 사진 나누기 · 옮기기<small>섞인 사진을 다른 제품으로</small></button>
-      <button class="ed-btn" id="ed-same" type="button" onclick="newSameFactory()">＋ 같은 업체 새 제품<small>명함을 이어받은 새 카드</small></button>
-      <button class="ed-btn ed-video" type="button" onclick="openVideoCamera()">🎥 동영상<small>폰 사진첩에 저장</small></button>
+      <button class="ed-btn ed-mini" id="ed-split" type="button" onclick="startSplit()"><i>✂</i>사진 나누기</button>
+      <button class="ed-btn ed-mini" id="ed-same" type="button" onclick="newSameFactory()"><i>＋</i>같은 업체 새 제품</button>
+      <button class="ed-btn ed-mini ed-video" type="button" onclick="openVideoCamera()"><i>🎥</i>동영상 촬영</button>
       <button class="ed-btn danger" id="ed-discard" type="button" onclick="discardDraft()">작성 취소</button>
       <button class="ed-btn danger" id="ed-delete" type="button" onclick="deleteFromEditor()">🗑 제품 삭제</button>
     </div>
@@ -2642,7 +2647,7 @@ function renderFnChips() {
     var sx = String(cur.sample.expected).split('-');
     var late = (dLeftFromDate(cur.sample.expected) || 0) < 0;
     chipLV('fn-smp', 'fn-smp-t', late ? '샘플 지연' : '샘플', (+sx[1]) + '/' + (+sx[2]), late ? 'on-red' : 'on-green');
-  } else chipLV('fn-smp', 'fn-smp-t', '샘플 신청', '', 'on-green');
+  } else chipLV('fn-smp', 'fn-smp-t', '샘플', '', 'on-green');   // v84: 한 줄에 들어가게 짧게
 
   // 명함
   var nc = (cur.bizCards || []).length;
@@ -2652,7 +2657,7 @@ function renderFnChips() {
   // 기수 (v67) — 탭하면 1기 가전 ⇄ 2기 주방
   if (typeof PHASE_NAMES !== 'undefined' && PHASE_NAMES) {   // 앱 시작 직후(설정 읽기 전)에는 건너뛴다
     var eph = curEffectivePhase();
-    fnSet('fn-phase', 'fn-phase-t', eph === '2' ? '2기 주방' : '1기 가전', eph === '2' ? 'on-blue' : 'on-orange');
+    fnSet('fn-phase', 'fn-phase-t', eph === '2' ? '2기' : '1기', eph === '2' ? 'on-blue' : 'on-orange');   // v84: 짧게 (탭하면 1기 ⇄ 2기)
   }
 
   // 카테고리 칩은 v77에서 화면에서 뺐다 (기존 데이터는 그대로 보관)
