@@ -925,6 +925,21 @@ body { font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', 'Malgu
 .p-phase.ph2 { background: rgba(74,158,255,.16); color: var(--blue); }
 .fn-chip.on-blue { background: rgba(74,158,255,.16); border-color: var(--blue); color: var(--blue); }
 .phase-bar { display: flex; gap: 6px; padding: 0 16px 9px; flex-shrink: 0; }
+/* v82: 미신청만 보기 */
+.ns-bar { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+.ns-btn { flex-shrink: 0; padding: 6px 12px; border-radius: 16px; border: 1px solid var(--border); background: transparent;
+  color: var(--t2); font-family: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: pointer;
+  -webkit-appearance: none; touch-action: manipulation; }
+.ns-btn b { font-weight: 800; margin-left: 2px; }
+.ns-btn.on { background: rgba(245,165,0,.15); border-color: var(--orange); color: var(--orange); }
+.ns-help { display: none; font-size: 11.5px; color: var(--t3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ns-bar.on .ns-help { display: block; }
+.ns-acts { display: flex; gap: 8px; margin-top: 10px; }
+.ns-drop { flex: 0 0 34%; padding: 9px 0; border-radius: 10px; border: 1px solid rgba(224,85,85,.4); background: rgba(224,85,85,.1);
+  color: #f3a9a4; font-family: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; -webkit-appearance: none; touch-action: manipulation; }
+.ns-req { flex: 1; display: block; padding: 9px 0; border-radius: 10px; border: 1px solid rgba(46,204,113,.45);
+  background: rgba(46,204,113,.12); color: #5fd88f; font-family: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
+  -webkit-appearance: none; touch-action: manipulation; }
 .ph-btn {
   flex: 1; padding: 6px 4px; border-radius: 10px; border: 1px solid var(--border);
   background: transparent; color: var(--t2); font-family: inherit; font-size: 12.5px; font-weight: 600;
@@ -1384,6 +1399,11 @@ img.th-wait { background: rgba(255,255,255,.06); }
   <!-- PRODUCT LIST -->
   <div class="content" id="main-page">
 
+    <!-- v82: 현장에서 샘플 신청을 놓친 제품 정리용 -->
+    <div class="ns-bar" id="ns-bar" style="display:none;">
+      <button class="ns-btn" id="ns-btn" type="button" onclick="toggleNoSample()">미신청만 보기 <b id="ns-n"></b></button>
+      <span class="ns-help" id="ns-help">신청 또는 버리기 (되돌리기 가능)</span>
+    </div>
     <div class="empty" id="empty-state">
       <div class="empty-icon">📋</div>
       <div class="empty-title">등록된 제품이 없어요</div>
@@ -2177,7 +2197,7 @@ function saveDraftId(id) {
 function clearDraftId() {
   try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
 }
-function resumeDraftIfAny() {
+function resumeDraftIfAny(silent) {
   var savedId;
   try { savedId = localStorage.getItem(DRAFT_KEY); } catch (e) { return; }
   if (!savedId) return;
@@ -2189,7 +2209,7 @@ function resumeDraftIfAny() {
     //      이어서 고치려면 목록에서 그 제품을 누르면 된다.
     clearDraftId();
     if (draftingId === id) draftingId = null;
-    setTimeout(function() { showToast('✓ 작성 중이던 내용을 저장해 두었어요'); }, 600);
+    if (!silent) setTimeout(function() { showToast('✓ 작성 중이던 내용을 저장해 두었어요'); }, 600);
   } else {
     clearDraftId(); // 대상이 없으면(삭제됨 등) 기록만 정리
   }
@@ -2251,10 +2271,17 @@ function resumeDraftIfAny() {
     checkAndShowRecoveryBanner();
     checkBackupReminder();
     updateStorageBar();
-    resumeDraftIfAny(); // v81: 작성 중이던 항목은 마지막 상태로 확정 (목록에 보임)
-    if (revived) setTimeout(function() { showToast('✓ 앱이 닫히기 직전 입력한 내용을 되살렸어요'); }, 900);
-    // v81: 첫 화면은 언제나 새 제품 입력 카드 (✕를 누르면 제품 목록)
-    if (!dataLoadFailed) openNewEditor({ startup: true });
+    // v82: 첫 화면 = 새 제품 입력 카드.
+    //      단, 10분 안에 쓰던 카드가 있으면(앱이 잠깐 꺼졌다 켜진 경우) 그 카드를 이어서 연다.
+    var resumeId = dataLoadFailed ? null : takeRecentCardId();
+    resumeDraftIfAny(!!resumeId); // v81: 작성 중이던 항목은 마지막 상태로 확정 (목록에 보임)
+    if (resumeId) {
+      editProduct(resumeId);
+      setTimeout(function() { showToast('✓ 쓰던 카드를 이어서 열었어요'); }, 700);
+    } else {
+      if (revived) setTimeout(function() { showToast('✓ 앱이 닫히기 직전 입력한 내용을 되살렸어요'); }, 900);
+      if (!dataLoadFailed) openNewEditor({ startup: true });
+    }
     updateFab();
     setTimeout(checkSharedInbox, 300);   // 안드로이드 공유창으로 받은 제품 파일 처리
 
@@ -3573,13 +3600,32 @@ function flushAutoSave() {
   try { performAutoSave(); } catch (e) { console.warn('[autosave] flush 실패', e); }
 }
 document.addEventListener('visibilitychange', function() { if (document.hidden) flushAutoSave(); });
+// v82: 카메라·다른 앱으로 넘어갈 때 쓰던 카드를 기억 (돌아왔을 때 앱이 다시 시작되면 이 카드를 연다)
+document.addEventListener('visibilitychange', function() { if (document.hidden && editorOpen && editingId) markLastCard(editingId); });
 window.addEventListener('pagehide', flushAutoSave);
 /* v81: 폰 저장소(IndexedDB)는 쓰는 데 시간이 걸려, 입력 직후 앱이 꺼지면 마지막 내용이 사라질 수 있다.
    그래서 자동 저장 때마다 글자 정보(사진 제외)를 즉시 기록되는 곳에도 적어 두고,
    다음에 앱을 열 때 본 저장보다 새로우면 되살린다. 본 저장이 끝나면 지운다. */
 var PENDING_KEY = 'gz_pending_edit';
+/* v82: 마지막으로 손대던 카드 — 폰이 앱을 잠깐 껐다 켠 경우(카메라 사용 중 아이폰 재시작 등)
+   쓰던 카드를 그대로 다시 연다. ✕·저장으로 카드를 닫으면 지운다. */
+var LAST_CARD_KEY = 'gz_last_card';
+var LAST_CARD_RESUME_MS = 10 * 60 * 1000;   // 10분 안에 다시 열리면 이어 쓰기
+function markLastCard(id) {
+  try { localStorage.setItem(LAST_CARD_KEY, JSON.stringify({ id: id, at: Date.now() })); } catch (e) {}
+}
+function clearLastCard() { try { localStorage.removeItem(LAST_CARD_KEY); } catch (e) {} }
+function takeRecentCardId() {
+  var lc = null;
+  try { lc = JSON.parse(localStorage.getItem(LAST_CARD_KEY) || 'null'); } catch (e) {}
+  clearLastCard();
+  if (!lc || !lc.id || !lc.at || Date.now() - lc.at > LAST_CARD_RESUME_MS) return null;
+  return products.some(function(p) { return p.id === lc.id; }) ? lc.id : null;
+}
+
 function writePendingEdit(p) {
   if (!p) return;
+  markLastCard(p.id);   // v82
   try {
     localStorage.setItem(PENDING_KEY, JSON.stringify({
       at: Date.now(), id: p.id, name: p.name, memo: p.memo, date: p.date,
@@ -3970,6 +4016,35 @@ function resetCur() {
 }
 
 // ── RENDER LIST ───────────────────────────────────────
+// v82: 제품목록 — 샘플 미신청 제품만 보기 (켜고 끄기)
+function toggleNoSample() {
+  curTab = (curTab === 'nosample') ? 'all' : 'nosample';
+  renderList();
+  var m = document.getElementById('main-page'); if (m) m.scrollTop = 0;
+}
+// v82: 목록에서 바로 샘플 신청 (신청일 = 오늘, 수량 1개) — 되돌리기 가능
+function quickRequestSample(id) {
+  var p = products.find(function(x) { return x.id === id; });
+  if (!p || p.sample) return;
+  p.sample = { requested: todayISO(), days: null, expected: null, memo: '', qty: 1 };
+  persistSafe();
+  renderList();
+  showUndo('★ "' + (p.name || '제품') + '" 샘플 신청했어요', function() {
+    p.sample = null;
+    persistSafe();
+    renderList();
+  });
+}
+function renderNoSampleBar(vis) {
+  var bar = document.getElementById('ns-bar');
+  if (!bar) return;
+  var on = curTab === 'nosample';
+  bar.style.display = vis.length ? 'flex' : 'none';
+  bar.classList.toggle('on', on);
+  document.getElementById('ns-btn').classList.toggle('on', on);
+  document.getElementById('ns-n').textContent = vis.filter(function(p) { return !p.sample; }).length;
+}
+
 function switchTab(el, tab) {
   document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
   el.classList.add('active');
@@ -4095,6 +4170,7 @@ function renderList() {
   updateTrashCount();
   renderPhaseBar();
   var vis = visibleProducts().filter(inPhase);   // 작성 중인 항목 제외 + 선택한 기수만
+  renderNoSampleBar(vis);   // v82
   var base = curTab === 'all' ? vis :
     vis.filter(function(p){ return curTab === 'sample' ? p.sample : !p.sample; });
   var filtered = curCat === 'all' ? base :
@@ -4106,6 +4182,7 @@ function renderList() {
   var empty = document.getElementById('empty-state');
   var list = document.getElementById('p-list');
   setEmptyText(empty, searching ? searchEmptyTitle() : null, searching ? SEARCH_EMPTY_SUB : null);
+  if (!searching && curTab === 'nosample' && vis.length) setEmptyText(empty, '미신청 제품이 없어요', '모든 제품을 샘플 신청했거나 정리했어요');   // v82
 
   if (filtered.length === 0) {
     if (listSortable) { listSortable.destroy(); listSortable = null; }
@@ -4168,6 +4245,9 @@ function renderList() {
       (catBadge ? '<div class="p-cat-row">' + catBadge + '</div>' : '') +
       photos +
       '<div class="p-badges">' + badges.join('') + '</div>' +
+      (curTab === 'nosample' ? '<div class="ns-acts">' +   // v82: 미신청 정리 — 한 번에 신청 / 버리기
+        '<button class="ns-req" type="button" onclick="event.stopPropagation(); quickRequestSample(' + p.id + ')">★ 샘플 신청</button>' +
+        '<button class="ns-drop" type="button" onclick="event.stopPropagation(); confirmDeleteProduct(' + p.id + ', true)">🗑 버리기</button></div>' : '') +
       (p.memo ? '<div class="p-memo">' + hlText(p.memo) + '</div>' : '') +
       todoHtml +
       '</div></div>';
@@ -4175,7 +4255,7 @@ function renderList() {
   list.innerHTML = html;
   watchThumbs(list);
   setupSwipeDelete();
-  if (searching) { if (listSortable) { listSortable.destroy(); listSortable = null; } }   // v79: 검색 중 순서 바꾸기 잠금
+  if (searching || curTab === 'nosample') { if (listSortable) { listSortable.destroy(); listSortable = null; } }   // v79: 검색 중 순서 바꾸기 잠금 (v82: 미신청만 볼 때도)
   else setupListReorder();
 }
 
@@ -4267,10 +4347,10 @@ function setupSwipeDelete() {
 }
 
 // 목록에서 바로 삭제 (한 번 더 확인)
-function confirmDeleteProduct(id) {
+function confirmDeleteProduct(id, quick) {   // v82: quick = 확인 창 없이 (되돌리기로 복구)
   var p = products.find(function(x){ return x.id === id; });
   if (!p) return;
-  if (!confirm('"' + (p.name || '이 제품') + '"\n\n휴지통으로 이동됩니다.\n(30일 동안 휴지통에서 복구할 수 있어요)')) {
+  if (!quick && !confirm('"' + (p.name || '이 제품') + '"\n\n휴지통으로 이동됩니다.\n(30일 동안 휴지통에서 복구할 수 있어요)')) {
     closeSwipeRow();
     return;
   }
@@ -4335,7 +4415,7 @@ function setupListReorder() {
     delay: 400,
     delayOnTouchOnly: true,      // v77: PC(마우스)는 누르고 바로 끌면 된다. 폰은 지금처럼 0.4초 누른 뒤
     touchStartThreshold: 8,
-    filter: '.p-star, .p-share, .p-row-del, .p-photo, .p-del',
+    filter: '.p-star, .p-share, .p-row-del, .p-photo, .p-del, .ns-req, .ns-drop',
     preventOnFilter: false,
     forceFallback: true,
     fallbackTolerance: 4,
@@ -4730,7 +4810,7 @@ function renderSamplePage() {
       var moqStr = p.moq ? '$'+p.moq.price+' · MOQ '+p.moq.qty : '';
       html += '<div class="sm-card" onclick="editProduct(' + p.id + ')" style="cursor:pointer;">' +
         '<div class="sm-left"><div class="sm-name">' + hlText(p.name) + (p.category ? ' <span style="font-size:10px;color:var(--t2);">'+hlText(p.category)+'</span>' : '') + '</div>' +
-        '<div class="sm-meta">제작 '+p.sample.days+'일 소요' + (moqStr?' · '+moqStr:'') + '</div></div>' +
+        '<div class="sm-meta">' + (p.sample.days ? '제작 '+p.sample.days+'일 소요' : '입고 예정') + (moqStr?' · '+moqStr:'') + '</div></div>' +
         '<div class="sm-right"><div class="sm-date">'+fmtDate(p.sample.expected)+'</div><span class="sm-badge '+uc+'">'+urgLabel(dl)+'</span></div>' +
         '</div>';
     });
@@ -6353,6 +6433,7 @@ window.addEventListener('resize', function() {
 });
 
 function closeEditor() {
+  clearLastCard();   // v82: 직접 닫은 카드는 다음에 다시 열지 않는다
   if (splitMode) { splitMode = false; splitSel.clear(); var ca = document.querySelector('.cur-area'); if (ca) ca.classList.remove('split-mode'); }
   editorOpen = false;
   var app = document.querySelector('.app');
